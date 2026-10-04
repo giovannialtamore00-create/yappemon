@@ -15,7 +15,6 @@ export class Sfx {
   private sfxBus!: GainNode;
   private musicBus!: GainNode;
   private noiseBuf!: AudioBuffer;
-  private ambientOn = false;
   private volume = 0.7;
   private musicVolume = 0.6;
   private musicGain!: GainNode;
@@ -59,7 +58,6 @@ export class Sfx {
       if (this.wantMusic) this.music.start();
     }
     if (this.ctx.state === 'suspended') void this.ctx.resume();
-    if (!this.ambientOn) this.startAmbient();
   }
 
   getVolume() { return this.volume; }
@@ -297,52 +295,6 @@ export class Sfx {
       this.tone(f / 2, kind === 'defeat' ? 0.45 : 0.3, { type: 'sine', vol: 0.15, delay: d, bus: this.musicBus });
     }
     if (kind === 'victory') [1046, 1318, 1568].forEach((f) => this.tone(f, 1.2, { type: 'sine', vol: 0.1, delay: 0.9, bus: this.musicBus }));
-  }
-
-  /** Quiet wind + slow pad drone. */
-  private startAmbient() {
-    if (!this.ctx) return;
-    this.ambientOn = true;
-    const ctx = this.ctx;
-    const wind = ctx.createBufferSource();
-    wind.buffer = this.noiseBuf;
-    wind.loop = true;
-    const wf = ctx.createBiquadFilter();
-    wf.type = 'bandpass';
-    wf.frequency.value = 500;
-    wf.Q.value = 0.6;
-    const wg = ctx.createGain();
-    wg.gain.value = 0.05;
-    const lfo = ctx.createOscillator();
-    lfo.frequency.value = 0.07;
-    const lfoG = ctx.createGain();
-    lfoG.gain.value = 250;
-    lfo.connect(lfoG).connect(wf.frequency);
-    wind.connect(wf).connect(wg).connect(this.musicBus);
-    wind.start();
-    lfo.start();
-    const pad = ctx.createGain();
-    pad.gain.value = 0.035;
-    const pf = ctx.createBiquadFilter();
-    pf.type = 'lowpass';
-    pf.frequency.value = 700;
-    pad.connect(pf).connect(this.musicBus);
-    for (const f of [110, 164.8, 220, 277.2]) {
-      const o = ctx.createOscillator();
-      o.type = 'triangle';
-      o.frequency.value = f;
-      o.detune.value = (Math.random() - 0.5) * 12;
-      const g = ctx.createGain();
-      g.gain.value = 0.25;
-      const l = ctx.createOscillator();
-      l.frequency.value = 0.05 + Math.random() * 0.08;
-      const lg = ctx.createGain();
-      lg.gain.value = 0.2;
-      l.connect(lg).connect(g.gain);
-      o.connect(g).connect(pad);
-      o.start();
-      l.start();
-    }
   }
 
   // ------------------------------------------------------------ event mapping
