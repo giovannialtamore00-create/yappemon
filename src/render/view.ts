@@ -148,7 +148,7 @@ export class BattleView {
             this.vfx.emit('fire', this.creaturePos(e.p, s), 40, 0.4, undefined, 1.2);
             this.vfx.ring(this.creaturePos(e.p, s), '#ff8a2a', 0.5, 1.6, false);
           } else if (e.move === 'healing_rain') {
-            const top = this.headPos(e.p).add(new THREE.Vector3(0, 1.2, 0));
+            const top = this.headPos(e.p).add(new THREE.Vector3(0, 0.5, 0));
             this.vfx.emit('heal', top, 40, 0.6);
           } else if (m.delivery === 'projectile' || m.delivery === 'wave') {
             this.vfx.emit(CHARGE_FX[m.element] ?? 'normal', from, 12, 0.1);
@@ -324,7 +324,7 @@ export class BattleView {
       side.shield.scale.setScalar(Math.max(0.8, m.height * 0.6) * (1 + Math.sin(this.time * 6) * 0.04));
       if (Math.random() < 0.3) this.vfx.emit('ember', side.shield.position, 1, 0.6);
     }
-    if (c.healTicks > 0 && Math.random() < 0.6) this.vfx.emit('heal', this.headPos(p).add(new THREE.Vector3(0, 0.6, 0)), 2, 0.6);
+    if (c.healTicks > 0 && Math.random() < 0.6) this.vfx.emit('heal', this.headPos(p).add(new THREE.Vector3(0, 0.2, 0)), 2, 0.6);
     if (c.staticTicks > 0 && Math.random() < 0.25) this.vfx.emit('static', this.creaturePos(p, curr), 2, 0.4);
     if (c.rootTicks > 0 && Math.random() < 0.1) this.vfx.emit('leaf', this.creaturePos(p, curr, 0.1), 1, 0.4);
 

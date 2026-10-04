@@ -1,6 +1,6 @@
 # PROGRESS
 
-**Current milestone:** 5 — VFX and audio
+**Current milestone:** 6 — PeerJS multiplayer
 **Phase:** building (main branch)
 
 ## Done
@@ -9,9 +9,10 @@
 - M2 ✅ `src/voice/parser.ts` (normalize, fold, levenshtein, windowed fuzzy match, parse(), toIntents()), `src/voice/aliases.ts`, `tests/parser.test.ts` (99 tests).
 - M3 ✅ Renderer: `src/render/{scene,creatures,view,vfx,hud,showcase}.ts`, `src/game/{session,battle}.ts`, `src/ui/screens.ts`, `src/main.ts`, `src/i18n.ts`, `src/style.css`. Practice vs Bot fully playable via debug box (backtick). `npm run smoke` (or `node scripts/smoke.mjs --full`) = headless Playwright run with screenshots in ./screenshots (gitignored).
 - M4 ✅ `src/voice/speech.ts` (continuous, auto-restart w/ backoff, interim → HUD, final alternatives → `Battle.commandAlternatives` picks first that parses). Browser check `isSupportedBrowser()`. Smoke test injects a FakeRec to test the wiring. URL test options: `?seed=7&botTeam=vinram,brinkle&bot=passive`.
+- M5 ✅ `src/audio/sfx.ts` (synth SFX per move, hit, whoosh, fail buzz, faint, recall, send-out, UI click, jingles, ambient wind+pad, volume slider in corner, unlocked on first gesture). VFX polish (tidal wave lip, heal height). `node scripts/vfx-shots.mjs [species]` + `node scripts/contact-sheet.mjs <dir> <out.png>` for visual review.
 
 ## In progress
-- M5: `src/audio/sfx.ts` (Web Audio synth: per-element move sounds, hit, dodge whoosh, fail buzz, faint, recall, send-out, UI clicks, victory/defeat jingles, ambient loop, master volume + corner slider). VFX already largely done in M3 (vfx.ts) — polish pass.
+- M6: `src/net/{protocol,peer,host,client}.ts`: room codes (cbattle-<code>), host-authoritative SimRunner, ~20 Hz snapshots + events, client interpolation, lobby host/join screens, team-select handshake, disconnect screen.
 
 ## Next steps (in order)
 1. Finish sim + tests (M1), checkpoint.

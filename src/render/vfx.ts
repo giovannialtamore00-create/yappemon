@@ -348,7 +348,7 @@ export class Vfx {
         o.lookAt(to.clone().setY(0));
         const s = 0.6 + k * 0.6;
         o.scale.set(s, s, s);
-        this.emit('splash', ground.clone().setY(0.6 * s), 4, 0.6);
+        this.emit('splash', ground.clone().setY(1.1 * s), 5, 0.8);
         break;
       }
       case 'thorn_quake': {
@@ -408,14 +408,24 @@ export class Vfx {
         return g;
       }
       case 'tidal_crash': {
+        // A curling wave lip: a plane bent into a quarter-pipe that leans toward the target (+z).
         const g = new THREE.Group();
-        const wave = new THREE.Mesh(new THREE.CylinderGeometry(1.0, 1.0, 2.2, 20, 1, true, -Math.PI / 2, Math.PI), new THREE.MeshStandardMaterial({ color: '#3a9be9', transparent: true, opacity: 0.75, side: THREE.DoubleSide, emissive: '#1a5fa8', emissiveIntensity: 0.4, roughness: 0.1 }));
-        wave.rotation.z = Math.PI / 2;
-        wave.position.y = 0.4;
-        const foam = new THREE.Mesh(new THREE.TorusGeometry(1.0, 0.1, 6, 20, Math.PI), additive('#e6f6ff', 0.8));
-        foam.rotation.y = Math.PI / 2;
-        foam.position.y = 0.4;
-        g.add(wave, foam);
+        const geo = new THREE.PlaneGeometry(2.8, 1, 24, 12);
+        const pos = geo.attributes.position as THREE.BufferAttribute;
+        for (let i = 0; i < pos.count; i++) {
+          const v = pos.getY(i) + 0.5; // 0 (base) .. 1 (lip)
+          const a = v * Math.PI * 0.85;
+          const r = 0.9 * (1 - v * 0.25);
+          const edge = 1 - Math.pow(Math.abs(pos.getX(i)) / 1.4, 3);
+          pos.setY(i, Math.sin(a) * r * 1.3 * (0.4 + 0.6 * edge));
+          pos.setZ(i, (1 - Math.cos(a)) * r * 0.8 - 0.4);
+        }
+        geo.computeVertexNormals();
+        const water = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: '#2f8fe0', transparent: true, opacity: 0.8, side: THREE.DoubleSide, emissive: '#1a5fa8', emissiveIntensity: 0.5, roughness: 0.15 }));
+        const foam = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 2.4, 8), additive('#e6f6ff', 0.85));
+        foam.rotation.z = Math.PI / 2;
+        foam.position.set(0, 1.0, 0.75);
+        g.add(water, foam);
         return g;
       }
       default:

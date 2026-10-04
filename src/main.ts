@@ -1,5 +1,6 @@
 import './style.css';
-import { Battle } from './game/battle';
+import { Sfx } from './audio/sfx';
+import { Battle, type BattleAudio } from './game/battle';
 import { LocalSession, type Session } from './game/session';
 import { getLang, setLang, t } from './i18n';
 import { Hud } from './render/hud';
@@ -7,7 +8,7 @@ import { createScene } from './render/scene';
 import { Showcase } from './render/showcase';
 import { SPECIES_IDS } from './sim/data';
 import type { Lang, SpeciesId } from './sim/types';
-import { Screens } from './ui/screens';
+import { Screens, setUiClickHandler } from './ui/screens';
 import { Speech, isSupportedBrowser } from './voice/speech';
 
 const LANG_KEY = 'yappemon.lang';
@@ -26,6 +27,12 @@ class App {
   private screens = new Screens(document.getElementById('screens')!);
   private showcase = new Showcase(this.ctx.scene);
   private speech = new Speech();
+  private sfx = new Sfx();
+  private audio: BattleAudio = {
+    event: (e, me, s) => this.sfx.event(e, me, s),
+    fail: () => this.sfx.fail(),
+    ui: () => this.sfx.ui(),
+  };
   private battle: Battle | null = null;
   private last = performance.now();
   private time = 0;
@@ -33,6 +40,12 @@ class App {
 
   constructor() {
     setLang(loadLang());
+    // Browsers only allow audio after a user gesture.
+    const unlock = () => this.sfx.unlock();
+    window.addEventListener('pointerdown', unlock);
+    window.addEventListener('keydown', unlock);
+    setUiClickHandler(() => this.sfx.ui());
+    this.buildCorner();
     window.addEventListener('keydown', (e) => {
       if (e.key === '`' && this.battle) { e.preventDefault(); this.hud.toggleDebug(); }
     });
@@ -55,6 +68,24 @@ class App {
     };
   }
 
+  /** Always-visible volume slider. */
+  private buildCorner() {
+    const c = document.createElement('div');
+    c.className = 'corner';
+    const label = document.createElement('span');
+    label.textContent = '🔊';
+    const r = document.createElement('input');
+    r.type = 'range';
+    r.min = '0';
+    r.max = '1';
+    r.step = '0.05';
+    r.value = String(this.sfx.getVolume());
+    r.title = t('volume');
+    r.addEventListener('input', () => this.sfx.setVolume(Number(r.value)));
+    c.append(label, r);
+    document.getElementById('app')!.append(c);
+  }
+
   private loop = (now: number) => {
     const dt = Math.min(0.1, (now - this.last) / 1000);
     this.last = now;
@@ -75,7 +106,7 @@ class App {
   private beginBattle(session: Session, teams: [SpeciesId[], SpeciesId[]], onEnd: (r: 'victory' | 'defeat' | 'draw') => void) {
     this.screens.clear();
     this.showcase.hide();
-    this.battle = new Battle(this.ctx, this.hud, this.screens, session, teams, null, (r) => {
+    this.battle = new Battle(this.ctx, this.hud, this.screens, session, teams, this.audio, (r) => {
       this.hud.toggleDebug(false);
       onEnd(r);
     });
