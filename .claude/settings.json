@@ -1,0 +1,62 @@
+{
+  "permissions": {
+    "allow": [
+      "Edit(./**)",
+      "Write(./**)",
+      "Read(./**)",
+
+      "Bash(npm install:*)",
+      "Bash(npm ci:*)",
+      "Bash(npm run:*)",
+      "Bash(npm test:*)",
+      "Bash(npm ls:*)",
+      "Bash(npx vitest:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npx vite:*)",
+      "Bash(npx playwright:*)",
+      "Bash(node:*)",
+
+      "Bash(git init:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git status:*)",
+      "Bash(git log:*)",
+      "Bash(git diff:*)",
+      "Bash(git branch:*)",
+      "Bash(git checkout:*)",
+      "Bash(git switch:*)",
+      "Bash(git merge:*)",
+      "Bash(git stash:*)",
+      "Bash(git rev-parse:*)",
+      "Bash(git remote:*)",
+      "Bash(git push:*)",
+      "Bash(git show:*)",
+
+      "Bash(gh repo create:*)",
+      "Bash(gh repo view:*)",
+      "Bash(gh auth status:*)",
+      "Bash(gh run list:*)",
+      "Bash(gh run view:*)",
+      "Bash(gh run watch:*)",
+      "Bash(gh api repos/:*)",
+
+      "PowerShell(npm install:*)",
+      "PowerShell(npm ci:*)",
+      "PowerShell(npm run:*)",
+      "PowerShell(npx vitest:*)",
+      "PowerShell(npx tsc:*)",
+      "PowerShell(npx vite:*)",
+      "PowerShell(npx playwright:*)",
+      "PowerShell(git add:*)",
+      "PowerShell(git commit:*)",
+      "PowerShell(git status:*)",
+      "PowerShell(git log:*)",
+      "PowerShell(git push:*)"
+    ],
+    "deny": [
+      "Bash(sudo:*)",
+      "Bash(git push --force:*)",
+      "Bash(git push -f:*)"
+    ]
+  }
+}
