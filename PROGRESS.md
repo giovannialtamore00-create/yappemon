@@ -1,14 +1,15 @@
 # PROGRESS
 
-**Current milestone:** 2 — Voice command parser
+**Current milestone:** 3 — Renderer + Practice vs Bot via debug box
 **Phase:** building (main branch)
 
 ## Done
 - Kickoff: settings.json permissions, git init, deps installed (three, peerjs, vite 8, TS 7, vitest 5, playwright + chromium).
 - M1 ✅ `src/sim/` (types, data, rng, sim, bot) + `tests/sim.test.ts` (28 tests). Bot-vs-bot matches end in ~25–45 s.
+- M2 ✅ `src/voice/parser.ts` (normalize, fold, levenshtein, windowed fuzzy match, parse(), toIntents()), `src/voice/aliases.ts`, `tests/parser.test.ts` (99 tests).
 
 ## In progress
-- M2: `src/voice/parser.ts` + `src/voice/aliases.ts` + `tests/parser.test.ts`.
+- M3: index.html, src/main.ts, src/game/ (local match loop), src/render/ (scene, creatures, hud), debug text box.
 
 ## Next steps (in order)
 1. Finish sim + tests (M1), checkpoint.

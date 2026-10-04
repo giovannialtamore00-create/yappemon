@@ -169,7 +169,7 @@ function fail(s: SimState, p: PlayerIdx, reason: FailReason, ev: SimEvent[]) {
   ev.push({ t: 'fail', p, reason });
 }
 
-function tickCreatureStatus(s: SimState, p: PlayerIdx, c: CreatureState, onField: boolean, ev: SimEvent[]) {
+function tickCreatureStatus(p: PlayerIdx, c: CreatureState, onField: boolean, ev: SimEvent[]) {
   if (c.fainted) return;
   if (c.regenPause > 0) c.regenPause--;
   else c.stamina = Math.min(STAMINA_MAX, c.stamina + (STAMINA_REGEN_PER_S * DT) * (c.staticTicks > 0 ? 0.5 : 1));
@@ -193,7 +193,7 @@ function clearStatuses(c: CreatureState) {
 
 function tickTrainer(s: SimState, p: PlayerIdx, ev: SimEvent[]) {
   const t = s.trainers[p];
-  t.team.forEach((c, i) => tickCreatureStatus(s, p, c, i === t.active && t.field === 'active', ev));
+  t.team.forEach((c, i) => tickCreatureStatus(p, c, i === t.active && t.field === 'active', ev));
   if (t.dodgeCooldown > 0) t.dodgeCooldown--;
   if (t.invulnTicks > 0) t.invulnTicks--;
 
