@@ -36,6 +36,10 @@ class App {
     fail: () => this.sfx.fail(),
     ui: () => this.sfx.ui(),
     evolve: () => this.sfx.evolve(),
+    musicStart: () => this.sfx.musicStart(),
+    musicStop: (fade) => this.sfx.musicStop(fade),
+    musicSet: (round, danger) => this.sfx.musicSet(round, danger),
+    musicDuck: (on) => this.sfx.musicDuck(on),
   };
   private battle: Battle | null = null;
   private link: Link | null = null;
@@ -92,7 +96,17 @@ class App {
     r.value = String(this.sfx.getVolume());
     r.title = t('volume');
     r.addEventListener('input', () => this.sfx.setVolume(Number(r.value)));
-    c.append(label, r);
+    const mlabel = document.createElement('span');
+    mlabel.textContent = '🎵';
+    const mr = document.createElement('input');
+    mr.type = 'range';
+    mr.min = '0';
+    mr.max = '1';
+    mr.step = '0.05';
+    mr.value = String(this.sfx.getMusicVolume());
+    mr.title = 'Music';
+    mr.addEventListener('input', () => this.sfx.setMusicVolume(Number(mr.value)));
+    c.append(label, r, mlabel, mr);
     document.getElementById('app')!.append(c);
   }
 

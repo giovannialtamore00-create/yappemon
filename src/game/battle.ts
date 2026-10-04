@@ -20,6 +20,11 @@ export interface BattleAudio {
   ui(): void;
   /** The flash moment of the evolution sequence. */
   evolve(): void;
+  /** Background battle music. */
+  musicStart(): void;
+  musicStop(fade?: number): void;
+  musicSet(round: number, danger: number): void;
+  musicDuck(on: boolean): void;
 }
 
 export class Battle {
@@ -47,6 +52,7 @@ export class Battle {
     hud.show(true);
     hud.clearToasts();
     hud.onDebugCommand = (text) => this.command(text, true);
+    audio?.musicStart();
   }
 
   /** A fresh 3D view for the creatures of the current round (stage changes each round). */
@@ -108,6 +114,11 @@ export class Battle {
     }
     this.view.update(dt, v.prev, v.curr, v.alpha);
     this.hud.update(v.curr, this.me);
+    // Music follows the round (key change) and the player's danger (low HP → faster).
+    const mine = v.curr.trainers[this.me];
+    const c = mine.team[mine.active]!;
+    const frac = this.spectator ? 1 : c.hp / c.maxHp;
+    this.audio?.musicSet(v.curr.round, mine.field === 'active' ? Math.min(1, Math.max(0, (0.35 - frac) / 0.2)) : 0);
     if (!this.spectator && !this.hintShown && v.curr.trainers[this.me].field === 'active') {
       this.hintShown = true;
       const first = SPECIES[activeCreature(v.curr.trainers[this.me]).species].moves[1];
@@ -131,12 +142,14 @@ export class Battle {
     switch (e.t) {
       case 'round_end': {
         this.closeSwitch();
+        if (e.next) this.audio?.musicDuck(true);
         const res = e.winner === 'draw' ? t('draw') : this.spectator ? t('playerWins', { n: e.winner + 1 }) : e.winner === this.me ? t('roundWon') : t('roundLost');
         const sub = `${t('score')} ${e.score[this.me]} – ${e.score[this.me === 0 ? 1 : 0]}` + (e.next ? ` · ${t('evolving')}` : '');
         this.hud.banner(`${t('round')} ${e.round}: ${res}`, sub, e.next ? 4200 : 2000);
         break;
       }
       case 'round_start': {
+        this.audio?.musicDuck(false);
         this.hud.banner(`${t('round')} ${e.round}`, t('fight'), 1600);
         const names = s.trainers[this.me].team.map((c) => SPECIES[c.species].name).join(' & ');
         if (!this.spectator) this.hud.toast(t('evolvedInto', { names }), 'good', 3000);
@@ -180,6 +193,7 @@ export class Battle {
         if (mine) this.hud.toast(t('stopped'), 'info', 1200);
         break;
       case 'match_end':
+        this.audio?.musicStop(0.15);
         if (!this.ended) {
           this.ended = true;
           const r = e.winner === 'draw' ? 'draw' : e.winner === this.me ? 'victory' : 'defeat';
@@ -211,6 +225,7 @@ export class Battle {
     this.view.dispose();
     this.session.dispose();
     this.hud.show(false);
+    this.audio?.musicStop();
     this.hud.setSpectator(false);
     this.hud.toggleDebug(false);
     this.ctx.cameraMode = 'orbit';

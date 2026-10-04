@@ -1,9 +1,11 @@
 // All sound is synthesized with the Web Audio API — no audio files.
 
 import { MOVES } from '../sim/data';
+import { ChipMusic } from './music';
 import type { MoveId, PlayerIdx, SimEvent, SimState } from '../sim/types';
 
 const VOL_KEY = 'yappemon.volume';
+const MUSIC_KEY = 'yappemon.music';
 
 type Wave = OscillatorType;
 
@@ -15,11 +17,17 @@ export class Sfx {
   private noiseBuf!: AudioBuffer;
   private ambientOn = false;
   private volume = 0.7;
+  private musicVolume = 0.6;
+  private musicGain!: GainNode;
+  private music: ChipMusic | null = null;
+  private wantMusic = false;
 
   constructor() {
     try {
       const v = Number(localStorage.getItem(VOL_KEY));
       if (localStorage.getItem(VOL_KEY) !== null && Number.isFinite(v)) this.volume = Math.min(1, Math.max(0, v));
+      const mv = Number(localStorage.getItem(MUSIC_KEY));
+      if (localStorage.getItem(MUSIC_KEY) !== null && Number.isFinite(mv)) this.musicVolume = Math.min(1, Math.max(0, mv));
     } catch { /* ignore */ }
   }
 
@@ -44,12 +52,30 @@ export class Sfx {
       this.noiseBuf = this.ctx.createBuffer(1, len, this.ctx.sampleRate);
       const d = this.noiseBuf.getChannelData(0);
       for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+      this.musicGain = this.ctx.createGain();
+      this.musicGain.gain.value = this.musicVolume * 0.55;
+      this.musicGain.connect(this.master);
+      this.music = new ChipMusic(this.ctx, this.musicGain, this.noiseBuf);
+      if (this.wantMusic) this.music.start();
     }
     if (this.ctx.state === 'suspended') void this.ctx.resume();
     if (!this.ambientOn) this.startAmbient();
   }
 
   getVolume() { return this.volume; }
+  getMusicVolume() { return this.musicVolume; }
+
+  setMusicVolume(v: number) {
+    this.musicVolume = v;
+    if (this.ctx) this.musicGain.gain.setTargetAtTime(v * 0.55, this.ctx.currentTime, 0.02);
+    try { localStorage.setItem(MUSIC_KEY, String(v)); } catch { /* ignore */ }
+  }
+
+  // ------------------------------------------------------------ battle music
+  musicStart() { this.wantMusic = true; this.music?.start(); }
+  musicStop(fade = 0.4) { this.wantMusic = false; this.music?.stop(fade); }
+  musicSet(round: number, danger: number) { this.music?.set(round, danger); }
+  musicDuck(on: boolean) { this.music?.duck(on); }
 
   setVolume(v: number) {
     this.volume = v;
