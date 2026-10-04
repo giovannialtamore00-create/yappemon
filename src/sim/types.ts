@@ -63,6 +63,10 @@ export interface MoveDef {
   hitGap?: number;
   /** Damaging move that also roots the target for this many seconds. */
   alsoRoot?: number;
+  /** Base chance to hit, 0–100 (self moves ignore it). */
+  accuracy: number;
+  /** Near-instant attack: tiny windup, can't be caught by the dodge window. */
+  quick?: boolean;
   name: Record<Lang, string>;
 }
 
@@ -87,7 +91,10 @@ export interface SpeciesDef {
 /** A queued action. */
 export type QAction =
   | { kind: 'move'; move: MoveId }
-  | { kind: 'dodge' }
+  /** Arms a 2 s dodge window; `dir` = −1 left / +1 right (from the creature's point of view), absent = auto. */
+  | { kind: 'dodge'; dir?: 1 | -1 }
+  /** 3 s defensive stance: harder to hit, no attacking. */
+  | { kind: 'alert' }
   | { kind: 'recall' };
 
 /** What a player can send to the simulation. */
@@ -146,9 +153,20 @@ export interface TrainerState {
   queue: QAction[];
   dodgeCooldown: number;
   invulnTicks: number;
-  /** Lateral offset (m) of the active creature and its drift direction. */
+  /** Active creature's position in arena (world) coordinates, metres. Player 0's half is z > 0. */
   x: number;
+  z: number;
+  /** Current strafe direction (world x) and ticks until the creature reconsiders it. */
   driftDir: 1 | -1;
+  strafeTicks: number;
+  /** Ticks left in the armed dodge window, and the requested side (0 = auto). */
+  dodgeReady: number;
+  dodgeDir: 0 | 1 | -1;
+  /** Ticks left of a dodge dash in progress, and its world-x direction. */
+  dashTicks: number;
+  dashDir: 1 | -1;
+  /** Ticks left of the alert stance. */
+  alertTicks: number;
 }
 
 export interface Strike {
@@ -161,9 +179,11 @@ export interface Strike {
   move: MoveId;
   left: number;
   total: number;
-  /** Lateral positions at launch, for rendering trajectories. */
+  /** Positions at launch, for rendering trajectories. */
   fromX: number;
+  fromZ: number;
   toX: number;
+  toZ: number;
   /** Set when an earlier strike of the same action was dodged (no second failure). */
   quiet?: boolean;
 }
@@ -195,6 +215,12 @@ export type SimEvent =
   | { t: 'launch'; p: PlayerIdx; move: MoveId; strike?: number }
   | { t: 'hit'; p: PlayerIdx; target: PlayerIdx; move: MoveId; damage: number; eff: Effectiveness; interrupted: boolean; heavy: boolean; strike: number }
   | { t: 'dodged'; p: PlayerIdx; target: PlayerIdx; move: MoveId; strike: number }
+  /** Accuracy roll failed (the target sidesteps). The attacker keeps its queue. */
+  | { t: 'miss'; p: PlayerIdx; target: PlayerIdx; move: MoveId; strike: number }
+  /** `p` was hit while it had commands queued: they are lost. */
+  | { t: 'combo_broken'; p: PlayerIdx; lost: number }
+  | { t: 'dodge_ready'; p: PlayerIdx; on: boolean }
+  | { t: 'alert'; p: PlayerIdx; on: boolean }
   | { t: 'fizzle'; p: PlayerIdx; move: MoveId; strike: number }
   | { t: 'fail'; p: PlayerIdx; reason: FailReason }
   | { t: 'status'; p: PlayerIdx; status: 'shield' | 'static' | 'root' | 'heal' | 'mirror'; on: boolean }
