@@ -24,3 +24,9 @@ Judgment calls made where the spec was silent. Newest at the bottom.
 20. **Adjacent identical matches in one segment are merged** (pieces of one garbled name). Saying the same move twice needs a connector: "spit then spit".
 21. **A creature name said with other commands is just addressing it** ("Cindrix, magma burst") and is dropped. A bare name or "go/vai <name>" = switch to it. "first/second/primo/secondo" only matter during a forced switch.
 22. Common exclamations ("mamma mia", "wow", "no", "si"…) are ignored words, since some sit one edit away from keywords.
+23. **Teams must be 2 different species** per player (cards toggle), so "go <name>" is never ambiguous. Both players may still pick the same species as each other.
+24. **UI language follows the voice language** chosen in the lobby (EN/IT), remembered in localStorage.
+25. **Practice bot team** is 2 random distinct species.
+26. **Render layout:** sim distance is 6 m; creatures render at z = ±3, trainers at z = ±7.6, camera FOV 56°, eye height 1.6 m. Each player sees their own creature from behind; the opponent's trainer figure stands at the far end.
+27. **Heavy ground moves telegraph** a pulsing circle under the target during the windup, so dodging by voice is feasible.
+28. **HUD is DOM-based** (crisp text, cheap), the 3D scene only renders the world and VFX. Floating damage numbers are DOM elements positioned by projecting 3D points.
