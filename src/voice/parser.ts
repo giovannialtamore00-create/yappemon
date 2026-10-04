@@ -5,12 +5,14 @@
 import { ALL_SPECIES_IDS, MOVES, SPECIES, knowsMove, sameFamily } from '../sim/data';
 import type { Intent, MoveId, QAction, SpeciesId } from '../sim/types';
 import {
-  CONNECTORS, DODGE_ALIASES, FILLERS, GO_WORDS, MOVE_ALIASES, PICK_ALIASES, RECALL_ALIASES, SPECIES_ALIASES, STOP_ALIASES,
+  ALERT_ALIASES, CONNECTORS, DODGE_ALIASES, DODGE_DIR_WORDS, FILLERS, GO_WORDS, MOVE_ALIASES, PICK_ALIASES, RECALL_ALIASES, SPECIES_ALIASES, STOP_ALIASES,
 } from './aliases';
 
 export type Command =
   | { kind: 'move'; move: MoveId }
-  | { kind: 'dodge' }
+  /** `dir`: −1 left / +1 right when said ("dodge left", "schiva a destra"). */
+  | { kind: 'dodge'; dir?: 1 | -1 }
+  | { kind: 'alert' }
   | { kind: 'recall' }
   | { kind: 'stop' }
   | { kind: 'go'; species: SpeciesId; explicit: boolean }
@@ -114,6 +116,7 @@ function buildPhrases(): Phrase[] {
     for (const a of SPECIES_ALIASES[id]) add(a, { kind: 'go', species: id, explicit: false });
   }
   for (const a of DODGE_ALIASES) add(a, { kind: 'dodge' });
+  for (const a of ALERT_ALIASES) add(a, { kind: 'alert' });
   for (const a of RECALL_ALIASES) add(a, { kind: 'recall' });
   for (const a of STOP_ALIASES) add(a, { kind: 'stop' });
   for (const slot of [0, 1] as const) for (const a of PICK_ALIASES[slot]) add(a, { kind: 'pick', slot });
@@ -146,7 +149,9 @@ interface Match { start: number; end: number; score: number; phrase: Phrase }
 function matchSegment(seg: string[], ctx: ParseContext): { found: Match[]; leftover: string[] } {
   // Explicit "go <creature>" marker anywhere in the segment.
   const explicitGo = seg.some((w) => GO_WORDS.has(w));
-  const words = seg.filter((w) => !FILLERS.has(w) || PHRASE_TOKENS.has(w));
+  // A side word ("left", "destra") goes with a dodge in the same segment; it is not matched on its own.
+  const dirWord = seg.find((w) => w in DODGE_DIR_WORDS);
+  const words = seg.filter((w) => (!FILLERS.has(w) || PHRASE_TOKENS.has(w)) && !(w in DODGE_DIR_WORDS));
   const candidates: Match[] = [];
   for (const ph of PHRASES) {
     if (ph.cmd.kind === 'move' && ctx.activeSpecies && !knowsMove(ctx.activeSpecies, ph.cmd.move)) continue;
@@ -168,10 +173,13 @@ function matchSegment(seg: string[], ctx: ParseContext): { found: Match[]; lefto
     if (!free) continue;
     for (let i = c.start; i < c.end; i++) used[i] = true;
     const cmd = c.phrase.cmd;
-    found.push(cmd.kind === 'go' && explicitGo ? { ...c, phrase: { ...c.phrase, cmd: { ...cmd, explicit: true } } } : c);
+    if (cmd.kind === 'go' && explicitGo) found.push({ ...c, phrase: { ...c.phrase, cmd: { ...cmd, explicit: true } } });
+    else if (cmd.kind === 'dodge' && dirWord) found.push({ ...c, phrase: { ...c.phrase, cmd: { kind: 'dodge', dir: DODGE_DIR_WORDS[dirWord]! } } });
+    else found.push(c);
   }
   found.sort((a, b) => a.start - b.start);
   const leftover = words.filter((w, i) => !used[i] && !FILLERS.has(w));
+  if (dirWord && !found.some((m) => m.phrase.cmd.kind === 'dodge')) leftover.push(dirWord);
   return { found, leftover };
 }
 
@@ -212,7 +220,8 @@ export function toIntents(cmds: Command[], opts: { forcedSwitch?: boolean; activ
   for (const c of cmds) {
     switch (c.kind) {
       case 'move': batch.push({ kind: 'move', move: c.move }); break;
-      case 'dodge': batch.push({ kind: 'dodge' }); break;
+      case 'dodge': batch.push(c.dir ? { kind: 'dodge', dir: c.dir } : { kind: 'dodge' }); break;
+      case 'alert': batch.push({ kind: 'alert' }); break;
       case 'recall': batch.push({ kind: 'recall' }); break;
       case 'stop': flush(); out.push({ type: 'stop' }); break;
       case 'go':

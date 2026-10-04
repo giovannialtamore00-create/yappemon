@@ -212,3 +212,44 @@ describe('evolutions: new moves and names', () => {
     expect(toIntents(parse('go cindrix', { activeSpecies: 'pyroxen' }).commands, { activeSpecies: 'pyroxen' })).toEqual([]);
   });
 });
+
+describe('dodge direction and alert', () => {
+  const cmds = (t: string, sp: SpeciesId = 'cindrix') => parse(t, { activeSpecies: sp });
+  const cases: [string, Command[]][] = [
+    ['dodge left', [{ kind: 'dodge', dir: -1 }]],
+    ['dodge to the right', [{ kind: 'dodge', dir: 1 }]],
+    ['dodge', [{ kind: 'dodge' }]],
+    ['schiva a sinistra', [{ kind: 'dodge', dir: -1 }]],
+    ['schiva a destra', [{ kind: 'dodge', dir: 1 }]],
+    ['schiva dx', [{ kind: 'dodge', dir: 1 }]],
+    ['schiva sx', [{ kind: 'dodge', dir: -1 }]],
+    ['cinder spit then dodge right', [{ kind: 'move', move: 'cinder_spit' }, { kind: 'dodge', dir: 1 }]],
+    ['alert', [{ kind: 'alert' }]],
+    ['on guard', [{ kind: 'alert' }]],
+    ['watch out', [{ kind: 'alert' }]],
+    ['be careful then cinder spit', [{ kind: 'alert' }, { kind: 'move', move: 'cinder_spit' }]],
+    ['attento', [{ kind: 'alert' }]],
+    ['stai attento', [{ kind: 'alert' }]],
+    ['in guardia', [{ kind: 'alert' }]],
+    ['occhio poi sputo di brace', [{ kind: 'alert' }, { kind: 'move', move: 'cinder_spit' }]],
+  ];
+  for (const [text, want] of cases) it(`"${text}"`, () => expect(cmds(text).commands).toEqual(want));
+  it('a side word without a dodge is not a command', () => {
+    const r = cmds('left');
+    expect(r.commands).toEqual([]);
+    expect(r.unmatched).toEqual(['left']);
+  });
+  it('the side only applies to the dodge in its own segment', () => {
+    expect(cmds('dodge then cinder spit left').commands).toEqual([{ kind: 'dodge' }, { kind: 'move', move: 'cinder_spit' }]);
+  });
+  it('toIntents carries the side and the alert', () => {
+    expect(toIntents(cmds('alert poi schiva a destra').commands)).toEqual([
+      { type: 'queue', actions: [{ kind: 'alert' }, { kind: 'dodge', dir: 1 }] },
+    ]);
+    expect(toIntents(cmds('dodge').commands)).toEqual([{ type: 'queue', actions: [{ kind: 'dodge' }] }]);
+  });
+  it('alert words do not steal moves', () => {
+    expect(cmds('attacca con sputo di brace').commands).toEqual([{ kind: 'move', move: 'cinder_spit' }]);
+    expect(cmds('magma burst', 'cindrix').commands).toEqual([{ kind: 'move', move: 'magma_burst' }]);
+  });
+});

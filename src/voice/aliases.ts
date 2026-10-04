@@ -78,6 +78,10 @@ export const SPECIES_ALIASES: Record<SpeciesId, string[]> = {
 
 export const DODGE_ALIASES = ['dodge', 'dodge it', 'doge', 'dodger', 'dodges', 'dog', 'evade', 'sidestep', 'side step', 'move aside', 'duck',
   'schiva', 'schivo', 'skiva', 'schiba', 'schivare', 'schivalo', 'scansati', 'evita'];
+/** Side words for "dodge left/right" (same segment as the dodge). Left = −1, right = +1. */
+export const DODGE_DIR_WORDS: Record<string, 1 | -1> = { left: -1, sinistra: -1, sx: -1, right: 1, destra: 1, dx: 1 };
+export const ALERT_ALIASES = ['alert', 'on guard', 'guard', 'careful', 'watch out', 'be careful',
+  'attento', 'attenta', 'guardia', 'in guardia', 'stai attento', 'occhio'];
 export const RECALL_ALIASES = ['come back', 'comeback', 'come back here', 'return', 'retreat', 'calm back', 'come bak', 'get back',
   'rientra', 'rientro', 'rientri', 'torna', 'torna indietro', 'ritorna', 'ritirati', 'rientra nella sfera'];
 export const STOP_ALIASES = ['stop', 'stopp', 'halt', 'cancel', 'wait', 'hold', 'hold on',
@@ -95,7 +99,7 @@ export const CONNECTORS = ['and then', 'after that', 'and after', 'followed by',
 /** Words ignored before matching. */
 export const FILLERS = new Set([
   'use', 'used', 'using', 'do', 'please', 'now', 'the', 'a', 'an', 'attack', 'with', 'it', 'ok', 'okay', 'lets', 'let', 's',
-  'try', 'again', 'quick', 'quickly', 'move', 'go', 'i', 'choose', 'you', 'your', 'hey', 'yo', 'come', 'on',
+  'try', 'again', 'quick', 'quickly', 'move', 'go', 'i', 'choose', 'you', 'your', 'hey', 'yo', 'come', 'on', 'to', 'verso',
   'fai', 'per', 'favore', 'adesso', 'ora', 'il', 'lo', 'la', 'le', 'gli', 'un', 'una', 'attacca', 'con', 'dai', 'forza',
   'vai', 'scelgo', 'tocca', 'a', 'te', 'tu', 'subito', 'mossa', 'ancora',
   // common exclamations that sit one edit away from keywords ("mamma" ~ "magma")
