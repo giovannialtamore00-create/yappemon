@@ -36,28 +36,26 @@ const smooth = (x: number) => x * x * (3 - 2 * x);
 /** Remap k from [a, b] to 0..1. */
 const seg = (k: number, a: number, b: number) => clamp01((k - a) / (b - a));
 
-/** How far melee moves travel to reach the opponent (gap is 6 m). */
-const REACH = 4.6;
-
 type Phase = 'windup' | 'active' | 'recovery';
-type MotionFn = (phase: Phase, k: number, t: number) => Pose;
+/** `reach`: how far (m) a melee move travels to touch the opponent (current distance minus body sizes). */
+type MotionFn = (phase: Phase, k: number, t: number, reach: number) => Pose;
 
 // ---------------------------------------------------------------- melee
 
 /** Shell Ram: tuck into the shell and roll at the target, then roll back. */
-const roll: MotionFn = (phase, k) => {
+const roll: MotionFn = (phase, k, _t, reach) => {
   const p = rest();
   if (phase === 'windup') {
     p.squash = 1 - 0.25 * seg(k, 0, 0.4);
-    p.fwd = REACH * easeIn(seg(k, 0.45, 1));
+    p.fwd = reach * easeIn(seg(k, 0.45, 1));
     p.energy = k;
   } else if (phase === 'active') {
     p.squash = 0.75;
-    p.fwd = REACH;
+    p.fwd = reach;
     p.energy = 1;
   } else {
     p.squash = 0.75 + 0.25 * seg(k, 0.7, 1);
-    p.fwd = REACH * (1 - smooth(k));
+    p.fwd = reach * (1 - smooth(k));
   }
   p.lean = p.fwd / 0.35; // rolling: rotation follows distance travelled
   p.dust = p.fwd > 0.2 && Math.random() < 0.4;
@@ -65,23 +63,23 @@ const roll: MotionFn = (phase, k) => {
 };
 
 /** Bubble Bump: squash down, then bounce over in hops and bump. */
-const bounce: MotionFn = (phase, k) => {
+const bounce: MotionFn = (phase, k, _t, reach) => {
   const p = rest();
   if (phase === 'windup') {
     const crouch = seg(k, 0, 0.35);
     const go = seg(k, 0.35, 1);
     p.squash = 1 - 0.3 * crouch * (1 - go);
-    p.fwd = REACH * go;
+    p.fwd = reach * go;
     const hop = Math.abs(Math.sin(go * Math.PI * 2));
     p.up = hop * 0.7;
     p.squash *= go > 0 ? 0.85 + hop * 0.35 : 1;
     p.energy = k;
   } else if (phase === 'active') {
-    p.fwd = REACH + Math.sin(k * Math.PI) * 0.3;
+    p.fwd = reach + Math.sin(k * Math.PI) * 0.3;
     p.squash = 1.25 - Math.sin(k * Math.PI) * 0.5;
     p.energy = 1;
   } else {
-    p.fwd = REACH * (1 - k);
+    p.fwd = reach * (1 - k);
     p.up = Math.abs(Math.sin(k * Math.PI * 2)) * 0.5;
     p.squash = 0.9 + p.up * 0.3;
   }
@@ -90,21 +88,21 @@ const bounce: MotionFn = (phase, k) => {
 };
 
 /** Horn Charge / Bramble Stampede: paw the ground, head down, gallop in, headbutt, trot back. */
-const gallop = (pawUntil: number): MotionFn => (phase, k, t) => {
+const gallop = (pawUntil: number): MotionFn => (phase, k, t, reach) => {
   const p = rest();
   if (phase === 'windup') {
     p.lean = 0.3 * seg(k, 0, pawUntil);
-    p.fwd = -0.15 * seg(k, 0, pawUntil) + (REACH + 0.15) * easeIn(seg(k, pawUntil, 1));
+    p.fwd = -0.15 * seg(k, 0, pawUntil) + (reach + 0.15) * easeIn(seg(k, pawUntil, 1));
     p.run = k < pawUntil ? 0.35 : 1;
     p.up = Math.abs(Math.sin(t * 18)) * (k < pawUntil ? 0.02 : 0.1);
     p.dust = Math.random() < (k < pawUntil ? 0.25 : 0.6);
     p.energy = k;
   } else if (phase === 'active') {
-    p.fwd = REACH + Math.sin(k * Math.PI) * 0.25;
+    p.fwd = reach + Math.sin(k * Math.PI) * 0.25;
     p.lean = 0.45;
     p.energy = 1;
   } else {
-    p.fwd = REACH * (1 - smooth(k));
+    p.fwd = reach * (1 - smooth(k));
     p.lean = 0.3 * (1 - k);
     p.run = 0.6 * (1 - k);
     p.up = Math.abs(Math.sin(t * 14)) * 0.06 * (1 - k);
@@ -113,46 +111,46 @@ const gallop = (pawUntil: number): MotionFn => (phase, k, t) => {
 };
 
 /** Wing Flick: lift off, fly in, pirouette with the wings, fly back. */
-const pirouette: MotionFn = (phase, k) => {
+const pirouette: MotionFn = (phase, k, _t, reach) => {
   const p = rest();
   if (phase === 'windup') {
     p.up = 0.35 * seg(k, 0, 0.5);
-    p.fwd = REACH * easeIn(seg(k, 0.4, 1));
+    p.fwd = reach * easeIn(seg(k, 0.4, 1));
     p.run = 1;
     p.energy = k;
   } else if (phase === 'active') {
     p.up = 0.35;
-    p.fwd = REACH;
+    p.fwd = reach;
     p.spin = k * Math.PI * 2;
     p.run = 1;
     p.energy = 1;
   } else {
     p.up = 0.35 * (1 - k);
-    p.fwd = REACH * (1 - smooth(k));
+    p.fwd = reach * (1 - smooth(k));
     p.run = 0.5;
   }
   return p;
 };
 
 /** Molten Leap: deep crouch, a big arcing jump onto the target, slam, hop back. */
-const leap: MotionFn = (phase, k) => {
+const leap: MotionFn = (phase, k, _t, reach) => {
   const p = rest();
   if (phase === 'windup') {
     const crouch = seg(k, 0, 0.4);
     const air = seg(k, 0.4, 1);
     p.squash = air > 0 ? 1.15 : 1 - 0.35 * crouch;
     p.lean = air > 0 ? -0.3 + 0.6 * air : -0.2 * crouch;
-    p.fwd = REACH * air;
+    p.fwd = reach * air;
     p.up = Math.sin(air * Math.PI) * 2.4;
     p.energy = k;
   } else if (phase === 'active') {
-    p.fwd = REACH;
+    p.fwd = reach;
     p.squash = 0.6 + 0.4 * k;
     p.lean = 0.3 * (1 - k);
     p.dust = k < 0.2;
     p.energy = 1;
   } else {
-    p.fwd = REACH * (1 - k);
+    p.fwd = reach * (1 - k);
     p.up = Math.sin(k * Math.PI) * 0.9;
   }
   return p;
@@ -303,16 +301,27 @@ const MOTIONS: Record<MoveId, MotionFn> = {
   volcanic_ruin: stomp, maelstrom: crash, ancient_bloom: levitate, sky_judgement: dive(1.6),
 };
 
-export function movePose(move: MoveId, phase: Phase, k: number, time: number): Pose {
-  return MOTIONS[move](phase, k, time);
+export function movePose(move: MoveId, phase: Phase, k: number, time: number, reach: number): Pose {
+  return MOTIONS[move](phase, k, time, Math.max(0, reach));
 }
 
-/** Species-flavoured sidestep for dodges. */
+/** Quick lateral hop with a roll for the dodge dash (`dir` = roll direction). */
 export function dodgePose(k: number, dir: number): Pose {
   const p = rest();
   p.roll = dir * Math.sin(k * Math.PI) * 0.6;
   p.up = Math.sin(k * Math.PI) * 0.3;
   p.squash = 1 + Math.sin(k * Math.PI) * 0.1;
   p.run = 1 - k;
+  return p;
+}
+
+/** Alert stance: low, coiled, weight shifting from side to side. */
+export function alertPose(t: number): Pose {
+  const p = rest();
+  p.squash = 0.9 + Math.sin(t * 7) * 0.02;
+  p.lean = 0.12;
+  p.roll = Math.sin(t * 3.5) * 0.08;
+  p.run = 0.4;
+  p.energy = 0.35;
   return p;
 }

@@ -1,12 +1,12 @@
 // Maps SimState + SimEvents to the 3D scene: creature placement, procedural animation, VFX.
 
 import * as THREE from 'three';
-import { MOVES, SPECIES } from '../sim/data';
+import { DASH_S, MOVES, SPECIES, secToTicks } from '../sim/data';
 import type { MoveId, PlayerIdx, SimEvent, SimState, SpeciesId } from '../sim/types';
 import { buildCreature, type CreatureModel } from './creatures';
 import { TRAINER_Z, creatureZ, makeOrb, worldX, type SceneCtx } from './scene';
 import { Vfx, type FxKind } from './vfx';
-import { dodgePose, movePose, type Pose } from './motion';
+import { alertPose, dodgePose, movePose, type Pose } from './motion';
 
 const ELEMENT_FX: Record<string, FxKind> = { fire: 'fire', water: 'water', grass: 'grass', electric: 'electric', normal: 'normal' };
 const CHARGE_FX: Record<string, FxKind> = { fire: 'ember', water: 'splash', grass: 'leaf', electric: 'static', normal: 'dust' };
@@ -14,7 +14,12 @@ const CHARGE_FX: Record<string, FxKind> = { fire: 'ember', water: 'splash', gras
 interface Side {
   models: CreatureModel[];
   shown: number;
+  /** Smoothed arena position of the active creature (world metres). */
   dispX: number;
+  dispZ: number;
+  /** Visual-only sidestep after an accuracy miss: time since it started (s) and side (±1). */
+  sidestepT: number;
+  sidestepDir: number;
   flash: number;
   recoil: number;
   faintT: number;
@@ -23,6 +28,23 @@ interface Side {
   shrink: number;
   shield: THREE.Mesh;
   mirror: THREE.Mesh;
+  /** Ground rings: armed dodge window, alert stance. */
+  dodgeRing: THREE.Mesh;
+  alertRing: THREE.Mesh;
+}
+
+/** Melee lunges stop this short of the opponent's centre. */
+const MELEE_STANDOFF_M = 1.3;
+const SIDESTEP_S = 0.4;
+
+function groundRing(inner: number, outer: number, segments: number, color: string): THREE.Mesh {
+  const ring = new THREE.Mesh(
+    new THREE.RingGeometry(inner, outer, segments),
+    new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }),
+  );
+  ring.rotation.x = -Math.PI / 2;
+  ring.visible = false;
+  return ring;
 }
 
 /** One creature transforming during the between-rounds evolution sequence. */
@@ -62,7 +84,13 @@ export class BattleView {
       );
       mirror.visible = false;
       this.group.add(mirror);
-      this.sides.push({ models, shown: -1, dispX: 0, flash: 0, recoil: 0, faintT: -1, appear: -1, shrink: -1, shield, mirror });
+      const dodgeRing = groundRing(0.85, 1.0, 40, '#7fe8ff');
+      const alertRing = groundRing(1.05, 1.22, 6, '#ffc24a');
+      this.group.add(dodgeRing, alertRing);
+      this.sides.push({
+        models, shown: -1, dispX: 0, dispZ: creatureZ(p), sidestepT: SIDESTEP_S, sidestepDir: 1,
+        flash: 0, recoil: 0, faintT: -1, appear: -1, shrink: -1, shield, mirror, dodgeRing, alertRing,
+      });
     }
     ctx.setPov(me);
   }
@@ -80,28 +108,53 @@ export class BattleView {
     return s.shown >= 0 ? s.models[s.shown] : undefined;
   }
 
+  /** Ground point under a creature (smoothed position plus any miss sidestep). */
+  private groundPos(p: PlayerIdx): THREE.Vector3 {
+    const side = this.sides[p]!;
+    const pos = new THREE.Vector3(side.dispX, 0, side.dispZ);
+    if (side.sidestepT < SIDESTEP_S) {
+      const k = side.sidestepT / SIDESTEP_S;
+      const f = this.forwardDir(p);
+      pos.add(new THREE.Vector3(f.z, 0, -f.x).multiplyScalar(Math.sin(k * Math.PI) * 0.6 * side.sidestepDir));
+    }
+    return pos;
+  }
+
   /** Center of a creature in world space. */
   creaturePos(p: PlayerIdx, s?: SimState, height = 0.5): THREE.Vector3 {
-    const side = this.sides[p]!;
     const m = this.model(p) ?? this.sides[p]!.models[s?.trainers[p].active ?? 0];
     const h = m ? (m.baseY + (m.height - m.baseY) * height * 0.6) * m.size : 0.6;
-    return new THREE.Vector3(worldX(p, side.dispX), h, creatureZ(p));
+    return this.groundPos(p).setY(h);
   }
 
   headPos(p: PlayerIdx): THREE.Vector3 {
     const m = this.model(p) ?? this.sides[p]!.models[0]!;
-    return new THREE.Vector3(worldX(p, this.sides[p]!.dispX), m.height * m.size + 0.25, creatureZ(p));
+    return this.groundPos(p).setY(m.height * m.size + 0.25);
   }
 
-  private mouthPos(p: PlayerIdx, x: number): THREE.Vector3 {
+  /** Mouth of `p`'s creature; `at` = arena position to use instead of the current one (strike launch spot). */
+  private mouthPos(p: PlayerIdx, at?: { x: number; z: number }): THREE.Vector3 {
     const m = this.model(p) ?? this.sides[p]!.models[0]!;
-    const dir = p === 0 ? -1 : 1;
-    return new THREE.Vector3(worldX(p, x), (m.baseY + m.mouth.y) * m.size, creatureZ(p) + dir * m.mouth.z * m.size);
+    const base = at ? new THREE.Vector3(at.x, 0, at.z) : this.groundPos(p);
+    return base.addScaledVector(this.forwardDir(p, base), m.mouth.z * m.size).setY((m.baseY + m.mouth.y) * m.size);
+  }
+
+  /** Unit vector (on the ground) from `p`'s creature (or `from`) toward the opponent. */
+  private forwardDir(p: PlayerIdx, from?: THREE.Vector3): THREE.Vector3 {
+    const me = this.sides[p]!;
+    const o = this.sides[p === 0 ? 1 : 0]!;
+    const d = new THREE.Vector3(o.dispX - (from?.x ?? me.dispX), 0, o.dispZ - (from?.z ?? me.dispZ));
+    return d.lengthSq() > 1e-6 ? d.normalize() : new THREE.Vector3(0, 0, p === 0 ? -1 : 1);
   }
 
   /** World-space vector of `d` metres toward the opponent. */
   private forward(p: PlayerIdx, d: number): THREE.Vector3 {
-    return new THREE.Vector3(0, 0, (p === 0 ? -1 : 1) * d);
+    return this.forwardDir(p).multiplyScalar(d);
+  }
+
+  private distance(): number {
+    const [a, b] = this.sides as [Side, Side];
+    return Math.hypot(a.dispX - b.dispX, a.dispZ - b.dispZ);
   }
 
   private trainerOrbPos(p: PlayerIdx): THREE.Vector3 {
@@ -122,6 +175,8 @@ export class BattleView {
           side.faintT = -1;
           side.shrink = -1;
           side.dispX = 0;
+          side.dispZ = creatureZ(e.p);
+          side.sidestepT = SIDESTEP_S;
           const to = new THREE.Vector3(0, 0.3, creatureZ(e.p));
           this.vfx.orbThrow(this.trainerOrbPos(e.p), to, 0.55, () => makeOrb(0.16), () => { side.appear = 0; });
           break;
@@ -155,7 +210,7 @@ export class BattleView {
         case 'launch': {
           const m = MOVES[e.move];
           const o = (e.p === 0 ? 1 : 0) as PlayerIdx;
-          const from = this.mouthPos(e.p, this.sides[e.p]!.dispX);
+          const from = this.mouthPos(e.p);
           const to = this.creaturePos(o, s);
           if (e.move === 'water_jet') {
             this.vfx.beam(from, to, '#3aa4ff', 0.45, 0.16, '#e6f6ff');
@@ -201,15 +256,30 @@ export class BattleView {
           this.impactFx(e.move, pos);
           break;
         }
-        case 'dodged': {
-          const pos = this.creaturePos(e.target, s);
-          this.impactFx(e.move, this.creaturePos(e.target, s).setX(worldX(e.target, s.trainers[e.target].x - 1.2 * Math.sign(s.trainers[e.target].x || 1))), true);
+        case 'dodged':
+          // The dodger dashes away (sim); the attack lands where it stood.
+          this.impactFx(e.move, this.creaturePos(e.target, s), true);
           this.onFloat({ text: e.target === this.me ? 'Dodged!' : 'Miss!', pos: this.headPos(e.target), color: '#9fe8ff' });
-          void pos;
+          break;
+        case 'miss': {
+          // Accuracy miss: a small visual sidestep, the attack lands beside the target.
+          const side = this.sides[e.target]!;
+          side.sidestepT = 0;
+          side.sidestepDir = Math.random() < 0.5 ? -1 : 1;
+          const f = this.forwardDir(e.target);
+          const beside = this.creaturePos(e.target, s).add(new THREE.Vector3(f.z, 0, -f.x).multiplyScalar(-0.9 * side.sidestepDir));
+          this.impactFx(e.move, beside, true);
+          this.onFloat({ text: 'Miss!', pos: this.headPos(e.target), color: '#c9d6e6' });
           break;
         }
         case 'dodge':
-          this.vfx.emit('dust', this.creaturePos(e.p, s).setY(0.15), 14, 0.3);
+          this.vfx.emit('dust', this.creaturePos(e.p, s).setY(0.15), 18, 0.35);
+          break;
+        case 'dodge_ready':
+          if (e.on) this.vfx.ring(this.creaturePos(e.p, s).setY(0.05), '#7fe8ff', 0.35, 1.4);
+          break;
+        case 'alert':
+          if (e.on) this.vfx.ring(this.creaturePos(e.p, s).setY(0.05), '#ffc24a', 0.35, 1.6);
           break;
         case 'status':
           if (e.status === 'root' && e.on) this.vfx.rootVines(this.creaturePos(e.p, s), 2.0);
@@ -284,8 +354,10 @@ export class BattleView {
       const m = MOVES[k.move];
       if (m.delivery === 'beam' || m.delivery === 'ground' && !m.speed) continue;
       const prog = Math.min(1, Math.max(0, 1 - (k.left - alpha) / k.total));
-      const from = this.mouthPos(k.owner, k.fromX);
-      const to = new THREE.Vector3(worldX(k.target, k.toX), 0.7, creatureZ(k.target));
+      const from = this.mouthPos(k.owner, { x: k.fromX, z: k.fromZ });
+      // Fly at the target's current spot (it keeps moving); fall back to the launch spot if it left.
+      const still = curr.trainers[k.target].active === k.targetSlot && this.sides[k.target]!.shown === k.targetSlot;
+      const to = still ? this.creaturePos(k.target, curr).setY(0.7) : new THREE.Vector3(k.toX, 0.7, k.toZ);
       this.vfx.projectile(k.id, k.move, from, to, prog, dt);
     }
     this.vfx.update(dt);
@@ -322,7 +394,7 @@ export class BattleView {
     // Hide the battle models once the sequence starts.
     for (const side of this.sides) {
       for (const m of side.models) m.root.visible = false;
-      side.shield.visible = side.mirror.visible = false;
+      side.shield.visible = side.mirror.visible = side.dodgeRing.visible = side.alertRing.visible = false;
     }
     const k = t - EVO_START;
     for (const a of evo.actors) {
@@ -371,9 +443,14 @@ export class BattleView {
     if (!m) return;
     const c = t.team[side.shown]!;
 
-    // Smooth lateral position (dodge sidestep is instantaneous in the sim).
-    const targetX = tp.x + (t.x - tp.x) * alpha;
-    side.dispX += (targetX - side.dispX) * Math.min(1, dt * (t.invulnTicks > 0 ? 16 : 8));
+    // Smooth arena position (interpolated between sim ticks; faster while dashing).
+    const sameCreature = tp.active === t.active;
+    const targetX = sameCreature ? tp.x + (t.x - tp.x) * alpha : t.x;
+    const targetZ = sameCreature ? tp.z + (t.z - tp.z) * alpha : t.z;
+    const follow = Math.min(1, dt * (t.dashTicks > 0 ? 22 : 12));
+    side.dispX += (targetX - side.dispX) * follow;
+    side.dispZ += (targetZ - side.dispZ) * follow;
+    if (side.sidestepT < SIDESTEP_S) side.sidestepT += dt;
 
     // Visibility: appear after the orb lands, shrink on recall, fade after faint.
     let scale = 1;
@@ -383,14 +460,13 @@ export class BattleView {
     if (side.shrink >= 0) { side.shrink += dt * 4; scale = Math.max(0, 1 - side.shrink); }
     if (side.faintT >= 0) { side.faintT += dt; opacity = Math.max(0, 1 - Math.max(0, side.faintT - 0.8) / 0.8); }
     m.root.visible = scale > 0.01 && opacity > 0.01;
-    if (!m.root.visible) { side.shield.visible = false; side.mirror.visible = false; return; }
+    if (!m.root.visible) { side.shield.visible = side.mirror.visible = side.dodgeRing.visible = side.alertRing.visible = false; return; }
 
-    const facing = p === 0 ? Math.PI : 0;
-    const fwd = p === 0 ? -1 : 1; // world z direction toward the opponent
-    m.root.position.set(worldX(p, side.dispX), 0, creatureZ(p));
-    const o = curr.trainers[p === 0 ? 1 : 0];
-    const yaw = Math.atan2(worldX(p === 0 ? 1 : 0, o.x) - worldX(p, side.dispX), 6) * fwd;
-    m.root.rotation.set(0, facing + yaw, 0);
+    // Face the opponent (models face +z).
+    const ground = this.groundPos(p);
+    const f = this.forwardDir(p);
+    m.root.position.copy(ground);
+    m.root.rotation.set(0, Math.atan2(f.x, f.z), 0);
     m.root.scale.setScalar(scale * m.size);
 
     // Base idle: bob + breathing.
@@ -401,17 +477,21 @@ export class BattleView {
 
     // Action animation: each move has its own body motion (see motion.ts).
     const run = t.action;
-    if (run && side.faintT < 0) {
+    if (t.dashTicks > 0 && side.faintT < 0) {
+      // Dodge dash: quick lateral hop with a roll (the sim moves x).
+      const k = Math.min(1, Math.max(0, 1 - (t.dashTicks - alpha) / secToTicks(DASH_S)));
+      pose = dodgePose(k, -t.dashDir * (p === 0 ? 1 : -1));
+    } else if (run && side.faintT < 0) {
       const k = Math.min(1, Math.max(0, 1 - (run.left - alpha) / Math.max(1, run.total)));
       const a = run.action;
       if (a.kind === 'move') {
         const mv = MOVES[a.move];
-        pose = movePose(a.move, run.phase, k, this.time);
+        pose = movePose(a.move, run.phase, k, this.time, this.distance() - MELEE_STANDOFF_M);
         if (run.phase === 'windup' && Math.random() < 0.3 + k) this.vfx.emit(CHARGE_FX[mv.element] ?? 'dust', this.creaturePos(p, curr), mv.heavy ? 2 : 1, 0.5);
         if (a.move === 'bramble_stampede' && pose.run > 0.5 && Math.random() < 0.5) this.vfx.emit('leaf', this.creaturePos(p, curr, 0.2), 1, 0.3);
         if (a.move === 'molten_leap' && pose.up > 0.3) this.vfx.emit('ember', this.creaturePos(p, curr, 0.3).add(this.forward(p, pose.fwd)).setY(pose.up + 0.4), 1, 0.2);
-      } else if (a.kind === 'dodge') {
-        pose = dodgePose(k, t.x > tp.x ? -1 : 1);
+      } else if (a.kind === 'alert') {
+        pose = alertPose(this.time + p);
       } else if (a.kind === 'recall' && run.phase === 'windup') {
         side.flash = Math.max(side.flash, 0.4 * k);
         if (k > 0.75) m.root.scale.setScalar(scale * m.size * (1 - (k - 0.75) * 3.6));
@@ -461,6 +541,23 @@ export class BattleView {
       side.mirror.position.copy(this.creaturePos(p, curr, 0.6));
       side.mirror.scale.setScalar(Math.max(0.9, m.height * m.size * 0.6));
       side.mirror.rotation.y += dt * 2;
+    }
+    // Armed dodge window: pulsing cyan ring (blinks in its last half second). Alert: amber hexagon.
+    const ringR = Math.max(0.75, m.size * 0.9);
+    const dodgeOn = t.dodgeReady > 0 && side.faintT < 0;
+    side.dodgeRing.visible = dodgeOn && (t.dodgeReady > 15 || Math.sin(this.time * 40) > 0);
+    if (dodgeOn) {
+      side.dodgeRing.position.set(ground.x, 0.04, ground.z);
+      side.dodgeRing.scale.setScalar(ringR * (1 + Math.sin(this.time * 9) * 0.06));
+      (side.dodgeRing.material as THREE.MeshBasicMaterial).opacity = 0.45 + Math.sin(this.time * 9) * 0.2;
+    }
+    const alertOn = t.alertTicks > 0 && side.faintT < 0;
+    side.alertRing.visible = alertOn;
+    if (alertOn) {
+      side.alertRing.position.set(ground.x, 0.03, ground.z);
+      side.alertRing.scale.setScalar(ringR);
+      side.alertRing.rotation.z += dt * 1.5;
+      if (Math.random() < 0.15) this.vfx.emit('spark', this.creaturePos(p, curr, 0.1), 1, 0.2);
     }
     if (c.healTicks > 0 && Math.random() < 0.6) this.vfx.emit('heal', this.headPos(p).add(new THREE.Vector3(0, 0.2, 0)), 2, 0.6);
     if (c.staticTicks > 0 && Math.random() < 0.25) this.vfx.emit('static', this.creaturePos(p, curr), 2, 0.4);
