@@ -70,6 +70,23 @@ try {
   if (JSON.stringify(sa.hp) !== JSON.stringify(sb.hp)) { ok = false; errors.push('HP mismatch between host and client'); }
   if (sa.hp[0][0] === 110 || sa.hp[1][0] === 125) { ok = false; errors.push('commands from one side had no effect'); }
 
+  // Host tab hidden + no animation frames: the worker ticker must keep the match running.
+  const t0 = (await st(A.page)).tick;
+  await A.page.evaluate(() => {
+    Object.defineProperty(document, 'hidden', { configurable: true, get: () => true });
+    window.__raf = window.requestAnimationFrame;
+    window.requestAnimationFrame = () => 0;
+  });
+  await A.page.waitForTimeout(1500);
+  const t1 = (await st(A.page)).tick;
+  await A.page.evaluate(() => {
+    delete document.hidden;
+    window.requestAnimationFrame = window.__raf;
+    window.__yappemon.app.loop(performance.now());
+  });
+  console.log(`hidden host advanced ${t1 - t0} ticks in 1.5 s`);
+  if (t1 - t0 < 30) { ok = false; errors.push('host sim stalled while hidden'); }
+
   // Play the match out quickly: host and client spam affordable moves until it ends.
   const moves = { cindrix: 'cinder spit', brinkle: 'water jet', vinram: 'leaf volley', joltmoth: 'spark dart' };
   for (let i = 0; i < 120; i++) {

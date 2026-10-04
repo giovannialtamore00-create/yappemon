@@ -66,6 +66,7 @@ class App {
     this.speech.onFinal = (alts) => this.battle?.commandAlternatives(alts);
     this.lobby();
     requestAnimationFrame(this.loop);
+    this.startBackgroundTicker();
     // Test hook (used by the headless smoke test); harmless in production.
     (window as unknown as { __yappemon: unknown }).__yappemon = {
       state: () => this.battle?.state() ?? null,
@@ -90,6 +91,25 @@ class App {
     r.addEventListener('input', () => this.sfx.setVolume(Number(r.value)));
     c.append(label, r);
     document.getElementById('app')!.append(c);
+  }
+
+  /**
+   * requestAnimationFrame stops in background tabs, which would freeze an online match for both
+   * players (the host runs the sim). A worker timer is not paused, so it keeps the battle ticking.
+   */
+  private startBackgroundTicker() {
+    try {
+      const src = 'setInterval(() => postMessage(0), 50);';
+      const worker = new Worker(URL.createObjectURL(new Blob([src], { type: 'text/javascript' })));
+      worker.onmessage = () => {
+        if (!document.hidden || !this.battle || !this.link) return;
+        const now = performance.now();
+        const dt = Math.min(0.1, (now - this.last) / 1000);
+        this.last = now;
+        this.time += dt;
+        this.battle.frame(dt);
+      };
+    } catch { /* workers unavailable: matches pause while hidden */ }
   }
 
   private loop = (now: number) => {
