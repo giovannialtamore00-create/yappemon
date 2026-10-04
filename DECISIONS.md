@@ -30,3 +30,7 @@ Judgment calls made where the spec was silent. Newest at the bottom.
 26. **Render layout:** sim distance is 6 m; creatures render at z = ±3, trainers at z = ±7.6, camera FOV 56°, eye height 1.6 m. Each player sees their own creature from behind; the opponent's trainer figure stands at the far end.
 27. **Heavy ground moves telegraph** a pulsing circle under the target during the windup, so dodging by voice is feasible.
 28. **HUD is DOM-based** (crisp text, cheap), the 3D scene only renders the world and VFX. Floating damage numbers are DOM elements positioned by projecting 3D points.
+29. **Recognizer alternatives:** with `maxAlternatives = 4`, the first alternative that parses into an actionable command is used (helps a lot with invented names).
+30. **Voice runs only during a battle** (incl. the forced-switch prompt); it stops on the end screen and in menus. Recognition auto-restarts when Chrome ends a session, with exponential backoff on errors; "mic blocked" stops retrying and shows a toast.
+31. **Supported-browser check:** SpeechRecognition must exist and the browser must be Chrome/Edge/Chromium (Brave/Opera excluded — they expose the API but it doesn't work). Others get a warning in the lobby and a toast in battle; the debug box still works.
+32. **Test-only URL options** `?seed=`, `?botTeam=a,b`, `?bot=passive` for deterministic headless tests. Harmless for players.

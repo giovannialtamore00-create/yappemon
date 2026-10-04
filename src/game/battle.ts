@@ -54,15 +54,25 @@ export class Battle {
   /** Feed recognized (or typed) text through the parser. Only final text produces intents. */
   command(text: string, final: boolean) {
     if (!final) { this.hud.setTranscript(text); return; }
+    this.commandAlternatives([text]);
+  }
+
+  /** Final recognizer result: use the first alternative that parses into something actionable. */
+  commandAlternatives(alts: string[]) {
     const s = this.state();
-    if (!s || s.result) return;
+    if (!s || s.result || !alts.length) return;
     const tr = s.trainers[this.me];
     const activeSpecies = activeCreature(tr).species;
     const forcedSwitch = tr.field === 'choosing';
-    const { commands } = parse(text, { activeSpecies });
-    const intents = toIntents(commands, { forcedSwitch, activeSpecies });
-    this.hud.setTranscript(text, true, intents.length > 0);
-    if (intents.length) this.session.send(intents);
+    for (const text of alts) {
+      const intents = toIntents(parse(text, { activeSpecies }).commands, { forcedSwitch, activeSpecies });
+      if (intents.length) {
+        this.hud.setTranscript(text, true, true);
+        this.session.send(intents);
+        return;
+      }
+    }
+    this.hud.setTranscript(alts[0]!, true, false);
   }
 
   frame(dt: number) {

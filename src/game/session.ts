@@ -61,8 +61,8 @@ export class LocalSession implements Session {
   readonly me: PlayerIdx = 0;
   private runner: SimRunner;
 
-  constructor(myTeam: SpeciesId[], botTeam: SpeciesId[], seed = (Math.random() * 2 ** 32) >>> 0) {
-    this.runner = new SimRunner([myTeam, botTeam], seed, new Bot(1, seed ^ 0x9e3779b9));
+  constructor(myTeam: SpeciesId[], botTeam: SpeciesId[], seed = (Math.random() * 2 ** 32) >>> 0, passiveBot = false) {
+    this.runner = new SimRunner([myTeam, botTeam], seed, passiveBot ? undefined : new Bot(1, seed ^ 0x9e3779b9));
   }
 
   update(dt: number) {

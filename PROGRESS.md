@@ -1,6 +1,6 @@
 # PROGRESS
 
-**Current milestone:** 4 — Live voice input
+**Current milestone:** 5 — VFX and audio
 **Phase:** building (main branch)
 
 ## Done
@@ -8,9 +8,10 @@
 - M1 ✅ `src/sim/` (types, data, rng, sim, bot) + `tests/sim.test.ts` (28 tests). Bot-vs-bot matches end in ~25–45 s.
 - M2 ✅ `src/voice/parser.ts` (normalize, fold, levenshtein, windowed fuzzy match, parse(), toIntents()), `src/voice/aliases.ts`, `tests/parser.test.ts` (99 tests).
 - M3 ✅ Renderer: `src/render/{scene,creatures,view,vfx,hud,showcase}.ts`, `src/game/{session,battle}.ts`, `src/ui/screens.ts`, `src/main.ts`, `src/i18n.ts`, `src/style.css`. Practice vs Bot fully playable via debug box (backtick). `npm run smoke` (or `node scripts/smoke.mjs --full`) = headless Playwright run with screenshots in ./screenshots (gitignored).
+- M4 ✅ `src/voice/speech.ts` (continuous, auto-restart w/ backoff, interim → HUD, final alternatives → `Battle.commandAlternatives` picks first that parses). Browser check `isSupportedBrowser()`. Smoke test injects a FakeRec to test the wiring. URL test options: `?seed=7&botTeam=vinram,brinkle&bot=passive`.
 
 ## In progress
-- M4: `src/voice/speech.ts` (webkitSpeechRecognition wrapper, continuous, auto-restart, interim → HUD transcript, final → Battle.command), mic indicator, browser warning, click-to-start gate.
+- M5: `src/audio/sfx.ts` (Web Audio synth: per-element move sounds, hit, dodge whoosh, fail buzz, faint, recall, send-out, UI clicks, victory/defeat jingles, ambient loop, master volume + corner slider). VFX already largely done in M3 (vfx.ts) — polish pass.
 
 ## Next steps (in order)
 1. Finish sim + tests (M1), checkpoint.
