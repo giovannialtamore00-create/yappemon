@@ -98,6 +98,8 @@ After a match, **Rematch** needs both players to click it; **Quit** goes back to
 
 ## 4. Voice command reference
 
+The **move bar** at the bottom of the screen always lists your active creature's moves with their stamina cost and what they do (in your language).
+
 Speak naturally and **pause briefly** after a command: the game acts when the recognizer finalizes your sentence. The live transcript appears at the bottom of the screen (green = understood, struck through = not understood). You can chain up to **4 actions**.
 
 ### Moves

@@ -128,7 +128,7 @@ function cindrix(stage: number): CreatureModel {
       k.mesh(new THREE.BoxGeometry(0.25, 0.08, 0.5), shellM, body, [sd * 0.38, 0.05, -0.05], undefined, [0, 0, sd * 0.5]);
     }
   }
-  const size = [1, 1.25, 1.5][stage - 1]!;
+  const size = [1, 1.15, 1.3][stage - 1]!;
   return {
     species: (['cindrix', 'pyroxen', 'calderox'] as const)[stage - 1]!, root, body, height: 0.95 + (stage - 1) * 0.15, baseY: 0.34, mouth: new THREE.Vector3(0, 0, 0.75), materials,
     size, legs, head, wings: [],
@@ -208,7 +208,7 @@ function brinkle(stage: number): CreatureModel {
     k.mesh(new THREE.SphereGeometry(0.06, 10, 8), k.mat('#c8fff4', { emissive: '#3affd2', emissiveIntensity: 2.5 }), fishG, [0, 0.64, 0.36]);
   }
   bubble.scale.setScalar(1);
-  const size = [1, 1.2, 1.4][stage - 1]!;
+  const size = [1, 1.1, 1.2][stage - 1]!;
   return {
     species: (['brinkle', 'tsunafin', 'abyssmaw'] as const)[stage - 1]!, root, body, height: 1.85, baseY: 0.95, mouth: new THREE.Vector3(0, -0.07, 0.75), materials,
     size, legs: [], head: fishG, wings: [finL, finR],
@@ -313,7 +313,7 @@ function vinram(stage: number): CreatureModel {
     }
     for (let i = 0; i < 4; i++) k.mesh(new THREE.IcosahedronGeometry(0.2, 0), i % 2 ? moss : moss2, body, [Math.sin(i * 1.6) * 0.18, 0.62, -0.25 + Math.cos(i * 1.6) * 0.2]);
   }
-  const size = [1, 1.2, 1.4][stage - 1]!;
+  const size = [1, 1.1, 1.25][stage - 1]!;
   return {
     species: (['vinram', 'thornhorn', 'elderoot'] as const)[stage - 1]!, root, body, height: 1.35 + (stage === 3 ? 0.5 : 0), baseY: 0.62, mouth: new THREE.Vector3(0, 0.15, 0.9), materials,
     size, legs, head, wings: [],
@@ -426,7 +426,7 @@ function joltmoth(stage: number): CreatureModel {
     halo.position.set(0, 0.55, 0);
     body.add(halo);
   }
-  const size = [1, 1.15, 1.3][stage - 1]!;
+  const size = [1, 1.1, 1.2][stage - 1]!;
   return {
     species: (['joltmoth', 'stormoth', 'tempestra'] as const)[stage - 1]!, root, body, height: 1.7, baseY: 1.05, mouth: new THREE.Vector3(0, 0.05, 0.45), materials,
     size, legs: [], head, wings: pivots,

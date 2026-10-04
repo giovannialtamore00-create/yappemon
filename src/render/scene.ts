@@ -301,7 +301,7 @@ export function createScene(canvas: HTMLCanvasElement): SceneCtx {
       shake.amount = Math.max(0, shake.amount - dt * 2.5);
       const k = shake.amount * shake.amount;
       camera.position.set(sway + (Math.random() - 0.5) * k * 0.5, EYE_HEIGHT + bob + (Math.random() - 0.5) * k * 0.4, s * TRAINER_Z);
-      camera.lookAt(sway * 0.5, 0.95, -s * 2.5);
+      camera.lookAt(sway * 0.5, 0.45, -s * 2.5);
     },
     render() {
       renderer.render(scene, camera);

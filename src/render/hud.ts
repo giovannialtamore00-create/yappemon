@@ -2,6 +2,7 @@
 
 import { ELEMENT_COLOR, ELEMENT_LABEL, getLang, t } from '../i18n';
 import { DODGE_COST, MOVES, SPECIES, STAMINA_MAX } from '../sim/data';
+import { MOVE_DESC } from '../movedesc';
 import type { CreatureState, PlayerIdx, QAction, SimState, TrainerState } from '../sim/types';
 
 export type MicStatus = 'on' | 'off' | 'denied' | 'unsupported' | 'starting';
@@ -224,25 +225,34 @@ export class Hud {
     }
   }
 
+  /** Bottom move bar: one card per move with name, type, stamina cost and what it does. */
   private updateMoves(tr: TrainerState) {
     const c = tr.team[tr.active]!;
+    const def = SPECIES[c.species];
     const lang = getLang();
-    const affordable = SPECIES[c.species].moves.map((m) => c.stamina >= MOVES[m].cost);
-    const key = `${c.species}|${lang}|${affordable.join()}|${c.stamina >= DODGE_COST}`;
+    const affordable = def.moves.map((m) => c.stamina >= MOVES[m].cost);
+    const current = tr.action?.action.kind === 'move' ? tr.action.action.move : null;
+    const queued = new Set(tr.queue.flatMap((a) => (a.kind === 'move' ? [a.move] : [])));
+    const key = `${c.species}|${lang}|${affordable.join()}|${c.stamina >= DODGE_COST}|${current}|${[...queued].join()}`;
     if (key === this.movesKey) return;
     this.movesKey = key;
     this.moves.innerHTML = '';
-    this.moves.append(h('div', 'moves-title', `${t('moves')} — ${SPECIES[c.species].name}`));
-    SPECIES[c.species].moves.forEach((id, i) => {
+    def.moves.forEach((id, i) => {
       const m = MOVES[id];
-      const row = h('div', `move-row${affordable[i] ? '' : ' poor'}`);
-      const dot = h('span', 'el-dot');
-      dot.style.background = ELEMENT_COLOR[m.element];
-      row.append(dot, h('span', 'move-name', m.name[lang]), h('span', 'move-cost', String(m.cost)));
-      row.title = lang === 'it' ? m.name.en : m.name.it;
-      this.moves.append(row);
+      const cls = ['move-card', affordable[i] ? '' : 'poor', id === current ? 'current' : '', queued.has(id) ? 'queued' : ''].filter(Boolean).join(' ');
+      const card = h('div', cls);
+      card.style.setProperty('--el', ELEMENT_COLOR[m.element]);
+      const meta = h('div', 'mc-meta');
+      meta.append(h('span', 'mc-type', ELEMENT_LABEL[lang][m.element]), h('span', 'mc-cost', String(m.cost)));
+      const dmg = Math.round(m.power * def.dmgMult);
+      const desc = h('div', 'mc-desc', MOVE_DESC[id][lang].replace('{d}', String(dmg)));
+      card.append(h('div', 'mc-name', m.name[lang]), meta, desc);
+      card.title = `${desc.textContent} (${lang === 'it' ? m.name.en : m.name.it})`;
+      this.moves.append(card);
     });
-    this.moves.append(h('div', 'move-universal', t('universal')));
+    const uni = h('div', `move-card universal${c.stamina >= DODGE_COST ? '' : ' poor'}`);
+    uni.append(h('div', 'mc-desc', t('universal')));
+    this.moves.append(uni);
   }
 
   // ------------------------------------------------------------ voice feedback

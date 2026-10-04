@@ -74,7 +74,8 @@ try {
   for (let round = 0; round < 3; round++) {
     const done = await S.page.evaluate(() => !!window.__yappemon.state().result);
     if (done) break;
-    await S.page.waitForFunction(() => window.__yappemon.state().intermission === 0, null, { timeout: 15000 });
+    if (round > 0) { await S.page.waitForTimeout(2500); await S.page.screenshot({ path: `screenshots/spectator/evo-round${round + 1}.png` }); }
+    await S.page.waitForFunction(() => window.__yappemon.state().intermission === 0, null, { timeout: 60000 }).catch(async (e) => { console.log('DIAG', await S.page.evaluate(() => { const s = window.__yappemon.state(); return JSON.stringify({ tick: s.tick, round: s.round, inter: s.intermission, score: s.score, res: s.result, f: s.trainers.map((t) => t.field) }); }), await S.page.evaluate(() => new Promise((r) => { let n = 0; const t0 = performance.now(); const t1 = window.__yappemon.state().tick; const f = () => { n++; if (performance.now() - t0 < 2000) requestAnimationFrame(f); else r(JSON.stringify({ fps: n / 2, ticksPerSec: (window.__yappemon.state().tick - t1) / 2, hidden: document.hidden, evo: !!window.__yappemon.app.battle?.view?.evo })); }; requestAnimationFrame(f); }))); throw e; });
     await S.page.evaluate(() => { for (const c of window.__yappemon.state().trainers[1].team) c.hp = 0.5; });
     for (let i = 0; i < 40; i++) {
       const st = await S.page.evaluate(() => { const s = window.__yappemon.state(); return { inter: s.intermission, res: !!s.result }; });
