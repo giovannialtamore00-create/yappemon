@@ -51,6 +51,7 @@ class App {
     window.addEventListener('keydown', unlock);
     setUiClickHandler(() => this.sfx.ui());
     this.buildCorner();
+    this.hud.onLeave = () => this.lobby();
     window.addEventListener('keydown', (e) => {
       if (e.key === '`' && this.battle) { e.preventDefault(); this.hud.toggleDebug(); }
     });
@@ -169,6 +170,7 @@ class App {
     let mine: SpeciesId[] | null = null;
     let theirs: SpeciesId[] | null = null;
     const ui = this.screens.teamSelect({
+      subtitle: isSupportedBrowser() ? t('micAsk') : undefined,
       onHover: (sp) => this.showcase.show(sp),
       onReady: (team) => {
         mine = team;
@@ -255,6 +257,7 @@ class App {
     this.closeNet(true);
     this.endBattle();
     this.screens.teamSelect({
+      subtitle: isSupportedBrowser() ? t('micAsk') : undefined,
       onHover: (sp) => this.showcase.show(sp),
       onReady: (team) => this.startPractice(team),
     });

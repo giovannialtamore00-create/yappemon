@@ -40,3 +40,6 @@ Judgment calls made where the spec was silent. Newest at the bottom.
 36. **Disconnect detection:** data-channel close, or 6 s without any message (1 s heartbeat). Quitting sends an explicit `quit`. Either way the other player gets "Opponent disconnected" + Back to lobby.
 37. **Rematch** requires both players to press Rematch; whoever presses second triggers it (via the host), then both return to team select. The waiting player sees "Opponent wants a rematch!".
 38. **STUN only, no TURN server** (no free reliable TURN exists). Works on most home networks; strict corporate/symmetric NATs can fail — documented in README.
+39. **Opponent windup is shown in their HUD panel** ("Charging: Magma Burst!", pulsing red for heavy moves) — voice latency makes reacting to animation alone too hard.
+40. **Leave button** during battle (top-right, click) returns to the lobby; online it notifies the opponent.
+41. **Phone layout:** panels side-by-side at the top, move list as a 2-column grid above the voice box, toasts lower. The game targets desktop Chrome/Edge but Android Chrome also supports speech recognition.

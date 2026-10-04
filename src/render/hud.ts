@@ -23,6 +23,7 @@ interface Panel {
   stFill: HTMLElement;
   status: HTMLElement;
   dots: HTMLElement;
+  act: HTMLElement;
   key: string;
 }
 
@@ -41,8 +42,9 @@ function panel(side: 'me' | 'foe'): Panel {
   const stFill = h('div', 'fill');
   st.append(stFill);
   const status = h('div', 'status-row');
-  root.append(top, hp, st, status);
-  return { root, name, badge, hpFill, hpText, stFill, status, dots, key: '' };
+  const act = h('div', 'act-row');
+  root.append(top, hp, st, status, act);
+  return { root, name, badge, hpFill, hpText, stFill, status, dots, act, key: '' };
 }
 
 export class Hud {
@@ -59,6 +61,18 @@ export class Hud {
   private queueKey = '';
   private transcriptTimer = 0;
   onDebugCommand: (text: string) => void = () => {};
+  onLeave: () => void = () => {};
+  private leaveBtn = h('button', 'btn leave-btn');
+  private queueLabel = h('div', 'queue-label');
+
+  /** Re-apply translated labels (the language can change between matches). */
+  relabel() {
+    this.leaveBtn.textContent = `✕ ${t('leave')}`;
+    this.queueLabel.textContent = t('queue');
+    this.debug.placeholder = t('debugHint');
+    this.movesKey = this.queueKey = '#stale';
+    this.me.key = this.foe.key = '';
+  }
 
   constructor(private root: HTMLElement, toasts: HTMLElement) {
     this.toasts = toasts;
@@ -67,7 +81,7 @@ export class Hud {
     this.foe = panel('foe');
     const bottom = h('div', 'hud-bottom');
     const voice = h('div', 'voice-box');
-    const qlabel = h('div', 'queue-label', t('queue'));
+    const qlabel = this.queueLabel;
     voice.append(this.mic, this.transcript, qlabel, this.queue);
     bottom.append(voice);
     this.debug.placeholder = t('debugHint');
@@ -80,7 +94,9 @@ export class Hud {
       }
       if (e.key === '`') { e.preventDefault(); this.toggleDebug(); }
     });
-    root.append(this.foe.root, this.me.root, this.moves, bottom, this.floats, this.debug);
+    const leave = this.leaveBtn;
+    leave.addEventListener('click', () => this.onLeave());
+    root.append(this.foe.root, this.me.root, this.moves, bottom, this.floats, this.debug, leave);
     this.setMic('off');
   }
 
@@ -135,6 +151,18 @@ export class Hud {
     const sk = st.join(' ');
     if (p.status.textContent !== sk) p.status.textContent = sk;
     p.root.classList.toggle('dim', tr.field !== 'active');
+    // Telegraph the opponent's windup so the player can react (dodge!).
+    let act = '';
+    let heavy = false;
+    if (p === this.foe && tr.action?.phase === 'windup' && tr.action.action.kind === 'move') {
+      const m = MOVES[tr.action.action.move];
+      act = t('foeWinding', { move: m.name[getLang()] });
+      heavy = m.heavy;
+    }
+    if (p.act.textContent !== act) {
+      p.act.textContent = act;
+      p.act.className = `act-row${heavy ? ' heavy' : ''}`;
+    }
   }
 
   private chipLabel(a: QAction): string {

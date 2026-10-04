@@ -13,7 +13,7 @@
 - M6 ✅ `src/net/{protocol,link,sessions}.ts`: hostRoom/joinRoom (PeerJS, id cbattle-CODE, STUN only), Link heartbeat (ping 1 s, timeout 6 s), HostSession (20 Hz snaps + events), ClientSession (tick-offset clock, 110 ms interp delay, events delivered when their snapshot is shown), sanitizeIntents/sanitizeTeam. Flows in main.ts: hostGame, joinGame, netTeamSelect, netEnd (rematch handshake), disconnected. `node scripts/net-test.mjs` = 2-page test over the real broker (needs internet).
 
 ## In progress
-- M7: polish pass — click-to-start/mic hints, how-to-play panel, HUD polish, opponent action telegraph, end-screen stats, Italian UI check, mobile layout check, perf check.
+- M7 (in progress): done — how-to-play in lobby, mic-permission hint on team select, opponent windup warning in foe panel ("Charging: X!"), Leave button, opponent-failed toast, HUD relabel on language change, phone layout. `node scripts/flow-test.mjs` (Italian UI, voice forced switch, leave, phone). Next: gameplay feel pass (match pacing), final visual review, then M8.
 
 ## Next steps (in order)
 1. Finish sim + tests (M1), checkpoint.

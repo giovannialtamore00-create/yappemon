@@ -66,6 +66,9 @@ export class Screens {
     input.addEventListener('keydown', (e) => { if (e.key === 'Enter') join(); });
     joinRow.append(input, button(t('joinGo'), join, 'btn big'));
     card.append(logo, tag, langRow, actions, h('div', 'or', t('join')), joinRow);
+    const how = h('details', 'howto');
+    how.append(h('summary', '', t('howTo')), h('p', '', t('howToBody')));
+    card.append(how);
     if (!o.voiceSupported) card.append(h('div', 'warn', t('browserWarn')));
     s.append(card);
   }

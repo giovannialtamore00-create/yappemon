@@ -38,6 +38,7 @@ export class Battle {
     this.view = new BattleView(ctx, teams, session.me);
     this.view.onFloat = (f) => this.floatText(f.text, f.pos, f.color, f.big);
     ctx.cameraMode = 'battle';
+    hud.relabel();
     hud.show(true);
     hud.clearToasts();
     hud.onDebugCommand = (text) => this.command(text, true);
@@ -114,7 +115,7 @@ export class Battle {
         if (mine) {
           this.hud.toast(`${t('moveFailed')} (${FAIL_REASON[lang][e.reason]})`, 'bad', 3200);
           this.audio?.fail();
-        }
+        } else this.hud.toast(t('foeFailed'), 'good', 1600);
         break;
       case 'faint': {
         const name = SPECIES[s.trainers[e.p].team[e.slot]!.species].name;

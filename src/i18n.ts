@@ -62,6 +62,12 @@ const STR = {
     peerError: 'Connection error: {msg}',
     badCode: 'Enter a 5-character code',
     clickToStart: 'Click to enable sound & microphone',
+    howTo: 'How to play',
+    howToBody: 'Talk to your creature! Say a move name to attack, and chain up to 4: “Cinder Spit then Shell Ram”. Say “dodge” to sidestep (best while the enemy is charging), “come back” to switch, “stop” to clear your queue. If a move fails (dodged, interrupted, no stamina) your whole queue is cleared, so give a new command. Types: Fire > Grass > Water > Fire, and Electric > Water.',
+    micAsk: 'Your browser will ask for microphone access: click Allow.',
+    foeWinding: 'Charging: {move}!',
+    foeFailed: "Opponent's move failed!",
+    leave: 'Leave',
   },
   it: {
     tagline: 'Comanda la tua creatura con la voce.',
@@ -124,6 +130,12 @@ const STR = {
     peerError: 'Errore di connessione: {msg}',
     badCode: 'Inserisci un codice di 5 caratteri',
     clickToStart: 'Clicca per attivare audio e microfono',
+    howTo: 'Come si gioca',
+    howToBody: 'Parla alla tua creatura! Di\' il nome di una mossa per attaccare, fino a 4 in fila: “Sputo di Brace poi Carica Corazzata”. Di\' “schiva” per scansarti (meglio mentre il nemico carica), “rientra” per cambiare, “fermati” per svuotare la coda. Se una mossa fallisce (schivata, interrotta, energia finita) la coda si svuota: dai un nuovo comando. Tipi: Fuoco > Erba > Acqua > Fuoco, ed Elettro > Acqua.',
+    micAsk: 'Il browser chiederà il permesso per il microfono: clicca Consenti.',
+    foeWinding: 'In carica: {move}!',
+    foeFailed: "Mossa dell'avversario fallita!",
+    leave: 'Esci',
   },
 } satisfies Record<Lang, Record<string, string>>;
 
