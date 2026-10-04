@@ -1,16 +1,19 @@
-// Practice bot: issues random valid commands every 1–3 s and sometimes dodges heavy windups.
+// Practice bot: issues random valid commands every 1–3 s, sometimes arms a dodge against heavy windups
+// and sometimes goes on alert when low on HP.
 // Pure: reads SimState, returns intents. Uses its own RNG so it never perturbs the sim's.
 
-import { MOVES, SPECIES, TICK_HZ } from './data';
+import { ALERT_COST, DODGE_COST, DODGE_WINDOW_S, MOVES, SPECIES, TICK_HZ } from './data';
 import { Rng } from './rng';
 import { activeCreature, benchSlot } from './sim';
 import type { Intent, PlayerIdx, SimState } from './types';
 
 export interface BotOptions {
-  /** Probability of reacting to a visible heavy windup with a dodge. */
+  /** Probability of reacting to a visible heavy windup by arming the dodge window. */
   dodgeChance: number;
   /** Probability per decision of recalling, when possible. */
   recallChance: number;
+  /** Probability per decision of going on alert when below 35% HP. */
+  alertChance: number;
 }
 
 export class Bot {
@@ -19,7 +22,7 @@ export class Bot {
   private reactedTo = -1;
   private switchAt = -1;
 
-  constructor(public p: PlayerIdx, seed: number, public opts: BotOptions = { dodgeChance: 0.45, recallChance: 0.06 }) {
+  constructor(public p: PlayerIdx, seed: number, public opts: BotOptions = { dodgeChance: 0.5, recallChance: 0.06, alertChance: 0.25 }) {
     this.rng = new Rng(seed);
   }
 
@@ -40,13 +43,12 @@ export class Bot {
     if (me.field !== 'active') return [];
     const c = activeCreature(me);
 
-    // React to the opponent's heavy windup.
+    // React to the opponent's heavy windup: arm the dodge window once the hit is sure to land inside it.
     const fa = foe.action;
-    // Decide late in the windup so the invulnerable window overlaps the hit.
-    if (fa && fa.phase === 'windup' && fa.action.kind === 'move' && MOVES[fa.action.move].heavy
-        && fa.left < 10 && this.reactedTo !== fa.uid) {
+    if (fa && fa.phase === 'windup' && fa.action.kind === 'move' && MOVES[fa.action.move].heavy && !MOVES[fa.action.move].quick
+        && fa.left < (DODGE_WINDOW_S - 0.8) * TICK_HZ && this.reactedTo !== fa.uid) {
       this.reactedTo = fa.uid;
-      if (this.rng.next() < this.opts.dodgeChance && c.stamina >= 15 && c.rootTicks === 0) {
+      if (this.rng.next() < this.opts.dodgeChance && c.stamina >= DODGE_COST && c.rootTicks === 0 && me.dodgeReady === 0) {
         return [{ type: 'queue', actions: [{ kind: 'dodge' }] }];
       }
     }
@@ -57,6 +59,9 @@ export class Bot {
 
     if (benchSlot(me) >= 0 && this.rng.next() < this.opts.recallChance && c.hp < c.maxHp * 0.4) {
       return [{ type: 'queue', actions: [{ kind: 'recall' }] }];
+    }
+    if (c.hp < c.maxHp * 0.35 && me.alertTicks === 0 && c.stamina >= ALERT_COST + 20 && this.rng.next() < this.opts.alertChance) {
+      return [{ type: 'queue', actions: [{ kind: 'alert' }] }];
     }
     const affordable = SPECIES[c.species].moves.filter((m) => MOVES[m].cost <= c.stamina);
     if (!affordable.length) return [];

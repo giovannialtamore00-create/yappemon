@@ -595,6 +595,18 @@ describe('determinism and bot', () => {
       expect(s.result).not.toBeNull();
     }
   });
+  it('bots arm dodges against heavies, go on alert, and both hits and misses happen', () => {
+    const count: Record<string, number> = {};
+    for (const seed of [1, 2, 3, 4, 5, 6]) {
+      const s = createMatch([['cindrix', 'brinkle'], ['vinram', 'joltmoth']], seed);
+      const a = new Bot(0, seed + 1);
+      const b = new Bot(1, seed + 2);
+      for (let n = 0; !s.result && n < TICK_HZ * 600; n++) {
+        for (const e of step(s, [a.think(s), b.think(s)])) count[e.t] = (count[e.t] ?? 0) + 1;
+      }
+    }
+    for (const t of ['dodge_ready', 'dodge', 'dodged', 'alert', 'miss', 'hit', 'combo_broken']) expect(count[t] ?? 0).toBeGreaterThan(0);
+  });
   it('species data matches the spec', () => {
     expect(SPECIES.cindrix.maxHp).toBe(110);
     expect(SPECIES.brinkle.maxHp).toBe(120);

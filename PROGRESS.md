@@ -1,7 +1,7 @@
 # PROGRESS
 
 **Current work:** Movement / dynamic fighting update on branch **`movement`** (NOT merged). `main` = last released version (playable, all tests green).
-**Status:** steps 1–3 of 8 done (types; sim + data + tests; voice parser + tests). `npx tsc --noEmit && npx vitest run` green. Next: step 4 (bot).
+**Status:** steps 1–4 of 8 done (types; sim + data + tests; voice parser + tests; bot). `npx tsc --noEmit && npx vitest run` green. Next: step 5 (view + motion).
 
 The user approved the plan (DECISIONS #61–66). Don't merge into `main` or change anything on `main` without the user's permission. The live link is no longer needed (the user said so), so `dist/` can be rebuilt freely.
 
@@ -40,7 +40,7 @@ The user approved the plan (DECISIONS #61–66). Don't merge into `main` or chan
 1. ✅ types.
 2. ✅ Sim + data changes above; rewrite/extend `tests/sim.test.ts` (accuracy + state modifiers via `hitChance`, miss keeps queue, hit clears queue + combo_broken, dodge window auto-dodges normal attacks but not quick ones, window expiry, dodge cost 5, alert, movement stays in bounds and is deterministic, bot-vs-bot still finishes). `npx tsc --noEmit && npx vitest run` green.
 3. ✅ Voice parser (dodge direction, alert) + tests. ("to"/"verso" are now fillers; a side word without a dodge in its segment is reported as unmatched.)
-4. Bot.
+4. ✅ Bot (arms the window when ≤1.2 s of a heavy windup is left, 50%; alert 25% per decision under 35% HP). Bot-vs-bot over 20 seeds: ~134 s per match, ~6% of attacks miss.
 5. View + motion (positions, facing, reach, dash, miss/combo visuals).
 6. Dynamic camera.
 7. HUD / i18n / audio.
