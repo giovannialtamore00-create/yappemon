@@ -301,7 +301,7 @@ export class BattleView {
         if (!next) return;
         const from = buildCreature(c.species);
         const to = buildCreature(next);
-        const x = (i - (team.length - 1) / 2) * 1.8;
+        const x = (i - (team.length - 1) / 2) * 2.4;
         const pos = new THREE.Vector3(worldX(p, x), 0, creatureZ(p));
         for (const m of [from, to]) {
           m.root.visible = false;

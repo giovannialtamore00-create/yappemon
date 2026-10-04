@@ -63,6 +63,7 @@ export class Battle {
 
   /** Feed recognized (or typed) text through the parser. Only final text produces intents. */
   command(text: string, final: boolean) {
+    if (typeof text !== 'string') return;
     if (!final) { this.hud.setTranscript(text); return; }
     this.commandAlternatives([text]);
   }

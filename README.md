@@ -2,7 +2,7 @@
 
 A 1v1 browser-based 3D creature-battle game you play **with your voice**. You are a trainer at one end of a stone arena; your creature fights your opponent's in real time, and you command it by shouting move names in **English or Italian**. The mouse is only used for menus.
 
-- 4 original creatures, 16 moves, a type chart, stamina, dodging, switching, and a command queue
+- 4 original creatures that evolve twice (12 forms), 24 moves, best-of-3 rounds, a type chart, stamina, dodging, switching, and a command queue
 - Online 1v1 with a friend (room codes, peer-to-peer, no game server) or **Practice vs Bot**
 - Everything is procedural: 3D models built from primitives, all sound synthesized, no asset files
 
@@ -121,7 +121,20 @@ Speak naturally and **pause briefly** after a command: the game acts when the re
 | | Static Field | Campo Statico | 20 | Halve target's stamina regen for 5 s |
 | | Thunder Lance | Lancia di Tuono | 35 | Electric bolt, 29 dmg, very fast |
 
-Short keywords work too, for example *magma*, *jet*, *lance*, *spit*, *quake*, *tuono*, *spine*, *brace*, *marea*, *foglie*. The parser is fuzzy, so common mishearings ("sinner spit", "water get", "thunder dance") still work.
+**Moves learned by evolving** (evolved forms keep all earlier moves):
+
+| Evolution | English | Italiano | Stamina | Effect |
+|---|---|---|---|---|
+| **Pyroxen** (stage 2 of Cindrix) | Molten Leap | Balzo Fuso | 30 | Leaps high and slams onto the target, 24 dmg |
+| **Calderox** (stage 3) | Volcanic Ruin | Rovina Vulcanica | 45 | Triple eruption under the target, 40 dmg, very long windup |
+| **Tsunafin** (stage 2 of Brinkle) | Tide Mirror | Specchio di Marea | 25 | For 1.5 s, the next hit is reflected back at the attacker |
+| **Abyssmaw** (stage 3) | Maelstrom | Gorgo Abissale | 40 | Whirlpool, 26 dmg + roots 1.5 s |
+| **Thornhorn** (stage 2 of Vinram) | Bramble Stampede | Carica di Rovi | 30 | Charge whose windup can't be interrupted, 24 dmg |
+| **Elderoot** (stage 3) | Ancient Bloom | Fioritura Antica | 35 | Heal 35 HP over 3 s |
+| **Stormoth** (stage 2 of Joltmoth) | Chain Storm | Tempesta a Catena | 30 | 3 bolts of 10 dmg, each dodgeable separately |
+| **Tempestra** (stage 3) | Sky Judgement | Giudizio Celeste | 45 | Lightning from the sky, 38 dmg, very long windup |
+
+Short keywords work too, for example *magma*, *jet*, *lance*, *spit*, *quake*, *tuono*, *spine*, *brace*, *marea*, *foglie*, *mirror*, *specchio*, *gorgo*, *rovi*. The parser is fuzzy, so common mishearings ("sinner spit", "water get", "thunder dance") still work.
 
 ### Universal commands
 
@@ -150,12 +163,14 @@ Saying **"dodge"** at the start of a command jumps the queue, so you can react t
 
 ## 5. Creatures, types and rules
 
-| Creature | Type | HP | Speed |
+| Creature (stage 1 → 2 → 3) | Type | HP by stage | Speed |
 |---|---|---|---|
-| Cindrix, a magma beetle with a cracked glowing shell | Fire | 110 | Medium |
-| Brinkle, a pufferfish riding a water bubble | Water | 120 | Medium |
-| Vinram, a mossy ram with vine-wrapped horns | Grass | 125 | Slow |
-| Joltmoth, a moth with crackling luminous wings | Electric | 95 | Fast |
+| Cindrix → Pyroxen → Calderox: a magma beetle that grows a spiked shell, then a volcano on its back | Fire | 110 / 138 / 165 | Medium |
+| Brinkle → Tsunafin → Abyssmaw: a bubble-riding pufferfish that becomes a deep-sea angler | Water | 120 / 150 / 180 | Medium |
+| Vinram → Thornhorn → Elderoot: a mossy ram that grows thorny horns, then tree-branch antlers | Grass | 125 / 156 / 188 | Slow |
+| Joltmoth → Stormoth → Tempestra: an electric moth that gains a lightning tail, then a storm-cloud crown | Electric | 95 / 119 / 143 | Fast |
+
+**Rounds and evolution:** a match is **best of 3 rounds**. A round ends when one trainer has no creatures left. Between rounds everyone's creatures **evolve** (with an evolution animation): round 1 uses stage-1 forms, round 2 stage 2, round 3 the final stage. Each stage has more HP, deals more damage (×1.15, then ×1.3) and learns one new move. HP and stamina are fully restored at the start of each round. To always play all 3 rounds, set `ROUNDS_TO_WIN = 3` in `src/sim/data.ts`.
 
 **Type chart** (2× super effective / 0.5× not very effective; Normal moves are always neutral):
 
@@ -171,7 +186,7 @@ Saying **"dodge"** at the start of a command jumps the queue, so you can react t
 - **Moves** have windup → active → recovery phases. Heavy (35-stamina) moves have long windups, and the opponent's panel shows "Charging: …!" so you can dodge.
 - **Interrupts:** a single hit of **25+ damage** interrupts the target's windup.
 - **Failure clears the whole queue.** If a move is dodged, interrupted, short on stamina, or its target leaves the field, your queue is cleared, you hear a buzz and see "Move failed: give a new command". Your creature waits for new orders.
-- **Fainting:** if you have another creature, pick it (click or voice). After 10 s it's sent out automatically. Lose both creatures and you lose the match.
+- **Fainting:** if you have another creature, pick it (click or voice). After 10 s it's sent out automatically. Lose both creatures and you lose the round; win 2 rounds to win the match.
 
 ---
 

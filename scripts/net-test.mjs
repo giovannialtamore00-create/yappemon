@@ -88,8 +88,9 @@ try {
   if (t1 - t0 < 30) { ok = false; errors.push('host sim stalled while hidden'); }
 
   // Play the match out quickly: host and client spam affordable moves until it ends.
-  const moves = { cindrix: 'cinder spit', brinkle: 'water jet', vinram: 'leaf volley', joltmoth: 'spark dart' };
-  for (let i = 0; i < 120; i++) {
+  const fam = { cindrix: 'cinder spit', brinkle: 'water jet', vinram: 'leaf volley', joltmoth: 'spark dart' };
+  const moves = { ...fam, pyroxen: fam.cindrix, calderox: fam.cindrix, tsunafin: fam.brinkle, abyssmaw: fam.brinkle, thornhorn: fam.vinram, elderoot: fam.vinram, stormoth: fam.joltmoth, tempestra: fam.joltmoth };
+  for (let i = 0; i < 400; i++) {
     const done = await A.page.evaluate(() => !!window.__yappemon.state()?.result);
     if (done) break;
     for (const P of [A.page, B.page]) {

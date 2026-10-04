@@ -90,7 +90,7 @@ try {
   });
   console.log('state:', JSON.stringify(st));
   if (full) {
-    for (let i = 0; i < 120; i++) {
+    for (let i = 0; i < 400; i++) {
       const res = await page.evaluate(() => window.__yappemon.state()?.result ?? null);
       if (res) break;
       const s = await page.evaluate(() => {
@@ -100,7 +100,8 @@ try {
       });
       if (s.field === 'choosing') await say('second');
       else if (s.q < 2) {
-        const moves = { cindrix: 'cinder spit then shell ram', brinkle: 'water jet then bubble bump', vinram: 'leaf volley then horn charge', joltmoth: 'spark dart then wing flick' };
+        const fam = { cindrix: 'cinder spit then shell ram', brinkle: 'water jet then bubble bump', vinram: 'leaf volley then horn charge', joltmoth: 'spark dart then wing flick' };
+        const moves = { ...fam, pyroxen: fam.cindrix, calderox: fam.cindrix, tsunafin: fam.brinkle, abyssmaw: fam.brinkle, thornhorn: fam.vinram, elderoot: fam.vinram, stormoth: fam.joltmoth, tempestra: fam.joltmoth };
         await say(moves[s.species]);
       }
       if (i === 30) await shot('08-mid');
