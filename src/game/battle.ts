@@ -166,6 +166,7 @@ export class Battle {
       case 'fail':
         if (mine) {
           this.hud.toast(`${t('moveFailed')} (${FAIL_REASON[lang][e.reason]})`, 'bad', 3200);
+          if (e.reason === 'stamina') this.hud.flashEnergy();
           this.audio?.fail();
         } else this.hud.toast(this.spectator ? t('failedP', { who: who(e.p) }) : t('foeFailed'), this.spectator ? 'info' : 'good', 1600);
         break;

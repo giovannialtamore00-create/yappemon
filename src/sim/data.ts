@@ -10,7 +10,13 @@ export const QUEUE_MAX = 4;
 export const INTERRUPT_THRESHOLD = 25;
 export const STAB = 1.25;
 
-export const DODGE_COST = 15;
+/** All stamina costs are the listed base cost × 1.35, rounded (balance change requested by the user). */
+export const STAMINA_COST_MULT = 1.35;
+export const scaledCost = (base: number) => Math.round(base * STAMINA_COST_MULT);
+export const DODGE_COST = scaledCost(15);
+/** Super-effective multiplier (was 2×). */
+export const SUPER_EFFECTIVE = 1.25;
+export const NOT_VERY_EFFECTIVE = 0.5;
 export const DODGE_INVULN_S = 0.4;
 export const DODGE_COOLDOWN_S = 1.0;
 export const DODGE_STEP_M = 1.3;
@@ -112,14 +118,17 @@ export const MOVES: Record<MoveId, MoveDef> = {
   sky_judgement: { id: 'sky_judgement', species: 'tempestra', element: 'electric', cost: 45, power: 38, delivery: 'beam', effect: dmg, windup: 1.8, active: 0.4, recovery: 0.9, hitDelay: 0.1, heavy: true, name: { en: 'Sky Judgement', it: 'Giudizio Celeste' } },
 };
 
+// Costs above are base values; apply the global stamina-cost multiplier once.
+for (const m of Object.values(MOVES)) m.cost = scaledCost(m.cost);
+
 export const MOVE_IDS = Object.keys(MOVES) as MoveId[];
 
-/** Attack element → defender element → multiplier (absent = 1). */
+/** Attack element → defender element → multiplier (absent = 1). Super effective = ×1.25, not very effective = ×0.5. */
 const CHART: Partial<Record<Element, Partial<Record<Element, number>>>> = {
-  fire: { grass: 2, fire: 0.5, water: 0.5 },
-  water: { fire: 2, water: 0.5, grass: 0.5 },
-  grass: { water: 2, grass: 0.5, fire: 0.5 },
-  electric: { water: 2, electric: 0.5, grass: 0.5 },
+  fire: { grass: SUPER_EFFECTIVE, fire: NOT_VERY_EFFECTIVE, water: NOT_VERY_EFFECTIVE },
+  water: { fire: SUPER_EFFECTIVE, water: NOT_VERY_EFFECTIVE, grass: NOT_VERY_EFFECTIVE },
+  grass: { water: SUPER_EFFECTIVE, grass: NOT_VERY_EFFECTIVE, fire: NOT_VERY_EFFECTIVE },
+  electric: { water: SUPER_EFFECTIVE, electric: NOT_VERY_EFFECTIVE, grass: NOT_VERY_EFFECTIVE },
 };
 
 export function typeMultiplier(attack: Element, defend: Element): number {

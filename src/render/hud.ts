@@ -53,6 +53,15 @@ export class Hud {
   private foe: Panel;
   private queue = h('div', 'queue');
   private moves = h('div', 'moves');
+  private cmds = h('div', 'cmds');
+  private cmdLabel = h('div', 'queue-label');
+  private cmdKey = '';
+  private energy = h('div', 'energy-gauge');
+  private energyFill = h('div', 'eg-fill');
+  private energyVal = h('div', 'eg-val');
+  private energyTicks = h('div', 'eg-ticks');
+  private energyLabel = h('div', 'eg-label');
+  private energyKey = '';
   private transcript = h('div', 'transcript');
   private mic = h('div', 'mic');
   private floats = h('div', 'floats');
@@ -82,6 +91,9 @@ export class Hud {
     this.leaveBtn.textContent = `✕ ${t('leave')}`;
     this.queueLabel.textContent = t('queue');
     this.debug.placeholder = t('debugHint');
+    this.cmdLabel.textContent = t('commands');
+    this.energyLabel.textContent = t('energy');
+    this.cmdKey = this.energyKey = '#stale';
     this.movesKey = this.queueKey = this.roundKey = '#stale';
     this.me.key = this.foe.key = '';
   }
@@ -94,7 +106,11 @@ export class Hud {
     const bottom = h('div', 'hud-bottom');
     const voice = h('div', 'voice-box');
     const qlabel = this.queueLabel;
-    voice.append(this.mic, this.transcript, qlabel, this.queue);
+    voice.append(this.mic, this.transcript, qlabel, this.queue, this.cmdLabel, this.cmds);
+    const track = h('div', 'eg-track');
+    track.append(this.energyFill, this.energyTicks);
+    this.energy.append(this.energyLabel, track, this.energyVal);
+    root.append(this.energy);
     bottom.append(voice);
     this.debug.placeholder = t('debugHint');
     this.debug.style.display = 'none';
@@ -161,6 +177,8 @@ export class Hud {
     this.updatePanel(this.foe, theirs);
     this.updateQueue(mine);
     this.updateMoves(mine);
+    this.updateCommands(mine);
+    this.updateEnergy(mine);
   }
 
   private updatePanel(p: Panel, tr: TrainerState) {
@@ -225,6 +243,59 @@ export class Hud {
     }
   }
 
+  /** Big vertical energy (stamina) gauge on the left, with a tick at each move's cost. */
+  private updateEnergy(tr: TrainerState) {
+    const c = tr.team[tr.active]!;
+    const pct = (c.stamina / STAMINA_MAX) * 100;
+    this.energyFill.style.height = `${pct}%`;
+    this.energyVal.textContent = String(Math.floor(c.stamina));
+    this.energy.classList.toggle('low', c.stamina < DODGE_COST);
+    this.energy.classList.toggle('paused', c.regenPause > 0);
+    this.energy.classList.toggle('slowed', c.staticTicks > 0);
+    const key = `${c.species}|${getLang()}`;
+    if (key === this.energyKey) return;
+    this.energyKey = key;
+    this.energyTicks.innerHTML = '';
+    const costs = [...new Set([DODGE_COST, ...SPECIES[c.species].moves.map((m) => MOVES[m].cost)])];
+    for (const cost of costs) {
+      const tick = h('div', 'eg-tick');
+      tick.style.bottom = `${(cost / STAMINA_MAX) * 100}%`;
+      tick.append(h('span', '', String(cost)));
+      this.energyTicks.append(tick);
+    }
+  }
+
+  /** Always-visible general commands, greyed out when they can't be used right now. */
+  private updateCommands(tr: TrainerState) {
+    const c = tr.team[tr.active]!;
+    const bench = tr.team.findIndex((x, i) => i !== tr.active && !x.fainted);
+    const benchName = bench >= 0 ? SPECIES[tr.team[bench]!.species].name : '';
+    const busy = !!tr.action || tr.queue.length > 0;
+    const items: { label: string; ok: boolean; why?: string; cost?: number; info?: boolean }[] = [
+      { label: t('cmdDodge'), cost: DODGE_COST, ok: c.rootTicks === 0 && c.stamina >= DODGE_COST, why: c.rootTicks > 0 ? t('whyRooted') : t('whyStamina') },
+      { label: bench >= 0 ? `${t('cmdBack')} / ${t('cmdGo', { name: benchName })}` : t('cmdBack'), ok: bench >= 0, why: t('whyNoBench') },
+      { label: t('cmdStop'), ok: busy, why: t('whyEmpty') },
+      { label: t('cmdChain'), ok: true, info: true },
+    ];
+    const key = items.map((i) => `${i.label}:${i.ok}`).join('|');
+    if (key === this.cmdKey) return;
+    this.cmdKey = key;
+    this.cmds.innerHTML = '';
+    for (const i of items) {
+      const chip = h('span', `cmd${i.ok ? '' : ' off'}${i.info ? ' info' : ''}`, i.label);
+      if (i.cost) chip.append(h('span', 'cmd-cost', `${i.cost}`));
+      if (!i.ok && i.why) chip.title = i.why;
+      this.cmds.append(chip);
+    }
+  }
+
+  /** Red pulse on the energy gauge (e.g. a move failed for lack of stamina). */
+  flashEnergy() {
+    this.energy.classList.remove('flash');
+    void this.energy.offsetWidth;
+    this.energy.classList.add('flash');
+  }
+
   /** Bottom move bar: one card per move with name, type, stamina cost and what it does. */
   private updateMoves(tr: TrainerState) {
     const c = tr.team[tr.active]!;
@@ -239,7 +310,7 @@ export class Hud {
     this.moves.innerHTML = '';
     def.moves.forEach((id, i) => {
       const m = MOVES[id];
-      const cls = ['move-card', affordable[i] ? '' : 'poor', id === current ? 'current' : '', queued.has(id) ? 'queued' : ''].filter(Boolean).join(' ');
+      const cls = ['move-card', affordable[i] || id === current ? '' : 'poor', id === current ? 'current' : '', queued.has(id) ? 'queued' : ''].filter(Boolean).join(' ');
       const card = h('div', cls);
       card.style.setProperty('--el', ELEMENT_COLOR[m.element]);
       const meta = h('div', 'mc-meta');
@@ -250,9 +321,7 @@ export class Hud {
       card.title = `${desc.textContent} (${lang === 'it' ? m.name.en : m.name.it})`;
       this.moves.append(card);
     });
-    const uni = h('div', `move-card universal${c.stamina >= DODGE_COST ? '' : ' poor'}`);
-    uni.append(h('div', 'mc-desc', t('universal')));
-    this.moves.append(uni);
+
   }
 
   // ------------------------------------------------------------ voice feedback

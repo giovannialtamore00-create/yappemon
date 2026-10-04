@@ -239,3 +239,35 @@ html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
   .panel, #hud.spectator .panel-me, #hud.spectator .panel-foe { top: 84px; }
   .mc-meta .mc-type { display: none; }
 }
+
+/* Big energy (stamina) gauge on the left edge. */
+.energy-gauge { position: absolute; left: 16px; top: 112px; bottom: 112px; width: 58px; display: flex; flex-direction: column; align-items: center; gap: 6px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 8px 0; }
+.eg-label { font-size: 0.62rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.eg-track { position: relative; flex: 1; width: 22px; border-radius: 999px; background: rgba(0, 0, 0, 0.5); overflow: visible; }
+.eg-fill { position: absolute; left: 0; right: 0; bottom: 0; border-radius: 999px; background: linear-gradient(0deg, #1e7fe0, #6fd6ff); box-shadow: 0 0 12px rgba(80, 190, 255, 0.6); transition: height 0.1s linear; }
+.energy-gauge.low .eg-fill { background: linear-gradient(0deg, #e06a1e, #ffc36f); box-shadow: 0 0 12px rgba(255, 160, 80, 0.6); }
+.energy-gauge.paused .eg-fill { filter: saturate(0.5) brightness(0.85); }
+.energy-gauge.slowed .eg-fill { background: linear-gradient(0deg, #7a3fe0, #c89bff); }
+.eg-ticks { position: absolute; inset: 0; pointer-events: none; }
+.eg-tick { position: absolute; left: -5px; right: -5px; height: 2px; background: rgba(255, 255, 255, 0.55); }
+.eg-tick span { position: absolute; left: 100%; top: -7px; margin-left: 3px; font-size: 0.6rem; font-weight: 800; color: var(--gold); text-shadow: 0 1px 2px #000; }
+.eg-val { font-size: 1.15rem; font-weight: 900; font-variant-numeric: tabular-nums; }
+.energy-gauge.flash { animation: egFlash 0.6s; }
+@keyframes egFlash { 0%, 60% { box-shadow: 0 0 0 3px var(--bad), 0 0 24px var(--bad); } }
+#hud.spectator .energy-gauge { display: none; }
+/* Generic commands strip inside the voice box. */
+.cmds { display: flex; gap: 6px; flex-wrap: wrap; }
+.cmd { font-size: 0.78rem; font-weight: 700; padding: 2px 9px; border-radius: 999px; background: rgba(51, 224, 255, 0.14); border: 1px solid rgba(51, 224, 255, 0.45); }
+.cmd.off { opacity: 0.35; text-decoration: line-through; }
+.cmd.info { background: transparent; border-style: dashed; color: var(--muted); font-weight: 600; }
+.cmd-cost { margin-left: 5px; color: var(--gold); }
+.cmd-cost::after { content: '⚡'; font-size: 0.7em; }
+@media (max-width: 700px) {
+  .energy-gauge { left: 8px; top: 200px; bottom: 360px; width: 40px; }
+  .eg-label { font-size: 0.5rem; }
+  .eg-track { width: 14px; }
+  .eg-val { font-size: 0.85rem; }
+  .cmd { font-size: 0.68rem; padding: 1px 6px; }
+  .hud-bottom { bottom: 164px; }
+}
+@media (max-width: 700px) { #toasts { bottom: 330px; } }

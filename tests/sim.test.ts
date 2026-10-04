@@ -23,17 +23,17 @@ const dodge: Intent = { type: 'queue', actions: [{ kind: 'dodge' }] };
 
 describe('type chart', () => {
   it('matches the spec', () => {
-    expect(typeMultiplier('fire', 'grass')).toBe(2);
+    expect(typeMultiplier('fire', 'grass')).toBe(1.25);
     expect(typeMultiplier('fire', 'fire')).toBe(0.5);
     expect(typeMultiplier('fire', 'water')).toBe(0.5);
     expect(typeMultiplier('fire', 'electric')).toBe(1);
-    expect(typeMultiplier('water', 'fire')).toBe(2);
+    expect(typeMultiplier('water', 'fire')).toBe(1.25);
     expect(typeMultiplier('water', 'water')).toBe(0.5);
     expect(typeMultiplier('water', 'grass')).toBe(0.5);
-    expect(typeMultiplier('grass', 'water')).toBe(2);
+    expect(typeMultiplier('grass', 'water')).toBe(1.25);
     expect(typeMultiplier('grass', 'grass')).toBe(0.5);
     expect(typeMultiplier('grass', 'fire')).toBe(0.5);
-    expect(typeMultiplier('electric', 'water')).toBe(2);
+    expect(typeMultiplier('electric', 'water')).toBe(1.25);
     expect(typeMultiplier('electric', 'electric')).toBe(0.5);
     expect(typeMultiplier('electric', 'grass')).toBe(0.5);
     expect(typeMultiplier('electric', 'fire')).toBe(1);
@@ -44,7 +44,7 @@ describe('type chart', () => {
 describe('damage formula', () => {
   it('base × type × STAB × variance', () => {
     // roll 0.5 → variance 1.0
-    expect(computeDamage(16, 'fire', 'fire', 'grass', 0.5, false)).toEqual({ damage: 40, eff: 'super' }); // 16*2*1.25
+    expect(computeDamage(16, 'fire', 'fire', 'grass', 0.5, false)).toEqual({ damage: 25, eff: 'super' }); // 16*1.25*1.25
     expect(computeDamage(16, 'fire', 'fire', 'water', 0.5, false)).toEqual({ damage: 10, eff: 'weak' }); // 16*.5*1.25
     expect(computeDamage(12, 'normal', 'fire', 'grass', 0.5, false)).toEqual({ damage: 12, eff: 'neutral' }); // normal: neutral, no STAB
     expect(computeDamage(30, 'fire', 'fire', 'electric', 0.5, false).damage).toBe(38); // 37.5 → 38
@@ -62,8 +62,8 @@ describe('damage formula', () => {
     const hit = ev.find((e) => e.t === 'hit');
     expect(hit).toMatchObject({ t: 'hit', p: 0, target: 1, eff: 'super' });
     const dmg = (hit as { damage: number }).damage;
-    expect(dmg).toBeGreaterThanOrEqual(36); // 16*2*1.25*0.9
-    expect(dmg).toBeLessThanOrEqual(44);
+    expect(dmg).toBeGreaterThanOrEqual(22); // 16*1.25*1.25*0.9
+    expect(dmg).toBeLessThanOrEqual(28);
     expect(activeCreature(s.trainers[1]).hp).toBe(125 - dmg);
   });
 });
@@ -73,11 +73,13 @@ describe('stamina', () => {
     const s = ready(['cindrix'], ['vinram']);
     step(s, [[q('magma_burst')], []]);
     const c = activeCreature(s.trainers[0]);
-    expect(c.stamina).toBe(STAMINA_MAX - 35);
+    const cost = MOVES.magma_burst.cost;
+    expect(cost).toBe(47); // 35 × 1.35
+    expect(c.stamina).toBe(STAMINA_MAX - cost);
     run(s, sec(0.7));
-    expect(c.stamina).toBe(STAMINA_MAX - 35); // still paused
+    expect(c.stamina).toBe(STAMINA_MAX - cost); // still paused
     run(s, sec(0.2) + 1);
-    expect(c.stamina).toBeGreaterThan(STAMINA_MAX - 35);
+    expect(c.stamina).toBeGreaterThan(STAMINA_MAX - cost);
   });
   it('regenerates 10/s', () => {
     const s = ready(['cindrix'], ['vinram']);

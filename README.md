@@ -98,7 +98,7 @@ After a match, **Rematch** needs both players to click it; **Quit** goes back to
 
 ## 4. Voice command reference
 
-The **move bar** at the bottom of the screen always lists your active creature's moves with their stamina cost and what they do (in your language).
+The big **energy gauge** on the left shows your stamina with a mark at each move's cost, and the **Commands** row in the voice box lists dodge / come back / stop (greyed out when unavailable). The **move bar** at the bottom of the screen always lists your active creature's moves with their stamina cost and what they do (in your language).
 
 Speak naturally and **pause briefly** after a command: the game acts when the recognizer finalizes your sentence. The live transcript appears at the bottom of the screen (green = understood, struck through = not understood). You can chain up to **4 actions**.
 
@@ -106,35 +106,35 @@ Speak naturally and **pause briefly** after a command: the game acts when the re
 
 | Creature | English | Italiano | Stamina | Effect |
 |---|---|---|---|---|
-| **Cindrix** (Fire) | Shell Ram | Carica Corazzata | 10 | Normal melee dash, 12 dmg |
-| | Cinder Spit | Sputo di Brace | 15 | Fire projectile, 16 dmg |
-| | Heat Shell | Guscio Rovente | 20 | Take 50% damage for 4 s |
-| | Magma Burst | Esplosione di Magma | 35 | Eruption under target, 30 dmg, long windup |
-| **Brinkle** (Water) | Bubble Bump | Spinta di Bolla | 10 | Normal melee, 12 dmg |
-| | Water Jet | Getto d'Acqua | 15 | Water beam, 16 dmg |
-| | Healing Rain | Pioggia Curativa | 25 | Heal 18 HP over 3 s |
-| | Tidal Crash | Schianto di Marea | 35 | Water wave, 30 dmg |
-| **Vinram** (Grass) | Horn Charge | Carica di Corna | 10 | Normal melee dash, 13 dmg |
-| | Leaf Volley | Raffica di Foglie | 15 | Grass projectile spread, 15 dmg |
-| | Vine Snare | Laccio di Liane | 20 | Root target 2 s (can't dodge or move) |
-| | Thorn Quake | Terremoto di Spine | 35 | Ground spikes, 30 dmg |
-| **Joltmoth** (Electric) | Wing Flick | Colpo d'Ala | 10 | Normal melee, 11 dmg |
-| | Spark Dart | Dardo Scintilla | 15 | Fast electric projectile, 15 dmg |
-| | Static Field | Campo Statico | 20 | Halve target's stamina regen for 5 s |
-| | Thunder Lance | Lancia di Tuono | 35 | Electric bolt, 29 dmg, very fast |
+| **Cindrix** (Fire) | Shell Ram | Carica Corazzata | 14 | Normal melee dash, 12 dmg |
+| | Cinder Spit | Sputo di Brace | 20 | Fire projectile, 16 dmg |
+| | Heat Shell | Guscio Rovente | 27 | Take 50% damage for 4 s |
+| | Magma Burst | Esplosione di Magma | 47 | Eruption under target, 30 dmg, long windup |
+| **Brinkle** (Water) | Bubble Bump | Spinta di Bolla | 14 | Normal melee, 12 dmg |
+| | Water Jet | Getto d'Acqua | 20 | Water beam, 16 dmg |
+| | Healing Rain | Pioggia Curativa | 34 | Heal 18 HP over 3 s |
+| | Tidal Crash | Schianto di Marea | 47 | Water wave, 30 dmg |
+| **Vinram** (Grass) | Horn Charge | Carica di Corna | 14 | Normal melee dash, 13 dmg |
+| | Leaf Volley | Raffica di Foglie | 20 | Grass projectile spread, 15 dmg |
+| | Vine Snare | Laccio di Liane | 27 | Root target 2 s (can't dodge or move) |
+| | Thorn Quake | Terremoto di Spine | 47 | Ground spikes, 30 dmg |
+| **Joltmoth** (Electric) | Wing Flick | Colpo d'Ala | 14 | Normal melee, 11 dmg |
+| | Spark Dart | Dardo Scintilla | 20 | Fast electric projectile, 15 dmg |
+| | Static Field | Campo Statico | 27 | Halve target's stamina regen for 5 s |
+| | Thunder Lance | Lancia di Tuono | 47 | Electric bolt, 29 dmg, very fast |
 
 **Moves learned by evolving** (evolved forms keep all earlier moves):
 
 | Evolution | English | Italiano | Stamina | Effect |
 |---|---|---|---|---|
-| **Pyroxen** (stage 2 of Cindrix) | Molten Leap | Balzo Fuso | 30 | Leaps high and slams onto the target, 24 dmg |
-| **Calderox** (stage 3) | Volcanic Ruin | Rovina Vulcanica | 45 | Triple eruption under the target, 40 dmg, very long windup |
-| **Tsunafin** (stage 2 of Brinkle) | Tide Mirror | Specchio di Marea | 25 | For 1.5 s, the next hit is reflected back at the attacker |
-| **Abyssmaw** (stage 3) | Maelstrom | Gorgo Abissale | 40 | Whirlpool, 26 dmg + roots 1.5 s |
-| **Thornhorn** (stage 2 of Vinram) | Bramble Stampede | Carica di Rovi | 30 | Charge whose windup can't be interrupted, 24 dmg |
-| **Elderoot** (stage 3) | Ancient Bloom | Fioritura Antica | 35 | Heal 35 HP over 3 s |
-| **Stormoth** (stage 2 of Joltmoth) | Chain Storm | Tempesta a Catena | 30 | 3 bolts of 10 dmg, each dodgeable separately |
-| **Tempestra** (stage 3) | Sky Judgement | Giudizio Celeste | 45 | Lightning from the sky, 38 dmg, very long windup |
+| **Pyroxen** (stage 2 of Cindrix) | Molten Leap | Balzo Fuso | 41 | Leaps high and slams onto the target, 24 dmg |
+| **Calderox** (stage 3) | Volcanic Ruin | Rovina Vulcanica | 61 | Triple eruption under the target, 40 dmg, very long windup |
+| **Tsunafin** (stage 2 of Brinkle) | Tide Mirror | Specchio di Marea | 34 | For 1.5 s, the next hit is reflected back at the attacker |
+| **Abyssmaw** (stage 3) | Maelstrom | Gorgo Abissale | 54 | Whirlpool, 26 dmg + roots 1.5 s |
+| **Thornhorn** (stage 2 of Vinram) | Bramble Stampede | Carica di Rovi | 41 | Charge whose windup can't be interrupted, 24 dmg |
+| **Elderoot** (stage 3) | Ancient Bloom | Fioritura Antica | 47 | Heal 35 HP over 3 s |
+| **Stormoth** (stage 2 of Joltmoth) | Chain Storm | Tempesta a Catena | 41 | 3 bolts of 10 dmg, each dodgeable separately |
+| **Tempestra** (stage 3) | Sky Judgement | Giudizio Celeste | 61 | Lightning from the sky, 38 dmg, very long windup |
 
 Short keywords work too, for example *magma*, *jet*, *lance*, *spit*, *quake*, *tuono*, *spine*, *brace*, *marea*, *foglie*, *mirror*, *specchio*, *gorgo*, *rovi*. The parser is fuzzy, so common mishearings ("sinner spit", "water get", "thunder dance") still work.
 
@@ -142,7 +142,7 @@ Short keywords work too, for example *magma*, *jet*, *lance*, *spit*, *quake*, *
 
 | Action | English | Italiano |
 |---|---|---|
-| Dodge (15 stamina, 0.4 s invulnerable, 1 s cooldown) | "dodge" | "schiva" |
+| Dodge (20 stamina, 0.4 s invulnerable, 1 s cooldown) | "dodge" | "schiva" |
 | Recall your creature and send out the other one | "come back" | "rientra" |
 | Clear your command queue | "stop" | "fermati" |
 | Switch to a specific creature | "go Joltmoth" | "vai Joltmoth" |
@@ -174,12 +174,12 @@ Saying **"dodge"** at the start of a command jumps the queue, so you can react t
 
 **Rounds and evolution:** a match is **best of 3 rounds**. A round ends when one trainer has no creatures left. Between rounds everyone's creatures **evolve** (with an evolution animation): round 1 uses stage-1 forms, round 2 stage 2, round 3 the final stage. Each stage has more HP, deals more damage (×1.15, then ×1.3) and learns one new move. HP and stamina are fully restored at the start of each round. To always play all 3 rounds, set `ROUNDS_TO_WIN = 3` in `src/sim/data.ts`.
 
-**Type chart** (2× super effective / 0.5× not very effective; Normal moves are always neutral):
+**Type chart** (super effective = **+25%**, not very effective = 0.5×; Normal moves are always neutral):
 
-- Fire: 2× vs Grass; 0.5× vs Fire, Water
-- Water: 2× vs Fire; 0.5× vs Water, Grass
-- Grass: 2× vs Water; 0.5× vs Grass, Fire
-- Electric: 2× vs Water; 0.5× vs Electric, Grass
+- Fire: ×1.25 vs Grass; 0.5× vs Fire, Water
+- Water: ×1.25 vs Fire; 0.5× vs Water, Grass
+- Grass: ×1.25 vs Water; 0.5× vs Grass, Fire
+- Electric: ×1.25 vs Water; 0.5× vs Electric, Grass
 
 **Rules in short:**
 
