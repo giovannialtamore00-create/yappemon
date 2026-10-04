@@ -64,3 +64,11 @@ Judgment calls made where the spec was silent. Newest at the bottom.
 58. **Big energy gauge** on the left edge (vertical, value + a tick at every move's cost and at the dodge cost; orange when below the dodge cost, dimmed while regen is paused, purple under Static Field; red pulse when a move fails for lack of stamina). Hidden for spectators.
 59. **Commands row** in the voice box (always visible): dodge (with cost), come back / go <bench creature>, stop, and the chaining hint “A then B” / “A poi B”. Commands that can't be used right now are greyed and struck through, with the reason on hover (rooted, not enough energy, no creature left, nothing queued). It replaces the small "Dodge · Come back · Stop" card that was in the move bar.
 60. **Ambient loop removed** (user request: "big noise" in the menus). The wind-noise + drone pad that played everywhere is gone; menus are silent. Battle music, jingles and all sound effects are unchanged.
+
+## Movement / dynamic fighting update (branch `movement`, approved by the user 2026-10-05)
+61. Plan agreed with the user: creatures move on their own (strafe sideways and step in/out on their own half of the arena, so the first-person camera keeps working); hits are decided by **accuracy % × target state** (attacking ×1.2, circling ×1.0, alert ×0.7, mid-dash always missed), not by physical hitboxes (positional hits = possible later upgrade).
+62. **Getting hit clears your remaining queue; missing (accuracy miss or dodged) does not.** A 25+ hit during a windup still cancels that attack. Out of stamina / target recalled still fail as before.
+63. **Quick moves** (Shell Ram, Bubble Bump, Horn Charge, Wing Flick): ~0.15 s windup, ~100% accuracy, 8–9 dmg, 20 stamina; not dodgeable with the dodge window (alert still lowers their accuracy). Normal attacks get a minimum 0.6 s windup.
+64. **Dodge = 5 stamina, arms a 2 s window**: the first normal/heavy attack landing in it is auto-dodged with a dash ("dodge left/right" / "schiva a sinistra/destra" picks the side; plain dodge picks automatically). Unused → wasted. Quick moves go through it.
+65. **Alert** ("alert" / "attento" / "guardia"): 3 s defensive stance, accuracy against you ×0.7, faster strafing, no attacking during it, 15 stamina.
+66. **Dynamic camera**: stays behind the trainer but turns/zooms to keep both creatures framed.

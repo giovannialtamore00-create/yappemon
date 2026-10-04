@@ -1,6 +1,6 @@
 # PROGRESS
 
-**Current milestone:** COMPLETE + post-MVP feature: rounds/evolutions/move animations (done, tested).
+**Current milestone:** Movement update (branch `movement`, NOT merged; live link serves main). See plan in DECISIONS #61+.
 **Phase:** all build milestones done on `main`. BLOCKERS.md has no parked technical problems; only items that need the user.
 
 ## Done
