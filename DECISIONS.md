@@ -34,3 +34,9 @@ Judgment calls made where the spec was silent. Newest at the bottom.
 30. **Voice runs only during a battle** (incl. the forced-switch prompt); it stops on the end screen and in menus. Recognition auto-restarts when Chrome ends a session, with exponential backoff on errors; "mic blocked" stops retrying and shows a toast.
 31. **Supported-browser check:** SpeechRecognition must exist and the browser must be Chrome/Edge/Chromium (Brave/Opera excluded — they expose the API but it doesn't work). Others get a warning in the lobby and a toast in battle; the debug box still works.
 32. **Test-only URL options** `?seed=`, `?botTeam=a,b`, `?bot=passive` for deterministic headless tests. Harmless for players.
+33. **Room codes** use a 31-character alphabet without 0/O/1/I/L so they can be read aloud; PeerJS id = `cbattle-<CODE>`. If the id is taken, the host silently picks a new code (up to 5 tries).
+34. **Host = player 0, joiner = player 1.** The host sends `start` with both teams once both are ready; the client renders host snapshots 110 ms behind (clock offset estimated from snapshot ticks), and receives events when their snapshot is displayed so effects line up with motion.
+35. **Remote input is sanitized** on the host (only known intent shapes, max 8 intents, max 4 actions each); a remote team must be 2 distinct known species.
+36. **Disconnect detection:** data-channel close, or 6 s without any message (1 s heartbeat). Quitting sends an explicit `quit`. Either way the other player gets "Opponent disconnected" + Back to lobby.
+37. **Rematch** requires both players to press Rematch; whoever presses second triggers it (via the host), then both return to team select. The waiting player sees "Opponent wants a rematch!".
+38. **STUN only, no TURN server** (no free reliable TURN exists). Works on most home networks; strict corporate/symmetric NATs can fail — documented in README.

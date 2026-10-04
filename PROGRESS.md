@@ -1,6 +1,6 @@
 # PROGRESS
 
-**Current milestone:** 6 — PeerJS multiplayer
+**Current milestone:** 7 — Screens and polish (full lobby → rematch flow)
 **Phase:** building (main branch)
 
 ## Done
@@ -10,9 +10,10 @@
 - M3 ✅ Renderer: `src/render/{scene,creatures,view,vfx,hud,showcase}.ts`, `src/game/{session,battle}.ts`, `src/ui/screens.ts`, `src/main.ts`, `src/i18n.ts`, `src/style.css`. Practice vs Bot fully playable via debug box (backtick). `npm run smoke` (or `node scripts/smoke.mjs --full`) = headless Playwright run with screenshots in ./screenshots (gitignored).
 - M4 ✅ `src/voice/speech.ts` (continuous, auto-restart w/ backoff, interim → HUD, final alternatives → `Battle.commandAlternatives` picks first that parses). Browser check `isSupportedBrowser()`. Smoke test injects a FakeRec to test the wiring. URL test options: `?seed=7&botTeam=vinram,brinkle&bot=passive`.
 - M5 ✅ `src/audio/sfx.ts` (synth SFX per move, hit, whoosh, fail buzz, faint, recall, send-out, UI click, jingles, ambient wind+pad, volume slider in corner, unlocked on first gesture). VFX polish (tidal wave lip, heal height). `node scripts/vfx-shots.mjs [species]` + `node scripts/contact-sheet.mjs <dir> <out.png>` for visual review.
+- M6 ✅ `src/net/{protocol,link,sessions}.ts`: hostRoom/joinRoom (PeerJS, id cbattle-CODE, STUN only), Link heartbeat (ping 1 s, timeout 6 s), HostSession (20 Hz snaps + events), ClientSession (tick-offset clock, 110 ms interp delay, events delivered when their snapshot is shown), sanitizeIntents/sanitizeTeam. Flows in main.ts: hostGame, joinGame, netTeamSelect, netEnd (rematch handshake), disconnected. `node scripts/net-test.mjs` = 2-page test over the real broker (needs internet).
 
 ## In progress
-- M6: `src/net/{protocol,peer,host,client}.ts`: room codes (cbattle-<code>), host-authoritative SimRunner, ~20 Hz snapshots + events, client interpolation, lobby host/join screens, team-select handshake, disconnect screen.
+- M7: polish pass — click-to-start/mic hints, how-to-play panel, HUD polish, opponent action telegraph, end-screen stats, Italian UI check, mobile layout check, perf check.
 
 ## Next steps (in order)
 1. Finish sim + tests (M1), checkpoint.

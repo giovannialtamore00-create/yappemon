@@ -10,6 +10,9 @@ import { SPECIES_IDS } from './sim/data';
 import type { Lang, SpeciesId } from './sim/types';
 import { Screens, setUiClickHandler } from './ui/screens';
 import { Speech, isSupportedBrowser } from './voice/speech';
+import { hostRoom, joinRoom, type Link, type Pending } from './net/link';
+import { normalizeCode } from './net/protocol';
+import { ClientSession, HostSession, sanitizeTeam } from './net/sessions';
 
 const LANG_KEY = 'yappemon.lang';
 
@@ -34,6 +37,8 @@ class App {
     ui: () => this.sfx.ui(),
   };
   private battle: Battle | null = null;
+  private link: Link | null = null;
+  private pending: Pending | null = null;
   private last = performance.now();
   private time = 0;
   private micWarned = false;
@@ -115,7 +120,121 @@ class App {
     else this.hud.toast(t('browserWarn'), 'bad', 6000);
   }
 
+  // ------------------------------------------------------------ online play
+
+  private closeNet(notify: boolean) {
+    this.pending?.cancel();
+    this.pending = null;
+    const link = this.link;
+    this.link = null;
+    if (link) {
+      link.onClose = () => {};
+      if (notify) link.close();
+    }
+  }
+
+  private disconnected() {
+    this.link = null;
+    this.endBattle();
+    this.showcase.show('cindrix');
+    this.screens.message(t('disconnected'), () => this.lobby());
+  }
+
+  private hostGame() {
+    this.closeNet(true);
+    this.screens.message(t('connecting'), () => this.lobby());
+    this.pending = hostRoom({
+      onCode: (code) => this.screens.hosting(code, () => this.lobby()),
+      onLink: (link) => { this.pending = null; this.netTeamSelect(link, 'host'); },
+      onError: (msg) => this.screens.message(t('peerError', { msg }), () => this.lobby()),
+    });
+  }
+
+  private joinGame(code: string) {
+    this.closeNet(true);
+    const c = normalizeCode(code);
+    if (c.length !== 5) return this.screens.message(t('badCode'), () => this.lobby());
+    this.screens.message(t('connecting'), () => this.lobby());
+    this.pending = joinRoom(c, {
+      onLink: (link) => { this.pending = null; this.netTeamSelect(link, 'client'); },
+      onError: (msg) => this.screens.message(t('peerError', { msg }), () => this.lobby()),
+    });
+  }
+
+  /** Team select for an online match. The host collects both teams and starts the match. */
+  private netTeamSelect(link: Link, role: 'host' | 'client') {
+    this.endBattle();
+    this.link = link;
+    link.onClose = () => this.disconnected();
+    let mine: SpeciesId[] | null = null;
+    let theirs: SpeciesId[] | null = null;
+    const ui = this.screens.teamSelect({
+      onHover: (sp) => this.showcase.show(sp),
+      onReady: (team) => {
+        mine = team;
+        ui.setWaiting();
+        if (role === 'client') link.send({ k: 'ready', team });
+        else tryStart();
+      },
+    });
+    const tryStart = () => {
+      if (role !== 'host' || !mine || !theirs) return;
+      const teams: [SpeciesId[], SpeciesId[]] = [mine, theirs];
+      link.send({ k: 'start', teams });
+      const session = new HostSession(teams, link);
+      link.onMessage = (m) => {
+        if (m.k === 'intents') session.receiveIntents(m.list);
+        else if (m.k === 'rematch') this.rematch.remote();
+      };
+      this.beginBattle(session, teams, (r) => this.netEnd(r, link, role));
+    };
+    link.onMessage = (m) => {
+      if (role === 'host' && m.k === 'ready') {
+        theirs = sanitizeTeam(m.team);
+        tryStart();
+      } else if (role === 'client' && m.k === 'start') {
+        const teams = m.teams;
+        const session = new ClientSession(link);
+        link.onMessage = (msg) => {
+          if (msg.k === 'snap') session.receiveSnapshot(msg.state, msg.events);
+          else if (msg.k === 'rematch') this.rematch.remote();
+          else if (msg.k === 'rematch_go') this.netTeamSelect(link, 'client');
+        };
+        this.beginBattle(session, teams, (r) => this.netEnd(r, link, role));
+      }
+    };
+  }
+
+  /** Set by netEnd while the end screen is up; called when the opponent asks for a rematch. */
+  private rematch = { remote: () => {} };
+
+  private netEnd(result: 'victory' | 'defeat' | 'draw', link: Link, role: 'host' | 'client') {
+    this.speech.stop();
+    let localWants = false;
+    let remoteWants = false;
+    const go = () => {
+      link.send({ k: 'rematch_go' });
+      this.netTeamSelect(link, 'host');
+    };
+    const ui = this.screens.end({
+      result,
+      onRematch: () => {
+        localWants = true;
+        link.send({ k: 'rematch' });
+        ui.setStatus(t('rematchWaiting'));
+        if (role === 'host' && remoteWants) go();
+      },
+      onQuit: () => { this.closeNet(true); this.lobby(); },
+    });
+    this.rematch.remote = () => {
+      remoteWants = true;
+      if (role === 'host' && localWants) go();
+      else ui.setStatus(t('opponentWantsRematch'));
+    };
+  }
+
   lobby() {
+    this.closeNet(true);
     this.endBattle();
     this.showcase.show('cindrix');
     this.screens.lobby({
@@ -127,12 +246,13 @@ class App {
         this.lobby();
       },
       onPractice: () => this.practiceTeamSelect(),
-      onHost: () => {},
-      onJoin: () => {},
+      onHost: () => this.hostGame(),
+      onJoin: (code) => this.joinGame(code),
     });
   }
 
   practiceTeamSelect() {
+    this.closeNet(true);
     this.endBattle();
     this.screens.teamSelect({
       onHover: (sp) => this.showcase.show(sp),
