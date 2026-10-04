@@ -1,13 +1,14 @@
 # PROGRESS
 
-**Current milestone:** 1 — Scaffold + sim core + tests
+**Current milestone:** 2 — Voice command parser
 **Phase:** building (main branch)
 
 ## Done
 - Kickoff: settings.json permissions, git init, deps installed (three, peerjs, vite 8, TS 7, vitest 5, playwright + chromium).
+- M1 ✅ `src/sim/` (types, data, rng, sim, bot) + `tests/sim.test.ts` (28 tests). Bot-vs-bot matches end in ~25–45 s.
 
 ## In progress
-- `src/sim/*` combat simulation.
+- M2: `src/voice/parser.ts` + `src/voice/aliases.ts` + `tests/parser.test.ts`.
 
 ## Next steps (in order)
 1. Finish sim + tests (M1), checkpoint.
