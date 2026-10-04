@@ -1,30 +1,30 @@
 # PROGRESS
 
-**Current milestone:** 8 — Deployment + README
-**Phase:** building (main branch)
+**Current milestone:** 9 — Parking-lot phase (final)
+**Phase:** all build milestones done on `main`. BLOCKERS.md has no parked technical problems; only items that need the user.
 
 ## Done
-- Kickoff: settings.json permissions, git init, deps installed (three, peerjs, vite 8, TS 7, vitest 5, playwright + chromium).
-- M1 ✅ `src/sim/` (types, data, rng, sim, bot) + `tests/sim.test.ts` (28 tests). Bot-vs-bot matches end in ~25–45 s.
-- M2 ✅ `src/voice/parser.ts` (normalize, fold, levenshtein, windowed fuzzy match, parse(), toIntents()), `src/voice/aliases.ts`, `tests/parser.test.ts` (99 tests).
-- M3 ✅ Renderer: `src/render/{scene,creatures,view,vfx,hud,showcase}.ts`, `src/game/{session,battle}.ts`, `src/ui/screens.ts`, `src/main.ts`, `src/i18n.ts`, `src/style.css`. Practice vs Bot fully playable via debug box (backtick). `npm run smoke` (or `node scripts/smoke.mjs --full`) = headless Playwright run with screenshots in ./screenshots (gitignored).
-- M4 ✅ `src/voice/speech.ts` (continuous, auto-restart w/ backoff, interim → HUD, final alternatives → `Battle.commandAlternatives` picks first that parses). Browser check `isSupportedBrowser()`. Smoke test injects a FakeRec to test the wiring. URL test options: `?seed=7&botTeam=vinram,brinkle&bot=passive`.
-- M5 ✅ `src/audio/sfx.ts` (synth SFX per move, hit, whoosh, fail buzz, faint, recall, send-out, UI click, jingles, ambient wind+pad, volume slider in corner, unlocked on first gesture). VFX polish (tidal wave lip, heal height). `node scripts/vfx-shots.mjs [species]` + `node scripts/contact-sheet.mjs <dir> <out.png>` for visual review.
-- M6 ✅ `src/net/{protocol,link,sessions}.ts`: hostRoom/joinRoom (PeerJS, id cbattle-CODE, STUN only), Link heartbeat (ping 1 s, timeout 6 s), HostSession (20 Hz snaps + events), ClientSession (tick-offset clock, 110 ms interp delay, events delivered when their snapshot is shown), sanitizeIntents/sanitizeTeam. Flows in main.ts: hostGame, joinGame, netTeamSelect, netEnd (rematch handshake), disconnected. `node scripts/net-test.mjs` = 2-page test over the real broker (needs internet).
-- M8 (next): `.github/workflows/deploy.yml` (GitHub Pages via actions/deploy-pages), README.md (run, deploy step-by-step, host/join, voice reference EN/IT, browser reqs, known limitations), final user step for `gh` login + push.
+- Kickoff: `.claude/settings.json` permissions, git init, deps (three, peerjs, vite 8, TS 7, vitest 5, playwright + chromium).
+- M1 ✅ `src/sim/` (types, data, rng, sim, bot) + `tests/sim.test.ts`.
+- M2 ✅ `src/voice/parser.ts`, `src/voice/aliases.ts` + `tests/parser.test.ts`.
+- M3 ✅ `src/render/{scene,creatures,view,vfx,hud,showcase}.ts`, `src/game/{session,battle}.ts`, `src/ui/screens.ts`, `src/main.ts`, `src/i18n.ts`, `src/style.css`.
+- M4 ✅ `src/voice/speech.ts` (continuous, auto-restart with backoff, alternatives → `Battle.commandAlternatives`).
+- M5 ✅ `src/audio/sfx.ts` (all synthesized) + VFX polish.
+- M6 ✅ `src/net/{protocol,link,sessions}.ts` + flows in `main.ts` (hostGame, joinGame, netTeamSelect, netEnd/rematch, disconnected) + `tests/net.test.ts`.
+- M7 ✅ how-to-play, mic hint, opponent windup warning, Leave button, phone layout, heavy windups tuned (DECISIONS #42).
+- M8 ✅ `.github/workflows/deploy.yml`, `scripts/publish.ps1`, `README.md`, background-tab keep-alive worker.
 
-## In progress
-- M7 ✅ how-to-play in lobby, mic-permission hint on team select, opponent windup warning in foe panel ("Charging: X!"), Leave button, opponent-failed toast, HUD relabel on language change, phone layout. `node scripts/flow-test.mjs` (Italian UI, voice forced switch, leave, phone). Heavy windups lengthened for voice dodging (DECISIONS #42).
+## Status of checks (last run)
+- `npm test`: 134 passing. `npm run build`: OK.
+- `node scripts/smoke.mjs [--full]`, `node scripts/flow-test.mjs`, `node scripts/net-test.mjs` (real PeerJS broker, needs internet), `node scripts/preview-test.mjs`: all OK.
 
 ## Next steps (in order)
-1. Finish sim + tests (M1), checkpoint.
-2. Voice parser + tests (M2).
-3. Renderer + Practice vs Bot via debug box (M3).
-4. Live voice (M4). 5. VFX/audio (M5). 6. PeerJS (M6). 7. Screens/polish (M7). 8. Deploy + README (M8). 9. Parking lot (M9).
+1. Parking lot: nothing parked. Items needing the user are in BLOCKERS.md ("Needs the user").
+2. Final summary to the user + final checkpoint.
 
 ## Context for a fresh session
-- Shell: Windows; use the Bash tool (Git Bash). `npm test`, `npm run build`, `npm run dev`.
-- GitHub CLI is NOT logged in (user was remote at kickoff). Deploy is left as a final documented step for the user (README "Deploy").
-- TypeScript is v7 (native compiler); `tsc --noEmit` runs in `npm run build`.
-- Test hook: `window.__yappemon.say(text)` / `.state()` in the page (used by scripts/smoke.mjs).
-- Headless WebGL works with chromium args `--use-angle=swiftshader --enable-unsafe-swiftshader`.
+- Windows; use the Bash tool (Git Bash). Commands: `npm test`, `npm run build`, `npm run dev`, plus the scripts above.
+- Headless WebGL needs chromium args `--use-angle=swiftshader --enable-unsafe-swiftshader` (already in the scripts).
+- Page test hook: `window.__yappemon.say(text)`, `.state()`, `.app`. URL test options: `?seed=7&botTeam=vinram,brinkle&bot=passive`.
+- GitHub CLI is NOT installed/logged in (the kickoff winget install was waiting on a UAC prompt when the user left). Deployment = the user runs `scripts/publish.ps1` (README §2).
+- Gotcha: don't put text with backticks inside `node -e "..."` in bash — bash runs them as commands. Use the Write/Edit tools for such text.
