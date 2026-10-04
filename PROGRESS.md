@@ -14,6 +14,7 @@
 - M7 ✅ how-to-play, mic hint, opponent windup warning, Leave button, phone layout, heavy windups tuned (DECISIONS #42).
 - M8 ✅ `.github/workflows/deploy.yml`, `scripts/publish.ps1`, `README.md`, background-tab keep-alive worker.
 
+- Post-MVP ✅ spectator rooms ("Host as spectator", SpectatorHostSession, side camera; `node scripts/spectator-test.mjs` = 3-browser test).
 - Post-MVP ✅ best-of-3 rounds, 3 evolution stages (8 new forms, 8 new moves), evolution sequence, per-move animations (src/render/motion.ts), round HUD/banners, sounds. DECISIONS #46–52. Visual check script: node scripts/evo-shots.mjs.
 
 ## Status of checks (last run)

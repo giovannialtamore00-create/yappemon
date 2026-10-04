@@ -92,13 +92,12 @@ export class HostSession implements Session {
 interface Snap { state: SimState; events: SimEvent[]; delivered: boolean }
 
 export class ClientSession implements Session {
-  readonly me: PlayerIdx = 1;
   private buf: Snap[] = [];
   /** performance.now() − tick·DT for the snapshot that arrived fastest (ms). */
   private offset = Number.NaN;
   private current: SessionView | null = null;
 
-  constructor(private link: Link) {}
+  constructor(private link: Link, readonly me: PlayerIdx = 1) {}
 
   receiveSnapshot(state: SimState, events: SimEvent[]) {
     if (!state || typeof state.tick !== 'number') return;
@@ -147,6 +146,49 @@ export class ClientSession implements Session {
   send(intents: Intent[]) {
     this.link.send({ k: 'intents', list: intents });
   }
+
+  dispose() {}
+}
+
+// ---------------------------------------------------------------- spectator host
+
+/**
+ * The host only watches: it runs the sim for two remote players (link 0 → player 0, link 1 → player 1)
+ * and broadcasts snapshots to both. `me` is 0 only for the render perspective; it sends no intents.
+ */
+export class SpectatorHostSession implements Session {
+  readonly me: PlayerIdx = 0;
+  readonly spectator = true;
+  private runner: SimRunner;
+  private pendingEvents: SimEvent[] = [];
+  private snapAcc = 0;
+
+  constructor(teams: [BaseSpeciesId[], BaseSpeciesId[]], private links: [Link, Link], seed = (Math.random() * 2 ** 32) >>> 0) {
+    this.runner = new SimRunner(teams, seed);
+  }
+
+  receiveIntents(p: PlayerIdx, list: unknown) {
+    const intents = sanitizeIntents(list);
+    if (intents.length) this.runner.queue(p, intents);
+  }
+
+  update(dt: number): SimEvent[] {
+    const events = this.runner.advance(dt);
+    this.pendingEvents.push(...events);
+    this.snapAcc += dt;
+    if (this.snapAcc >= SNAP_INTERVAL || events.some((e) => e.t === 'match_end')) {
+      this.snapAcc = 0;
+      for (const l of this.links) l.send({ k: 'snap', state: this.runner.state, events: this.pendingEvents });
+      this.pendingEvents = [];
+    }
+    return events;
+  }
+
+  view(): SessionView {
+    return { prev: this.runner.prev, curr: this.runner.state, alpha: this.runner.alpha };
+  }
+
+  send() {}
 
   dispose() {}
 }

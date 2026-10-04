@@ -29,7 +29,8 @@ export class Link {
   private timer: number;
   private closed = false;
 
-  constructor(private peer: Peer, private conn: DataConnection) {
+  /** `ownsPeer`: closing this link also tears down the PeerJS peer (false when one host peer serves several links). */
+  constructor(private peer: Peer, private conn: DataConnection, private ownsPeer = true) {
     conn.on('data', (d) => {
       this.lastSeen = performance.now();
       if (!isMsg(d)) return;
@@ -64,7 +65,7 @@ export class Link {
     this.closed = true;
     window.clearInterval(this.timer);
     try { this.conn.close(); } catch { /* ignore */ }
-    try { this.peer.destroy(); } catch { /* ignore */ }
+    if (this.ownsPeer) try { this.peer.destroy(); } catch { /* ignore */ }
     if (notify) this.onClose(reason);
   }
 }
@@ -83,10 +84,14 @@ function errorText(err: unknown): string {
 export interface Pending { cancel(): void }
 
 /** Host a room. Calls onCode once the room id is registered, onLink when a friend connects. */
-export function hostRoom(cb: { onCode(code: string): void; onLink(link: Link): void; onError(msg: string): void }): Pending {
+/**
+ * Host a room. Calls onCode once the room id is registered, onLink for each friend that connects
+ * (up to `maxLinks`; extra connections are refused). With maxLinks > 1 the host peer stays alive until cancel().
+ */
+export function hostRoom(cb: { onCode(code: string): void; onLink(link: Link): void; onError(msg: string): void }, maxLinks = 1): Pending {
   let peer: Peer | null = null;
   let cancelled = false;
-  let linked = false;
+  let links = 0;
   let attempts = 0;
   const open = () => {
     const code = makeRoomCode();
@@ -94,11 +99,11 @@ export function hostRoom(cb: { onCode(code: string): void; onLink(link: Link): v
     const p = peer;
     p.on('open', () => { if (!cancelled) cb.onCode(code); });
     p.on('connection', (conn) => {
-      if (cancelled || linked) { conn.on('open', () => conn.close()); return; }
+      if (cancelled || links >= maxLinks) { conn.on('open', () => conn.close()); return; }
       conn.on('open', () => {
-        if (linked) return conn.close();
-        linked = true;
-        const link = new Link(p, conn);
+        if (links >= maxLinks) return conn.close();
+        links++;
+        const link = new Link(p, conn, maxLinks === 1);
         link.send({ k: 'hello', v: PROTOCOL_VERSION });
         cb.onLink(link);
       });
@@ -110,11 +115,11 @@ export function hostRoom(cb: { onCode(code: string): void; onLink(link: Link): v
         open();
         return;
       }
-      if (!linked) cb.onError(errorText(err));
+      if (links === 0) cb.onError(errorText(err));
     });
   };
   open();
-  return { cancel: () => { cancelled = true; if (!linked) peer?.destroy(); } };
+  return { cancel: () => { cancelled = true; if (links === 0 || maxLinks > 1) peer?.destroy(); } };
 }
 
 /** Join a room by code. */

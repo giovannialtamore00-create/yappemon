@@ -39,7 +39,7 @@ export class Screens {
 
   lobby(o: {
     lang: Lang; voiceSupported: boolean;
-    onLang(l: Lang): void; onPractice(): void; onHost(): void; onJoin(code: string): void;
+    onLang(l: Lang): void; onPractice(): void; onHost(): void; onHostSpectate(): void; onJoin(code: string): void;
   }) {
     const s = this.overlay('lobby');
     const card = h('div', 'card lobby-card');
@@ -52,7 +52,7 @@ export class Screens {
       langRow.append(b);
     }
     const actions = h('div', 'lobby-actions');
-    actions.append(button(t('practice'), o.onPractice, 'btn big primary'), button(t('host'), o.onHost, 'btn big'));
+    actions.append(button(t('practice'), o.onPractice, 'btn big primary'), button(t('host'), o.onHost, 'btn big'), button(t('hostSpectate'), o.onHostSpectate, 'btn big'));
     const joinRow = h('div', 'join-row');
     const input = h('input', 'code-input') as HTMLInputElement;
     input.placeholder = t('joinCode');
@@ -73,7 +73,7 @@ export class Screens {
     s.append(card);
   }
 
-  hosting(code: string, onCancel: () => void) {
+  hosting(code: string, onCancel: () => void, status = t('waitingFriend')) {
     const s = this.overlay();
     const card = h('div', 'card');
     card.append(h('div', 'label', t('yourCode')));
@@ -81,8 +81,10 @@ export class Screens {
     const copy = button(t('copy'), () => {
       navigator.clipboard?.writeText(code).then(() => { copy.textContent = t('copied'); }).catch(() => {});
     });
-    card.append(codeEl, copy, h('p', 'muted pulse', t('waitingFriend')), button(t('back'), onCancel, 'btn ghost'));
+    const st = h('p', 'muted pulse', status);
+    card.append(codeEl, copy, st, button(t('back'), onCancel, 'btn ghost'));
     s.append(card);
+    return { setStatus: (text: string) => { st.textContent = text; } };
   }
 
   message(text: string, onBack?: () => void, cls = '') {
@@ -192,10 +194,10 @@ export class Screens {
 
   // ------------------------------------------------------------ end screen
 
-  end(o: { result: 'victory' | 'defeat' | 'draw'; onRematch(): void; onQuit(): void; rematchLabel?: string }) {
+  end(o: { result: 'victory' | 'defeat' | 'draw'; onRematch(): void; onQuit(): void; rematchLabel?: string; title?: string }) {
     const s = this.overlay(`end end-${o.result}`);
     const card = h('div', 'card');
-    card.append(h('h1', 'end-title', t(o.result)));
+    card.append(h('h1', 'end-title', o.title ?? t(o.result)));
     const status = h('p', 'muted');
     const rematch = button(o.rematchLabel ?? t('rematch'), () => { rematch.disabled = true; o.onRematch(); }, 'btn big primary');
     const row = h('div', 'end-row');

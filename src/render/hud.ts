@@ -69,6 +69,13 @@ export class Hud {
   private leaveBtn = h('button', 'btn leave-btn');
   private queueLabel = h('div', 'queue-label');
 
+  /** Spectator: no voice box / move list; panels labelled Player 1 (bottom) and Player 2 (top). */
+  setSpectator(on: boolean) {
+    this.root.classList.toggle('spectator', on);
+    this.me.root.dataset.label = on ? t('player', { n: 1 }) : '';
+    this.foe.root.dataset.label = on ? t('player', { n: 2 }) : '';
+  }
+
   /** Re-apply translated labels (the language can change between matches). */
   relabel() {
     this.leaveBtn.textContent = `✕ ${t('leave')}`;

@@ -15,8 +15,9 @@ export interface SceneCtx {
   /** Shake amount, decays each frame. */
   shake: { amount: number };
   /** battle: first-person at the trainer; orbit: menu showcase camera. */
-  cameraMode: 'battle' | 'orbit';
-  setPov(p: 0 | 1): void;
+  cameraMode: 'battle' | 'orbit' | 'spectate';
+  /** Whose eyes the battle camera uses; null = spectator (both trainers visible). */
+  setPov(p: 0 | 1 | null): void;
   update(dt: number, time: number): void;
   render(): void;
 }
@@ -269,7 +270,7 @@ export function createScene(canvas: HTMLCanvasElement): SceneCtx {
   const ctx: SceneCtx = {
     renderer, scene, camera, shake, cameraMode: 'orbit',
     setPov(p) {
-      pov = p;
+      pov = p ?? 0;
       trainers[0]!.visible = p !== 0;
       trainers[1]!.visible = p !== 1;
     },
@@ -283,6 +284,15 @@ export function createScene(canvas: HTMLCanvasElement): SceneCtx {
         const a = time * 0.12;
         camera.position.set(Math.sin(a) * 9.5, 3.4, Math.cos(a) * 9.5);
         camera.lookAt(0, 0.9, 0);
+        return;
+      }
+      if (ctx.cameraMode === 'spectate') {
+        // Side view of the whole arena, gently drifting.
+        const a = Math.sin(time * 0.15) * 0.18;
+        shake.amount = Math.max(0, shake.amount - dt * 2.5);
+        const k = shake.amount * shake.amount * 0.4;
+        camera.position.set(Math.cos(a) * 8.8 + (Math.random() - 0.5) * k, 3.6 + (Math.random() - 0.5) * k, Math.sin(a) * 8.8);
+        camera.lookAt(0, 0.8, 0);
         return;
       }
       const s = pov === 0 ? 1 : -1;

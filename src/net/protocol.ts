@@ -30,7 +30,8 @@ export type Msg =
   | { k: 'ready'; team: BaseSpeciesId[] }
   | { k: 'intents'; list: Intent[] }
   // host → client
-  | { k: 'start'; teams: [BaseSpeciesId[], BaseSpeciesId[]] }
+  /** `you`: which player the receiver controls (spectator-hosted rooms have two clients). */
+  | { k: 'start'; teams: [BaseSpeciesId[], BaseSpeciesId[]]; you?: 0 | 1 }
   | { k: 'snap'; state: SimState; events: SimEvent[] }
   | { k: 'rematch_go' };
 

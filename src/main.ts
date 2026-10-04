@@ -12,7 +12,7 @@ import { Screens, setUiClickHandler } from './ui/screens';
 import { Speech, isSupportedBrowser } from './voice/speech';
 import { hostRoom, joinRoom, type Link, type Pending } from './net/link';
 import { normalizeCode } from './net/protocol';
-import { ClientSession, HostSession, sanitizeTeam } from './net/sessions';
+import { ClientSession, HostSession, SpectatorHostSession, sanitizeTeam } from './net/sessions';
 
 const LANG_KEY = 'yappemon.lang';
 
@@ -39,6 +39,8 @@ class App {
   };
   private battle: Battle | null = null;
   private link: Link | null = null;
+  /** Both player links when hosting as a spectator. */
+  private specLinks: Link[] = [];
   private pending: Pending | null = null;
   private last = performance.now();
   private time = 0;
@@ -138,6 +140,7 @@ class App {
       onEnd(r);
     });
     this.hud.setMic(this.speech.status);
+    if (this.battle.spectator) return;
     if (isSupportedBrowser()) this.speech.start(getLang());
     else this.hud.toast(t('browserWarn'), 'bad', 6000);
   }
@@ -145,18 +148,21 @@ class App {
   // ------------------------------------------------------------ online play
 
   private closeNet(notify: boolean) {
-    this.pending?.cancel();
-    this.pending = null;
-    const link = this.link;
+    const links = [...(this.link ? [this.link] : []), ...this.specLinks];
     this.link = null;
-    if (link) {
+    this.specLinks = [];
+    for (const link of links) {
       link.onClose = () => {};
       if (notify) link.close();
     }
+    // Spectator hosts keep the room's peer open until here (after the quit messages are sent).
+    const pending = this.pending;
+    this.pending = null;
+    if (pending) window.setTimeout(() => pending.cancel(), 200);
   }
 
   private disconnected() {
-    this.link = null;
+    this.closeNet(true); // tell any remaining player too (spectator rooms)
     this.endBattle();
     this.showcase.show('cindrix');
     this.screens.message(t('disconnected'), () => this.lobby());
@@ -170,6 +176,70 @@ class App {
       onLink: (link) => { this.pending = null; this.netTeamSelect(link, 'host'); },
       onError: (msg) => this.screens.message(t('peerError', { msg }), () => this.lobby()),
     });
+  }
+
+  /**
+   * Host a room for two friends and watch: this browser runs the match (no creature, no mic);
+   * the first joiner is Player 1, the second Player 2.
+   */
+  private hostSpectate() {
+    this.closeNet(true);
+    this.screens.message(t('connecting'), () => this.lobby());
+    const links: Link[] = [];
+    let ui: { setStatus(text: string): void } | null = null;
+    this.pending = hostRoom({
+      onCode: (code) => { ui = this.screens.hosting(code, () => this.lobby(), t('waitingPlayers', { n: 0 })); },
+      onLink: (link) => {
+        links.push(link);
+        this.specLinks = links;
+        link.onClose = () => this.disconnected();
+        ui?.setStatus(links.length < 2 ? t('waitingPlayers', { n: links.length }) : t('playersPicking'));
+        if (links.length === 2) this.spectatorTeams(links as [Link, Link], ui);
+      },
+      onError: (msg) => this.screens.message(t('peerError', { msg }), () => this.lobby()),
+    }, 2);
+  }
+
+  /** Wait for both players' teams, then start the match they play and we watch. */
+  private spectatorTeams(links: [Link, Link], ui: { setStatus(text: string): void } | null) {
+    const teams: (BaseSpeciesId[] | null)[] = [null, null];
+    links.forEach((link, i) => {
+      link.onMessage = (m) => {
+        if (m.k !== 'ready') return;
+        teams[i] = sanitizeTeam(m.team);
+        if (!teams[0] || !teams[1]) return;
+        const both: [BaseSpeciesId[], BaseSpeciesId[]] = [teams[0], teams[1]];
+        const session = new SpectatorHostSession(both, links);
+        links.forEach((l, j) => {
+          l.send({ k: 'start', teams: both, you: j as 0 | 1 });
+          l.onMessage = (msg) => {
+            if (msg.k === 'intents') session.receiveIntents(j as 0 | 1, msg.list);
+            else if (msg.k === 'rematch') this.rematch.remote(j);
+          };
+        });
+        this.beginBattle(session, both, () => this.spectatorEnd(links));
+      };
+    });
+    ui?.setStatus(t('playersPicking'));
+  }
+
+  private spectatorEnd(links: [Link, Link]) {
+    const s = this.battle?.state();
+    const w = s?.result?.winner;
+    const ui = this.screens.end({
+      result: w === 'draw' || w === undefined ? 'draw' : 'victory',
+      title: w === 'draw' || w === undefined ? t('draw') : t('playerWins', { n: w + 1 }),
+      onRematch: () => {
+        // The spectator decides: both players go back to team select.
+        for (const l of links) l.send({ k: 'rematch_go' });
+        this.endBattle();
+        this.showcase.show('cindrix');
+        this.screens.message(t('playersPicking'), () => this.lobby());
+        this.spectatorTeams(links, null);
+      },
+      onQuit: () => this.lobby(),
+    });
+    this.rematch.remote = (p?: number) => ui.setStatus(t('wantsRematch', { n: (p ?? 0) + 1 }));
   }
 
   private joinGame(code: string) {
@@ -217,7 +287,7 @@ class App {
         tryStart();
       } else if (role === 'client' && m.k === 'start') {
         const teams = m.teams;
-        const session = new ClientSession(link);
+        const session = new ClientSession(link, m.you ?? 1);
         link.onMessage = (msg) => {
           if (msg.k === 'snap') session.receiveSnapshot(msg.state, msg.events);
           else if (msg.k === 'rematch') this.rematch.remote();
@@ -229,7 +299,7 @@ class App {
   }
 
   /** Set by netEnd while the end screen is up; called when the opponent asks for a rematch. */
-  private rematch = { remote: () => {} };
+  private rematch: { remote: (p?: number) => void } = { remote: () => {} };
 
   private netEnd(result: 'victory' | 'defeat' | 'draw', link: Link, role: 'host' | 'client') {
     this.speech.stop();
@@ -270,6 +340,7 @@ class App {
       },
       onPractice: () => this.practiceTeamSelect(),
       onHost: () => this.hostGame(),
+      onHostSpectate: () => this.hostSpectate(),
       onJoin: (code) => this.joinGame(code),
     });
   }

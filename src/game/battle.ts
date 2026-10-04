@@ -27,6 +27,8 @@ export class Battle {
   private switchUi: { close(): void } | null = null;
   private ended = false;
   private hintShown = false;
+  /** Watching only (spectator-hosted room): no commands, side camera, neutral messages. */
+  readonly spectator: boolean;
 
   constructor(
     private ctx: SceneCtx,
@@ -37,9 +39,11 @@ export class Battle {
     private audio: BattleAudio | null,
     private onEnd: (result: 'victory' | 'defeat' | 'draw') => void,
   ) {
+    this.spectator = !!(session as { spectator?: boolean }).spectator;
     this.view = this.makeView(teams);
-    ctx.cameraMode = 'battle';
+    ctx.cameraMode = this.spectator ? 'spectate' : 'battle';
     hud.relabel();
+    hud.setSpectator(this.spectator);
     hud.show(true);
     hud.clearToasts();
     hud.onDebugCommand = (text) => this.command(text, true);
@@ -50,6 +54,7 @@ export class Battle {
     const v = new BattleView(this.ctx, teams, this.session.me);
     v.onFloat = (f) => this.floatText(f.text, f.pos, f.color, f.big);
     v.onEvolveBurst = () => this.audio?.evolve();
+    if (this.spectator) this.ctx.setPov(null);
     return v;
   }
 
@@ -63,7 +68,7 @@ export class Battle {
 
   /** Feed recognized (or typed) text through the parser. Only final text produces intents. */
   command(text: string, final: boolean) {
-    if (typeof text !== 'string') return;
+    if (typeof text !== 'string' || this.spectator) return;
     if (!final) { this.hud.setTranscript(text); return; }
     this.commandAlternatives([text]);
   }
@@ -103,7 +108,7 @@ export class Battle {
     }
     this.view.update(dt, v.prev, v.curr, v.alpha);
     this.hud.update(v.curr, this.me);
-    if (!this.hintShown && v.curr.trainers[this.me].field === 'active') {
+    if (!this.spectator && !this.hintShown && v.curr.trainers[this.me].field === 'active') {
       this.hintShown = true;
       const first = SPECIES[activeCreature(v.curr.trainers[this.me]).species].moves[1];
       this.hud.setHint(t('sayHint', { move: MOVES[first].name[getLang()] }));
@@ -120,44 +125,45 @@ export class Battle {
 
   private onEvent(e: SimEvent, s: SimState) {
     this.audio?.event(e, this.me, s);
-    const mine = 'p' in e && e.p === this.me;
+    const mine = !this.spectator && 'p' in e && e.p === this.me;
     const lang = getLang();
+    const who = (p: number) => t('player', { n: p + 1 });
     switch (e.t) {
       case 'round_end': {
         this.closeSwitch();
-        const who = e.winner === 'draw' ? t('draw') : e.winner === this.me ? t('roundWon') : t('roundLost');
+        const res = e.winner === 'draw' ? t('draw') : this.spectator ? t('playerWins', { n: e.winner + 1 }) : e.winner === this.me ? t('roundWon') : t('roundLost');
         const sub = `${t('score')} ${e.score[this.me]} – ${e.score[this.me === 0 ? 1 : 0]}` + (e.next ? ` · ${t('evolving')}` : '');
-        this.hud.banner(`${t('round')} ${e.round}: ${who}`, sub, e.next ? 4200 : 2000);
+        this.hud.banner(`${t('round')} ${e.round}: ${res}`, sub, e.next ? 4200 : 2000);
         break;
       }
       case 'round_start': {
         this.hud.banner(`${t('round')} ${e.round}`, t('fight'), 1600);
         const names = s.trainers[this.me].team.map((c) => SPECIES[c.species].name).join(' & ');
-        this.hud.toast(t('evolvedInto', { names }), 'good', 3000);
+        if (!this.spectator) this.hud.toast(t('evolvedInto', { names }), 'good', 3000);
         break;
       }
       case 'reflect':
-        if (e.target === this.me) this.hud.toast(t('reflectedYou'), 'bad');
+        if (!this.spectator && e.target === this.me) this.hud.toast(t('reflectedYou'), 'bad');
         break;
       case 'hit':
         if (e.eff === 'super') this.hud.toast(t('super'), 'super');
         else if (e.eff === 'weak') this.hud.toast(t('weak'), 'weak');
-        if (e.interrupted && e.target === this.me) this.hud.toast(t('interruptedYou'), 'bad');
+        if (!this.spectator && e.interrupted && e.target === this.me) this.hud.toast(t('interruptedYou'), 'bad');
         break;
       case 'fail':
         if (mine) {
           this.hud.toast(`${t('moveFailed')} (${FAIL_REASON[lang][e.reason]})`, 'bad', 3200);
           this.audio?.fail();
-        } else this.hud.toast(t('foeFailed'), 'good', 1600);
+        } else this.hud.toast(this.spectator ? t('failedP', { who: who(e.p) }) : t('foeFailed'), this.spectator ? 'info' : 'good', 1600);
         break;
       case 'faint': {
         const name = SPECIES[s.trainers[e.p].team[e.slot]!.species].name;
-        this.hud.toast(`${name} ${t('fainted')}`, mine ? 'bad' : 'good');
+        this.hud.toast(`${name} ${t('fainted')}`, this.spectator ? 'info' : mine ? 'bad' : 'good');
         break;
       }
       case 'sendout': {
         const name = SPECIES[s.trainers[e.p].team[e.slot]!.species].name;
-        this.hud.toast(mine ? t('sentOut', { name }) : t('foeSentOut', { name }), 'info');
+        this.hud.toast(this.spectator ? t('foeSentOutP', { who: who(e.p), name }) : mine ? t('sentOut', { name }) : t('foeSentOut', { name }), 'info');
         if (mine) this.closeSwitch();
         break;
       }
@@ -205,6 +211,7 @@ export class Battle {
     this.view.dispose();
     this.session.dispose();
     this.hud.show(false);
+    this.hud.setSpectator(false);
     this.hud.toggleDebug(false);
     this.ctx.cameraMode = 'orbit';
   }
