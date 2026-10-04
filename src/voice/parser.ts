@@ -2,7 +2,7 @@
 // Robust to recognizer garbling: accents/case normalized, phonetic folding, Levenshtein similarity
 // over token windows, and alias lists with distinctive keywords.
 
-import { MOVES, SPECIES, SPECIES_IDS } from '../sim/data';
+import { ALL_SPECIES_IDS, MOVES, SPECIES, knowsMove, sameFamily } from '../sim/data';
 import type { Intent, MoveId, QAction, SpeciesId } from '../sim/types';
 import {
   CONNECTORS, DODGE_ALIASES, FILLERS, GO_WORDS, MOVE_ALIASES, PICK_ALIASES, RECALL_ALIASES, SPECIES_ALIASES, STOP_ALIASES,
@@ -109,7 +109,7 @@ function buildPhrases(): Phrase[] {
     add(m.name.it, cmd, m.species);
     for (const a of MOVE_ALIASES[m.id]) add(a, cmd, m.species);
   }
-  for (const id of SPECIES_IDS) {
+  for (const id of ALL_SPECIES_IDS) {
     add(SPECIES[id].name, { kind: 'go', species: id, explicit: false });
     for (const a of SPECIES_ALIASES[id]) add(a, { kind: 'go', species: id, explicit: false });
   }
@@ -149,7 +149,7 @@ function matchSegment(seg: string[], ctx: ParseContext): { found: Match[]; lefto
   const words = seg.filter((w) => !FILLERS.has(w) || PHRASE_TOKENS.has(w));
   const candidates: Match[] = [];
   for (const ph of PHRASES) {
-    if (ph.species && ctx.activeSpecies && ph.species !== ctx.activeSpecies) continue;
+    if (ph.cmd.kind === 'move' && ctx.activeSpecies && !knowsMove(ctx.activeSpecies, ph.cmd.move)) continue;
     const need = threshold(ph.text);
     for (let n = Math.max(1, ph.tokens - 1); n <= ph.tokens + 1; n++) {
       for (let i = 0; i + n <= words.length; i++) {
@@ -216,7 +216,7 @@ export function toIntents(cmds: Command[], opts: { forcedSwitch?: boolean; activ
       case 'recall': batch.push({ kind: 'recall' }); break;
       case 'stop': flush(); out.push({ type: 'stop' }); break;
       case 'go':
-        if (!opts.forcedSwitch && c.species === opts.activeSpecies) break; // already out
+        if (!opts.forcedSwitch && opts.activeSpecies && sameFamily(c.species, opts.activeSpecies)) break; // already out
         flush();
         out.push({ type: 'go', species: c.species });
         break;

@@ -1,7 +1,13 @@
 // Pure data types for the combat simulation. No DOM / Three.js imports allowed in src/sim.
 
 export type Element = 'normal' | 'fire' | 'water' | 'grass' | 'electric';
-export type SpeciesId = 'cindrix' | 'brinkle' | 'vinram' | 'joltmoth';
+/** Base forms (stage 1), then stage 2 and stage 3 evolutions. */
+export type BaseSpeciesId = 'cindrix' | 'brinkle' | 'vinram' | 'joltmoth';
+export type SpeciesId =
+  | BaseSpeciesId
+  | 'pyroxen' | 'tsunafin' | 'thornhorn' | 'stormoth'
+  | 'calderox' | 'abyssmaw' | 'elderoot' | 'tempestra';
+export type Stage = 1 | 2 | 3;
 export type PlayerIdx = 0 | 1;
 export type Lang = 'en' | 'it';
 
@@ -9,7 +15,11 @@ export type MoveId =
   | 'shell_ram' | 'cinder_spit' | 'heat_shell' | 'magma_burst'
   | 'bubble_bump' | 'water_jet' | 'healing_rain' | 'tidal_crash'
   | 'horn_charge' | 'leaf_volley' | 'vine_snare' | 'thorn_quake'
-  | 'wing_flick' | 'spark_dart' | 'static_field' | 'thunder_lance';
+  | 'wing_flick' | 'spark_dart' | 'static_field' | 'thunder_lance'
+  // stage 2
+  | 'molten_leap' | 'tide_mirror' | 'bramble_stampede' | 'chain_storm'
+  // stage 3
+  | 'volcanic_ruin' | 'maelstrom' | 'ancient_bloom' | 'sky_judgement';
 
 /**
  * How a move reaches its target.
@@ -25,14 +35,16 @@ export type MoveEffect =
   | { kind: 'shield'; factor: number; seconds: number }
   | { kind: 'heal'; amount: number; seconds: number }
   | { kind: 'root'; seconds: number }
-  | { kind: 'static'; seconds: number };
+  | { kind: 'static'; seconds: number }
+  | { kind: 'mirror'; seconds: number };
 
 export interface MoveDef {
   id: MoveId;
+  /** The species that first learns it (evolutions keep earlier moves). */
   species: SpeciesId;
   element: Element;
   cost: number;
-  power: number; // 0 for non-damaging moves
+  power: number; // 0 for non-damaging moves; per hit for multi-hit moves
   delivery: Delivery;
   effect: MoveEffect;
   /** Phase durations in seconds at medium speed. */
@@ -44,6 +56,13 @@ export interface MoveDef {
   /** Delay in seconds after active start before an untravelled strike resolves. */
   hitDelay?: number;
   heavy: boolean;
+  /** The windup cannot be interrupted by big hits. */
+  armored?: boolean;
+  /** Number of separate strikes (each dodgeable), `hitGap` seconds apart. */
+  hits?: number;
+  hitGap?: number;
+  /** Damaging move that also roots the target for this many seconds. */
+  alsoRoot?: number;
   name: Record<Lang, string>;
 }
 
@@ -54,8 +73,15 @@ export interface SpeciesDef {
   element: Element;
   maxHp: number;
   speed: SpeedClass;
-  moves: [MoveId, MoveId, MoveId, MoveId];
+  moves: MoveId[];
   name: string; // invented names are the same in both languages
+  stage: Stage;
+  /** The stage-1 form of this evolution line. */
+  family: BaseSpeciesId;
+  /** Next evolution stage, if any. */
+  next?: SpeciesId;
+  /** Damage multiplier for this stage. */
+  dmgMult: number;
 }
 
 /** A queued action. */
@@ -97,6 +123,8 @@ export interface CreatureState {
   rootTicks: number;
   healTicks: number;
   healPerTick: number;
+  /** Tide Mirror: the next damaging hit is reflected while > 0. */
+  mirrorTicks: number;
 }
 
 /**
@@ -136,6 +164,8 @@ export interface Strike {
   /** Lateral positions at launch, for rendering trajectories. */
   fromX: number;
   toX: number;
+  /** Set when an earlier strike of the same action was dodged (no second failure). */
+  quiet?: boolean;
 }
 
 export interface SimState {
@@ -144,13 +174,21 @@ export interface SimState {
   nextId: number;
   trainers: [TrainerState, TrainerState];
   strikes: Strike[];
+  /** Stage-1 teams picked at team select; each round uses the stage matching the round. */
+  teams: [BaseSpeciesId[], BaseSpeciesId[]];
+  /** 1-based round number (= evolution stage of every creature). */
+  round: number;
+  /** Rounds won. */
+  score: [number, number];
+  /** Ticks left in the between-rounds break (result banner + evolution); 0 while fighting. */
+  intermission: number;
   /** null while running. */
   result: null | { winner: PlayerIdx | 'draw' };
 }
 
 export type Effectiveness = 'super' | 'weak' | 'neutral';
 
-export type FailReason = 'dodged' | 'interrupted' | 'stamina' | 'target_recalled' | 'rooted' | 'no_bench';
+export type FailReason = 'dodged' | 'interrupted' | 'stamina' | 'target_recalled' | 'rooted' | 'no_bench' | 'reflected';
 
 export type SimEvent =
   | { t: 'action_start'; p: PlayerIdx; action: QAction }
@@ -159,7 +197,7 @@ export type SimEvent =
   | { t: 'dodged'; p: PlayerIdx; target: PlayerIdx; move: MoveId; strike: number }
   | { t: 'fizzle'; p: PlayerIdx; move: MoveId; strike: number }
   | { t: 'fail'; p: PlayerIdx; reason: FailReason }
-  | { t: 'status'; p: PlayerIdx; status: 'shield' | 'static' | 'root' | 'heal'; on: boolean }
+  | { t: 'status'; p: PlayerIdx; status: 'shield' | 'static' | 'root' | 'heal' | 'mirror'; on: boolean }
   | { t: 'heal'; p: PlayerIdx; amount: number }
   | { t: 'dodge'; p: PlayerIdx; dir: 1 | -1 }
   | { t: 'recall'; p: PlayerIdx; slot: number }
@@ -169,4 +207,8 @@ export type SimEvent =
   | { t: 'queue_full'; p: PlayerIdx }
   | { t: 'invalid'; p: PlayerIdx; reason: 'unknown_move' | 'cannot_recall' | 'not_now' }
   | { t: 'stopped'; p: PlayerIdx }
+  | { t: 'reflect'; p: PlayerIdx; target: PlayerIdx; move: MoveId; damage: number }
+  /** A round is over; the next round (if any) starts after the intermission with evolved creatures. */
+  | { t: 'round_end'; round: number; winner: PlayerIdx | 'draw'; score: [number, number]; next: number | null }
+  | { t: 'round_start'; round: number }
   | { t: 'match_end'; winner: PlayerIdx | 'draw' };

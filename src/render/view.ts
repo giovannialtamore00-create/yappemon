@@ -6,8 +6,8 @@ import type { MoveId, PlayerIdx, SimEvent, SimState, SpeciesId } from '../sim/ty
 import { buildCreature, type CreatureModel } from './creatures';
 import { TRAINER_Z, creatureZ, makeOrb, worldX, type SceneCtx } from './scene';
 import { Vfx, type FxKind } from './vfx';
+import { dodgePose, movePose, type Pose } from './motion';
 
-const DASH: Partial<Record<MoveId, number>> = { shell_ram: 4.6, horn_charge: 4.6, bubble_bump: 4.2, wing_flick: 4.3 };
 const ELEMENT_FX: Record<string, FxKind> = { fire: 'fire', water: 'water', grass: 'grass', electric: 'electric', normal: 'normal' };
 const CHARGE_FX: Record<string, FxKind> = { fire: 'ember', water: 'splash', grass: 'leaf', electric: 'static', normal: 'dust' };
 
@@ -22,7 +22,11 @@ interface Side {
   appear: number;
   shrink: number;
   shield: THREE.Mesh;
+  mirror: THREE.Mesh;
 }
+
+/** One creature transforming during the between-rounds evolution sequence. */
+interface EvoActor { from: CreatureModel; to: CreatureModel; pos: THREE.Vector3; facing: number }
 
 export interface FloatText { text: string; pos: THREE.Vector3; color: string; big?: boolean }
 
@@ -32,6 +36,9 @@ export class BattleView {
   private time = 0;
   private group = new THREE.Group();
   onFloat: (f: FloatText) => void = () => {};
+  /** Called at the flash of the evolution sequence (for sound). */
+  onEvolveBurst: () => void = () => {};
+  private evo: { t: number; actors: EvoActor[]; burst: boolean } | null = null;
 
   constructor(private ctx: SceneCtx, teams: [SpeciesId[], SpeciesId[]], readonly me: PlayerIdx) {
     this.vfx = new Vfx(ctx.scene);
@@ -49,7 +56,13 @@ export class BattleView {
       );
       shield.visible = false;
       this.group.add(shield);
-      this.sides.push({ models, shown: -1, dispX: 0, flash: 0, recoil: 0, faintT: -1, appear: -1, shrink: -1, shield });
+      const mirror = new THREE.Mesh(
+        new THREE.IcosahedronGeometry(1, 1),
+        new THREE.MeshBasicMaterial({ color: '#7fe8ff', transparent: true, opacity: 0.3, blending: THREE.AdditiveBlending, depthWrite: false, wireframe: true }),
+      );
+      mirror.visible = false;
+      this.group.add(mirror);
+      this.sides.push({ models, shown: -1, dispX: 0, flash: 0, recoil: 0, faintT: -1, appear: -1, shrink: -1, shield, mirror });
     }
     ctx.setPov(me);
   }
@@ -71,19 +84,24 @@ export class BattleView {
   creaturePos(p: PlayerIdx, s?: SimState, height = 0.5): THREE.Vector3 {
     const side = this.sides[p]!;
     const m = this.model(p) ?? this.sides[p]!.models[s?.trainers[p].active ?? 0];
-    const h = m ? m.baseY + (m.height - m.baseY) * height * 0.6 : 0.6;
+    const h = m ? (m.baseY + (m.height - m.baseY) * height * 0.6) * m.size : 0.6;
     return new THREE.Vector3(worldX(p, side.dispX), h, creatureZ(p));
   }
 
   headPos(p: PlayerIdx): THREE.Vector3 {
     const m = this.model(p) ?? this.sides[p]!.models[0]!;
-    return new THREE.Vector3(worldX(p, this.sides[p]!.dispX), m.height + 0.25, creatureZ(p));
+    return new THREE.Vector3(worldX(p, this.sides[p]!.dispX), m.height * m.size + 0.25, creatureZ(p));
   }
 
   private mouthPos(p: PlayerIdx, x: number): THREE.Vector3 {
     const m = this.model(p) ?? this.sides[p]!.models[0]!;
     const dir = p === 0 ? -1 : 1;
-    return new THREE.Vector3(worldX(p, x), m.baseY + m.mouth.y, creatureZ(p) + dir * m.mouth.z);
+    return new THREE.Vector3(worldX(p, x), (m.baseY + m.mouth.y) * m.size, creatureZ(p) + dir * m.mouth.z * m.size);
+  }
+
+  /** World-space vector of `d` metres toward the opponent. */
+  private forward(p: PlayerIdx, d: number): THREE.Vector3 {
+    return new THREE.Vector3(0, 0, (p === 0 ? -1 : 1) * d);
   }
 
   private trainerOrbPos(p: PlayerIdx): THREE.Vector3 {
@@ -150,6 +168,19 @@ export class BattleView {
           } else if (e.move === 'healing_rain') {
             const top = this.headPos(e.p).add(new THREE.Vector3(0, 0.5, 0));
             this.vfx.emit('heal', top, 40, 0.6);
+          } else if (e.move === 'ancient_bloom') {
+            const c = this.creaturePos(e.p, s);
+            this.vfx.emit('leaf', c, 40, 0.8, new THREE.Vector3(0, 1.5, 0));
+            this.vfx.emit('heal', this.headPos(e.p), 50, 0.8);
+            this.vfx.ring(c.clone().setY(0.05), '#9cff6b', 0.8, 2.5);
+          } else if (e.move === 'tide_mirror') {
+            const c = this.creaturePos(e.p, s);
+            this.vfx.ring(c, '#7fe8ff', 0.5, 1.8, false);
+            this.vfx.emit('splash', c, 30, 0.5);
+          } else if (e.move === 'sky_judgement') {
+            const top = to.clone().setY(14);
+            for (let i = 0; i < 3; i++) this.vfx.lightning(top, to, 0.5, i ? '#7ae8ff' : '#ffffff', 1.2);
+            this.vfx.beam(top, to.clone().setY(0), '#bfefff', 0.5, 0.5, '#ffffff');
           } else if (m.delivery === 'projectile' || m.delivery === 'wave') {
             this.vfx.emit(CHARGE_FX[m.element] ?? 'normal', from, 12, 0.1);
           }
@@ -187,6 +218,21 @@ export class BattleView {
         case 'fail':
           this.vfx.emit('smoke', this.headPos(e.p), 8, 0.2);
           break;
+        case 'reflect': {
+          const from = this.creaturePos(e.p, s);
+          const to = this.creaturePos(e.target, s);
+          this.vfx.beam(from, to, '#7fe8ff', 0.35, 0.12, '#ffffff');
+          this.vfx.ring(from, '#7fe8ff', 0.4, 2, false);
+          const side = this.sides[e.target]!;
+          side.flash = 1;
+          side.recoil = 1;
+          this.onFloat({ text: e.p === this.me ? 'Reflected!' : 'Bounced back!', pos: this.headPos(e.p), color: '#9fe8ff' });
+          this.onFloat({ text: String(e.damage), pos: this.headPos(e.target), color: '#ffffff', big: e.damage >= 25 });
+          break;
+        }
+        case 'round_end':
+          if (e.next) this.startEvolution(s);
+          break;
         default:
           break;
       }
@@ -202,6 +248,27 @@ export class BattleView {
       case 'cinder_spit': this.vfx.emit('fire', pos, 25, 0.2); break;
       case 'spark_dart': this.vfx.emit('electric', pos, 25, 0.2); break;
       case 'vine_snare': this.vfx.emit('leaf', pos, 12, 0.3); break;
+      case 'molten_leap': this.vfx.eruption(pos.clone().setY(0)); break;
+      case 'bramble_stampede':
+        this.vfx.emit('leaf', pos, 30, 0.4);
+        for (let i = 0; i < 3; i++) this.vfx.spike(pos.clone().setY(0).add(new THREE.Vector3(Math.random() - 0.5, 0, Math.random() - 0.5)), 0.8);
+        break;
+      case 'chain_storm':
+        this.vfx.emit('electric', pos, 20, 0.2);
+        this.vfx.lightning(pos.clone().add(new THREE.Vector3(0, 1.5, 0)), pos, 0.15, '#7ae8ff', 0.4);
+        break;
+      case 'volcanic_ruin':
+        for (let i = 0; i < 3; i++) this.vfx.eruption(pos.clone().setY(0).add(new THREE.Vector3((i - 1) * 1.1, 0, (Math.random() - 0.5) * 0.8)));
+        this.vfx.ring(pos.clone().setY(0.05), '#ff3a00', 0.9, 4);
+        break;
+      case 'maelstrom':
+        this.vfx.emit('splash', pos, 70, 0.6, new THREE.Vector3(0, 1.2, 0), 1.2);
+        this.vfx.ring(pos.clone().setY(0.1), '#3aa4ff', 0.8, 2.5);
+        break;
+      case 'sky_judgement':
+        this.vfx.ring(pos, '#ffffff', 0.5, 3, false);
+        this.vfx.emit('electric', pos, 60, 0.6, undefined, 1.4);
+        break;
       default: if (!miss) this.vfx.ring(pos, '#ffffff', 0.25, 1.2, false);
     }
   }
@@ -210,7 +277,8 @@ export class BattleView {
 
   update(dt: number, prev: SimState, curr: SimState, alpha: number) {
     this.time += dt;
-    for (const p of [0, 1] as const) this.updateSide(p, dt, prev, curr, alpha);
+    if (this.evo) this.updateEvolution(dt);
+    if (!this.evo || this.evo.t < EVO_START) for (const p of [0, 1] as const) this.updateSide(p, dt, prev, curr, alpha);
     // Strikes in flight.
     for (const k of curr.strikes) {
       const m = MOVES[k.move];
@@ -221,6 +289,77 @@ export class BattleView {
       this.vfx.projectile(k.id, k.move, from, to, prog, dt);
     }
     this.vfx.update(dt);
+  }
+
+  /** Between rounds: every creature of both trainers appears and evolves into its next stage. */
+  private startEvolution(s: SimState) {
+    const actors: EvoActor[] = [];
+    for (const p of [0, 1] as const) {
+      const team = s.trainers[p].team;
+      team.forEach((c, i) => {
+        const next = SPECIES[c.species].next;
+        if (!next) return;
+        const from = buildCreature(c.species);
+        const to = buildCreature(next);
+        const x = (i - (team.length - 1) / 2) * 1.8;
+        const pos = new THREE.Vector3(worldX(p, x), 0, creatureZ(p));
+        for (const m of [from, to]) {
+          m.root.visible = false;
+          m.root.position.copy(pos);
+          this.group.add(m.root);
+        }
+        actors.push({ from, to, pos, facing: p === 0 ? Math.PI : 0 });
+      });
+    }
+    this.evo = { t: 0, actors, burst: false };
+  }
+
+  private updateEvolution(dt: number) {
+    const evo = this.evo!;
+    evo.t += dt;
+    const t = evo.t;
+    if (t < EVO_START) return;
+    // Hide the battle models once the sequence starts.
+    for (const side of this.sides) {
+      for (const m of side.models) m.root.visible = false;
+      side.shield.visible = side.mirror.visible = false;
+    }
+    const k = t - EVO_START;
+    for (const a of evo.actors) {
+      const before = t < EVO_BURST;
+      // Flicker between the two forms faster and faster just before the burst.
+      const flick = t > EVO_BURST - 1.1 && before ? Math.sin(Math.pow(t - (EVO_BURST - 1.1), 2) * 40) > 0 : false;
+      const showTo = !before || flick;
+      a.from.root.visible = !showTo;
+      a.to.root.visible = showTo;
+      const m = showTo ? a.to : a.from;
+      const appear = Math.min(1, k / 0.35);
+      const spinSpeed = before ? 1 + Math.min(1, k / 2.5) * 10 : Math.max(0, 10 - (t - EVO_BURST) * 12);
+      m.root.rotation.y = a.facing + (before ? k * spinSpeed * 0.6 : (t - EVO_BURST) * spinSpeed * 0.3);
+      const rise = before ? Math.min(0.5, k * 0.2) : Math.max(0, 0.5 - (t - EVO_BURST) * 1.2);
+      m.root.position.set(a.pos.x, rise, a.pos.z);
+      const pop = !before ? 1 + Math.max(0, 0.35 - (t - EVO_BURST)) : 1;
+      m.root.scale.setScalar(m.size * (before ? easeOutBack(appear) : pop));
+      m.body.position.y = m.baseY + Math.sin(this.time * 3) * 0.03;
+      m.animate(this.time, dt, before ? Math.min(1, k / 2) : 0.3, 0);
+      glow(m, before ? Math.min(1, k / 2.2) : Math.max(0, 1 - (t - EVO_BURST) * 1.2));
+      if (before && Math.random() < 0.5) {
+        const ang = this.time * 6 + Math.random();
+        this.vfx.emit('orb', a.pos.clone().add(new THREE.Vector3(Math.cos(ang) * 0.9, 0.3 + Math.random() * 1.2, Math.sin(ang) * 0.9)), 1, 0.05);
+      }
+      if (k < 0.1 && Math.random() < 0.5) this.vfx.emit('orb', a.pos.clone().setY(0.4), 6, 0.2);
+    }
+    if (!evo.burst && t >= EVO_BURST) {
+      evo.burst = true;
+      for (const a of evo.actors) {
+        this.vfx.ring(a.pos.clone().setY(0.05), '#ffffff', 0.8, 3.5);
+        this.vfx.ring(a.pos.clone().setY(1), '#33e0ff', 0.6, 2.5, false);
+        this.vfx.emit('orb', a.pos.clone().setY(0.8), 60, 0.4);
+        this.vfx.emit('spark', a.pos.clone().setY(0.8), 40, 0.3);
+      }
+      this.ctx.shake.amount = Math.max(this.ctx.shake.amount, 0.5);
+      this.onEvolveBurst();
+    }
   }
 
   private updateSide(p: PlayerIdx, dt: number, prev: SimState, curr: SimState, alpha: number) {
@@ -244,7 +383,7 @@ export class BattleView {
     if (side.shrink >= 0) { side.shrink += dt * 4; scale = Math.max(0, 1 - side.shrink); }
     if (side.faintT >= 0) { side.faintT += dt; opacity = Math.max(0, 1 - Math.max(0, side.faintT - 0.8) / 0.8); }
     m.root.visible = scale > 0.01 && opacity > 0.01;
-    if (!m.root.visible) { side.shield.visible = false; return; }
+    if (!m.root.visible) { side.shield.visible = false; side.mirror.visible = false; return; }
 
     const facing = p === 0 ? Math.PI : 0;
     const fwd = p === 0 ? -1 : 1; // world z direction toward the opponent
@@ -252,51 +391,43 @@ export class BattleView {
     const o = curr.trainers[p === 0 ? 1 : 0];
     const yaw = Math.atan2(worldX(p === 0 ? 1 : 0, o.x) - worldX(p, side.dispX), 6) * fwd;
     m.root.rotation.set(0, facing + yaw, 0);
-    m.root.scale.setScalar(scale);
+    m.root.scale.setScalar(scale * m.size);
 
     // Base idle: bob + breathing.
     const speedK = SPECIES[m.species].speed === 'fast' ? 1.6 : SPECIES[m.species].speed === 'slow' ? 0.8 : 1.1;
     let bodyY = m.baseY + Math.sin(this.time * 2.2 * speedK + p) * 0.04;
-    let bodyZ = 0;
-    let lean = 0;
-    let roll = 0;
-    let energy = 0;
+    let pose: Pose | null = null;
     const breathe = 1 + Math.sin(this.time * 2.6 + p) * 0.025;
-    m.body.scale.set(breathe, 1 / breathe, breathe);
 
-    // Action animation.
+    // Action animation: each move has its own body motion (see motion.ts).
     const run = t.action;
     if (run && side.faintT < 0) {
       const k = Math.min(1, Math.max(0, 1 - (run.left - alpha) / Math.max(1, run.total)));
       const a = run.action;
       if (a.kind === 'move') {
         const mv = MOVES[a.move];
-        const dash = DASH[a.move] ?? 0;
-        if (run.phase === 'windup') {
-          energy = k;
-          lean = -0.25 * k;
-          bodyY -= 0.06 * k;
-          if (dash && k > 0.6) bodyZ = dash * easeIn((k - 0.6) / 0.4);
-          if (Math.random() < 0.3 + k) this.vfx.emit(CHARGE_FX[mv.element] ?? 'dust', this.creaturePos(p, curr), mv.heavy ? 2 : 1, 0.5);
-        } else if (run.phase === 'active') {
-          energy = 1;
-          if (dash) bodyZ = dash;
-          else if (mv.delivery === 'self') bodyY += Math.sin(k * Math.PI) * 0.25;
-          else { lean = 0.15; bodyZ = -0.15 * (1 - k); }
-        } else {
-          energy = 1 - k;
-          if (dash) bodyZ = dash * (1 - easeOut(k));
-          lean = 0.1 * (1 - k);
-        }
+        pose = movePose(a.move, run.phase, k, this.time);
+        if (run.phase === 'windup' && Math.random() < 0.3 + k) this.vfx.emit(CHARGE_FX[mv.element] ?? 'dust', this.creaturePos(p, curr), mv.heavy ? 2 : 1, 0.5);
+        if (a.move === 'bramble_stampede' && pose.run > 0.5 && Math.random() < 0.5) this.vfx.emit('leaf', this.creaturePos(p, curr, 0.2), 1, 0.3);
+        if (a.move === 'molten_leap' && pose.up > 0.3) this.vfx.emit('ember', this.creaturePos(p, curr, 0.3).add(this.forward(p, pose.fwd)).setY(pose.up + 0.4), 1, 0.2);
       } else if (a.kind === 'dodge') {
-        roll = (t.x > tp.x ? -1 : 1) * Math.sin(k * Math.PI) * 0.5;
-        bodyY += Math.sin(k * Math.PI) * 0.25;
+        pose = dodgePose(k, t.x > tp.x ? -1 : 1);
       } else if (a.kind === 'recall' && run.phase === 'windup') {
-        energy = k;
         side.flash = Math.max(side.flash, 0.4 * k);
-        if (k > 0.75) m.root.scale.setScalar(scale * (1 - (k - 0.75) * 3.6));
+        if (k > 0.75) m.root.scale.setScalar(scale * m.size * (1 - (k - 0.75) * 3.6));
+        pose = { fwd: 0, up: 0, lean: 0, roll: 0, spin: 0, squash: 1, run: 0, energy: k };
       }
     }
+    const P: Pose = pose ?? { fwd: 0, up: 0, lean: 0, roll: 0, spin: 0, squash: 1, run: 0, energy: 0 };
+    // Pose distances are world metres; the body lives in the (stage-scaled) root's space.
+    let bodyZ = P.fwd / m.size;
+    bodyY += P.up / m.size;
+    let lean = P.lean;
+    let roll = P.roll;
+    if (P.jitter) { bodyZ += (Math.random() - 0.5) * P.jitter; bodyY += (Math.random() - 0.5) * P.jitter; }
+    if (P.dust) this.vfx.emit('dust', this.creaturePos(p, curr, 0).add(this.forward(p, P.fwd)).setY(0.12), 2, 0.3);
+    const sq = P.squash * (1 / breathe);
+    m.body.scale.set(1 / Math.sqrt(sq), sq, 1 / Math.sqrt(sq));
 
     // Hit recoil.
     if (side.recoil > 0) {
@@ -313,16 +444,23 @@ export class BattleView {
     }
 
     m.body.position.set(0, bodyY, bodyZ);
-    m.body.rotation.set(lean, 0, roll);
-    m.animate(this.time, dt, energy);
+    m.body.rotation.set(lean, P.spin, roll);
+    m.animate(this.time, dt, P.energy, P.run);
 
     // Status visuals.
     const shieldOn = c.shieldTicks > 0 && side.faintT < 0;
     side.shield.visible = shieldOn;
     if (shieldOn) {
       side.shield.position.copy(this.creaturePos(p, curr, 0.6));
-      side.shield.scale.setScalar(Math.max(0.8, m.height * 0.6) * (1 + Math.sin(this.time * 6) * 0.04));
+      side.shield.scale.setScalar(Math.max(0.8, m.height * m.size * 0.6) * (1 + Math.sin(this.time * 6) * 0.04));
       if (Math.random() < 0.3) this.vfx.emit('ember', side.shield.position, 1, 0.6);
+    }
+    const mirrorOn = c.mirrorTicks > 0 && side.faintT < 0;
+    side.mirror.visible = mirrorOn;
+    if (mirrorOn) {
+      side.mirror.position.copy(this.creaturePos(p, curr, 0.6));
+      side.mirror.scale.setScalar(Math.max(0.9, m.height * m.size * 0.6));
+      side.mirror.rotation.y += dt * 2;
     }
     if (c.healTicks > 0 && Math.random() < 0.6) this.vfx.emit('heal', this.headPos(p).add(new THREE.Vector3(0, 0.2, 0)), 2, 0.6);
     if (c.staticTicks > 0 && Math.random() < 0.25) this.vfx.emit('static', this.creaturePos(p, curr), 2, 0.4);
@@ -352,7 +490,17 @@ export class BattleView {
 }
 
 const WHITE = new THREE.Color(1, 1, 1);
-const easeIn = (x: number) => x * x;
+/** Evolution sequence timeline (s after the round ends; the break lasts INTERMISSION_S). */
+const EVO_START = 1.8;
+const EVO_BURST = 4.9;
+
+function glow(m: CreatureModel, amount: number) {
+  for (const mat of m.materials) {
+    const base = mat.userData.baseEmissive as THREE.Color;
+    mat.emissive.copy(base).lerp(WHITE, Math.min(1, amount));
+    mat.emissiveIntensity = Math.max(mat.userData.baseEmissiveIntensity as number, amount * 2.2);
+  }
+}
 const easeOut = (x: number) => 1 - (1 - x) * (1 - x);
 function easeOutBack(x: number) {
   const c1 = 1.70158, c3 = c1 + 1;

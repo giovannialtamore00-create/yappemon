@@ -1,8 +1,8 @@
 // Click-driven menus: lobby, room code, team select, forced switch, end screen, disconnect.
 
 import { ELEMENT_COLOR, ELEMENT_LABEL, getLang, t } from '../i18n';
-import { MOVES, SPECIES, SPECIES_IDS } from '../sim/data';
-import type { Lang, SpeciesId } from '../sim/types';
+import { MOVES, SPECIES, SPECIES_IDS, evolutionLine } from '../sim/data';
+import type { BaseSpeciesId, Lang, SpeciesId } from '../sim/types';
 
 const h = <K extends keyof HTMLElementTagNameMap>(tag: K, cls?: string, text?: string) => {
   const e = document.createElement(tag);
@@ -95,17 +95,17 @@ export class Screens {
 
   // ------------------------------------------------------------ team select
 
-  teamSelect(o: { subtitle?: string; onHover(sp: SpeciesId | null): void; onReady(team: SpeciesId[]): void }) {
+  teamSelect(o: { subtitle?: string; onHover(sp: BaseSpeciesId | null): void; onReady(team: BaseSpeciesId[]): void }) {
     const s = this.overlay('team');
     const lang = getLang();
     const head = h('div', 'team-head');
-    head.append(h('h2', '', t('teamSelect')), h('p', 'muted', t('teamHint')));
+    head.append(h('h2', '', t('teamSelect')), h('p', 'muted', t('teamHint')), h('p', 'muted', t('bestOf3')));
     if (o.subtitle) head.append(h('p', 'muted', o.subtitle));
     const grid = h('div', 'team-grid');
-    const picks: SpeciesId[] = [];
+    const picks: BaseSpeciesId[] = [];
     const ready = button(t('ready'), () => { if (picks.length === 2) { ready.disabled = true; o.onReady([...picks]); } }, 'btn big primary');
     ready.disabled = true;
-    const cards = new Map<SpeciesId, HTMLElement>();
+    const cards = new Map<BaseSpeciesId, HTMLElement>();
     const refresh = () => {
       for (const [sp, c] of cards) {
         const i = picks.indexOf(sp);
@@ -131,7 +131,18 @@ export class Screens {
         li.append(dot, h('span', '', MOVES[m].name[lang]), h('span', 'move-cost', String(MOVES[m].cost)));
         ml.append(li);
       }
-      c.append(top, stats, ml);
+      const line = evolutionLine(sp).slice(1);
+      const evo = h('div', 'cc-evo', t('evolvesTo', { chain: line.map((x) => SPECIES[x].name).join(' → ') }));
+      const extra = h('ul', 'cc-moves cc-new');
+      for (const x of line) {
+        const m = MOVES[SPECIES[x].moves[SPECIES[x].moves.length - 1]!];
+        const li = h('li');
+        const dot = h('span', 'el-dot');
+        dot.style.background = ELEMENT_COLOR[m.element];
+        li.append(dot, h('span', '', `+ ${m.name[lang]}`), h('span', 'move-cost', String(m.cost)));
+        extra.append(li);
+      }
+      c.append(top, stats, ml, evo, extra);
       c.addEventListener('mouseenter', () => o.onHover(sp));
       c.addEventListener('mouseleave', () => o.onHover(picks[picks.length - 1] ?? null));
       c.addEventListener('click', () => {

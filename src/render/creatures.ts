@@ -16,8 +16,17 @@ export interface CreatureModel {
   /** Where projectiles leave from, in body space. */
   mouth: THREE.Vector3;
   materials: THREE.MeshStandardMaterial[];
-  /** Species-specific idle detail; `energy` 0..1 rises during windups. */
-  animate(time: number, dt: number, energy: number): void;
+  /** Overall scale of this evolution stage (applied to `root` by the view). */
+  size: number;
+  /** Parts the view animates per move (may be empty). */
+  legs: THREE.Object3D[];
+  head: THREE.Object3D | null;
+  wings: THREE.Object3D[];
+  /**
+   * Species-specific idle detail. `energy` 0..1 rises during windups; `run` 0..1 makes the legs
+   * (or wings) cycle fast, for dashes.
+   */
+  animate(time: number, dt: number, energy: number, run?: number): void;
 }
 
 type Mat = THREE.MeshStandardMaterial;
@@ -55,15 +64,15 @@ function eyes(k: ReturnType<typeof kit>, parent: THREE.Object3D, x: number, y: n
 
 // ---------------------------------------------------------------- Cindrix: magma beetle
 
-function cindrix(): CreatureModel {
+function cindrix(stage: number): CreatureModel {
   const materials: Mat[] = [];
   const k = kit(materials);
   const root = new THREE.Group();
   const body = new THREE.Group();
   root.add(body);
-  const rock = k.mat('#2e2623', { roughness: 0.85, flatShading: true });
-  const shellM = k.mat('#3a2c27', { roughness: 0.6, flatShading: true });
-  const lava = k.mat('#ffb347', { emissive: '#ff5a12', emissiveIntensity: 2.2, roughness: 0.4 });
+  const rock = k.mat(stage === 3 ? '#1d1514' : '#2e2623', { roughness: 0.85, flatShading: true });
+  const shellM = k.mat(['#3a2c27', '#4a1f16', '#2a1210'][stage - 1]!, { roughness: 0.6, flatShading: true });
+  const lava = k.mat(stage === 3 ? '#ffe08a' : '#ffb347', { emissive: stage === 1 ? '#ff5a12' : '#ff3a00', emissiveIntensity: 2.2, roughness: 0.4 });
   const legM = k.mat('#1f1917', { roughness: 0.8 });
 
   // Belly + glowing core peeking from below the shell.
@@ -100,11 +109,32 @@ function cindrix(): CreatureModel {
     k.mesh(new THREE.CylinderGeometry(0.03, 0.02, 0.32, 6), legM, leg, [s * 0.26, -0.15, 0], undefined, [0, 0, s * 0.25]);
     legs.push(leg);
   }
+  if (stage >= 2) {
+    // Pyroxen: a ridge of glowing spikes along the shell and a longer horn.
+    for (let i = 0; i < 5; i++) {
+      const z = 0.35 - i * 0.2;
+      k.mesh(new THREE.ConeGeometry(0.06, 0.22 + (i % 2) * 0.06, 6), rock, body, [0, 0.42 - Math.abs(z) * 0.15, z], undefined, [-0.3, 0, 0]);
+      k.mesh(new THREE.SphereGeometry(0.03, 6, 4), lava, body, [0, 0.55 - Math.abs(z) * 0.15, z - 0.04]);
+    }
+    for (const sd of [-1, 1]) k.mesh(new THREE.ConeGeometry(0.05, 0.25, 6), rock, body, [sd * 0.42, 0.18, 0.05], undefined, [0, 0, -sd * 1.1]);
+    k.mesh(new THREE.ConeGeometry(0.06, 0.38, 7), rock, head, [0, 0.3, 0.1], undefined, [0.6, 0, 0]);
+  }
+  if (stage >= 3) {
+    // Calderox: a smoking volcano chimney on its back and heavy plated mandibles.
+    k.mesh(new THREE.CylinderGeometry(0.12, 0.26, 0.4, 9), rock, body, [0, 0.5, -0.3]);
+    k.mesh(new THREE.CylinderGeometry(0.11, 0.11, 0.05, 9), lava, body, [0, 0.71, -0.3]);
+    for (const sd of [-1, 1]) {
+      k.mesh(new THREE.ConeGeometry(0.07, 0.35, 6), shellM, head, [sd * 0.14, -0.06, 0.28], undefined, [Math.PI / 2, 0, sd * 0.6]);
+      k.mesh(new THREE.BoxGeometry(0.25, 0.08, 0.5), shellM, body, [sd * 0.38, 0.05, -0.05], undefined, [0, 0, sd * 0.5]);
+    }
+  }
+  const size = [1, 1.25, 1.5][stage - 1]!;
   return {
-    species: 'cindrix', root, body, height: 0.95, baseY: 0.34, mouth: new THREE.Vector3(0, 0, 0.75), materials,
-    animate(time, _dt, energy) {
+    species: (['cindrix', 'pyroxen', 'calderox'] as const)[stage - 1]!, root, body, height: 0.95 + (stage - 1) * 0.15, baseY: 0.34, mouth: new THREE.Vector3(0, 0, 0.75), materials,
+    size, legs, head, wings: [],
+    animate(time, _dt, energy, run = 0) {
       lava.emissiveIntensity = 1.8 + Math.sin(time * 3) * 0.4 + energy * 3;
-      legs.forEach((l, i) => { l.rotation.x = Math.sin(time * 4 + i * 1.7) * 0.08; });
+      legs.forEach((l, i) => { l.rotation.x = Math.sin(time * (4 + run * 22) + i * 1.7) * (0.08 + run * 0.5); });
       head.rotation.y = Math.sin(time * 0.9) * 0.12;
     },
   };
@@ -112,7 +142,7 @@ function cindrix(): CreatureModel {
 
 // ---------------------------------------------------------------- Brinkle: pufferfish in a bubble
 
-function brinkle(): CreatureModel {
+function brinkle(stage: number): CreatureModel {
   const materials: Mat[] = [];
   const k = kit(materials);
   const root = new THREE.Group();
@@ -120,7 +150,7 @@ function brinkle(): CreatureModel {
   root.add(body);
   const fishG = new THREE.Group();
   body.add(fishG);
-  const skin = k.mat('#3d9be9', { roughness: 0.45 });
+  const skin = k.mat(['#3d9be9', '#1f7fa8', '#183a73'][stage - 1]!, { roughness: 0.45 });
   const belly = k.mat('#d6f1ff', { roughness: 0.5 });
   const spikeM = k.mat('#eef8ff', { roughness: 0.4 });
   const finM = k.mat('#7fd0ff', { roughness: 0.3, transparent: true, opacity: 0.9, side: THREE.DoubleSide });
@@ -161,8 +191,27 @@ function brinkle(): CreatureModel {
   rim.rotation.x = Math.PI / 2;
   rim.position.y = 0.25;
   body.add(rim);
+  if (stage >= 2) {
+    // Tsunafin: tall crown fin and long flowing tail fins.
+    k.mesh(new THREE.ConeGeometry(0.16, 0.45, 3), finM, fishG, [0, 0.55, -0.05], [0.25, 1, 1.4]);
+    for (const sd of [-1, 1]) k.mesh(new THREE.ConeGeometry(0.14, 0.5, 3), finM, fishG, [sd * 0.12, 0.05, -0.68], [1, 1, 0.2], [-Math.PI / 2, 0, sd * 0.4]);
+  }
+  if (stage >= 3) {
+    // Abyssmaw: a toothed jaw and a glowing lure on a stalk.
+    const tooth = k.mat('#f4f1e6', { roughness: 0.3 });
+    for (let i = 0; i < 7; i++) {
+      const a = -0.6 + i * 0.2;
+      k.mesh(new THREE.ConeGeometry(0.025, 0.09, 4), tooth, fishG, [Math.sin(a) * 0.2, -0.13, 0.36 + Math.cos(a) * 0.02], undefined, [Math.PI, 0, 0]);
+    }
+    const stalk = k.mat('#183a73');
+    k.mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.35, 5), stalk, fishG, [0, 0.52, 0.2], undefined, [0.7, 0, 0]);
+    k.mesh(new THREE.SphereGeometry(0.06, 10, 8), k.mat('#c8fff4', { emissive: '#3affd2', emissiveIntensity: 2.5 }), fishG, [0, 0.64, 0.36]);
+  }
+  bubble.scale.setScalar(1);
+  const size = [1, 1.2, 1.4][stage - 1]!;
   return {
-    species: 'brinkle', root, body, height: 1.85, baseY: 0.95, mouth: new THREE.Vector3(0, -0.07, 0.75), materials,
+    species: (['brinkle', 'tsunafin', 'abyssmaw'] as const)[stage - 1]!, root, body, height: 1.85, baseY: 0.95, mouth: new THREE.Vector3(0, -0.07, 0.75), materials,
+    size, legs: [], head: fishG, wings: [finL, finR],
     animate(time, _dt, energy) {
       fishG.rotation.y = Math.sin(time * 0.7) * 0.25;
       fishG.rotation.z = Math.sin(time * 1.1) * 0.08;
@@ -181,13 +230,13 @@ function brinkle(): CreatureModel {
 
 // ---------------------------------------------------------------- Vinram: mossy ram
 
-function vinram(): CreatureModel {
+function vinram(stage: number): CreatureModel {
   const materials: Mat[] = [];
   const k = kit(materials);
   const root = new THREE.Group();
   const body = new THREE.Group();
   root.add(body);
-  const wool = k.mat('#d9cfb4', { roughness: 0.95, flatShading: true });
+  const wool = k.mat(['#d9cfb4', '#c9b98f', '#7a5c3e'][stage - 1]!, { roughness: 0.95, flatShading: true });
   const moss = k.mat('#4f8f3a', { roughness: 1, flatShading: true });
   const moss2 = k.mat('#6db04a', { roughness: 1, flatShading: true });
   const skin = k.mat('#5b4636', { roughness: 0.8 });
@@ -240,12 +289,39 @@ function vinram(): CreatureModel {
     k.mesh(new THREE.ConeGeometry(0.035, 0.09, 3), leaf, hg, [s * 0.06, 0.16, -0.05], [1, 1, 0.3], [0.5, 0, s * 0.6]);
   }
   k.mesh(new THREE.IcosahedronGeometry(0.09, 0), wool, body, [0, 0.12, -0.72]);
+  if (stage >= 2) {
+    // Thornhorn: thorns along the horns and a few flowers in the moss.
+    const thorn = k.mat('#3b5f22', { roughness: 0.6, flatShading: true });
+    for (const sd of [-1, 1]) for (let i = 0; i < 4; i++) {
+      const a = i * 0.9;
+      k.mesh(new THREE.ConeGeometry(0.03, 0.12, 4), thorn, head, [sd * (0.2 + Math.cos(a) * 0.12), 0.12 + Math.sin(a) * 0.15, -0.05 - i * 0.02], undefined, [0, 0, sd * (1 + a * 0.3)]);
+    }
+    const petal = k.mat('#ff8fc8', { emissive: '#ff4fa0', emissiveIntensity: 0.3 });
+    for (let i = 0; i < 5; i++) k.mesh(new THREE.SphereGeometry(0.045, 6, 5), petal, body, [Math.sin(i * 1.3) * 0.25, 0.47, -0.3 + Math.cos(i * 1.3) * 0.25]);
+  }
+  if (stage >= 3) {
+    // Elderoot: branching antlers and a leafy canopy on its back.
+    const bark = k.mat('#5a3d24', { roughness: 0.9, flatShading: true });
+    for (const sd of [-1, 1]) {
+      const br = new THREE.Group();
+      br.position.set(sd * 0.1, 0.2, -0.05);
+      br.rotation.z = -sd * 0.35;
+      head.add(br);
+      k.mesh(new THREE.CylinderGeometry(0.025, 0.04, 0.55, 6), bark, br, [0, 0.27, 0]);
+      k.mesh(new THREE.CylinderGeometry(0.018, 0.025, 0.3, 5), bark, br, [sd * 0.1, 0.42, 0], undefined, [0, 0, -sd * 0.7]);
+      k.mesh(new THREE.IcosahedronGeometry(0.1, 0), moss2, br, [0, 0.58, 0]);
+    }
+    for (let i = 0; i < 4; i++) k.mesh(new THREE.IcosahedronGeometry(0.2, 0), i % 2 ? moss : moss2, body, [Math.sin(i * 1.6) * 0.18, 0.62, -0.25 + Math.cos(i * 1.6) * 0.2]);
+  }
+  const size = [1, 1.2, 1.4][stage - 1]!;
   return {
-    species: 'vinram', root, body, height: 1.35, baseY: 0.62, mouth: new THREE.Vector3(0, 0.15, 0.9), materials,
-    animate(time, _dt, energy) {
+    species: (['vinram', 'thornhorn', 'elderoot'] as const)[stage - 1]!, root, body, height: 1.35 + (stage === 3 ? 0.5 : 0), baseY: 0.62, mouth: new THREE.Vector3(0, 0.15, 0.9), materials,
+    size, legs, head, wings: [],
+    animate(time, _dt, energy, run = 0) {
       head.rotation.x = Math.sin(time * 0.8) * 0.06 + energy * 0.35;
       head.rotation.y = Math.sin(time * 0.5) * 0.1;
-      legs.forEach((l, i) => { l.rotation.x = Math.sin(time * 2 + i) * 0.03; });
+      // Gallop: front and back pairs swing in opposition.
+      legs.forEach((l, i) => { l.rotation.x = run > 0 ? Math.sin(time * 18 + (i < 2 ? 0 : Math.PI) + (i % 2) * 0.5) * 0.7 * run : Math.sin(time * 2 + i) * 0.03; });
     },
   };
 }
@@ -265,7 +341,7 @@ function wingShape(w: number, h: number, back: boolean): THREE.Shape {
   return s;
 }
 
-function joltmoth(): CreatureModel {
+function joltmoth(stage: number): CreatureModel {
   const materials: Mat[] = [];
   const k = kit(materials);
   const root = new THREE.Group();
@@ -274,8 +350,8 @@ function joltmoth(): CreatureModel {
   const fur = k.mat('#3a3352', { roughness: 0.9 });
   const fluff = k.mat('#f4f1e6', { roughness: 1, flatShading: true });
   const stripe = k.mat('#ffd83a', { emissive: '#ffb800', emissiveIntensity: 0.6, roughness: 0.5 });
-  const wingM = k.mat('#ffe66b', { emissive: '#ffd21a', emissiveIntensity: 1.1, transparent: true, opacity: 0.88, side: THREE.DoubleSide, roughness: 0.4 });
-  const wingEdge = k.mat('#7a5cff', { emissive: '#7a5cff', emissiveIntensity: 1.2, side: THREE.DoubleSide });
+  const wingM = k.mat(['#ffe66b', '#b9a6ff', '#7fe8ff'][stage - 1]!, { emissive: ['#ffd21a', '#7a5cff', '#1ad2ff'][stage - 1]!, emissiveIntensity: 1.1, transparent: true, opacity: 0.88, side: THREE.DoubleSide, roughness: 0.4 });
+  const wingEdge = k.mat(stage === 1 ? '#7a5cff' : '#ffe14a', { emissive: stage === 1 ? '#7a5cff' : '#ffd21a', emissiveIntensity: 1.2, side: THREE.DoubleSide });
   const spotM = k.mat('#2b2340', { emissive: '#39e6ff', emissiveIntensity: 0.9, side: THREE.DoubleSide });
 
   // Thorax, fluffy collar, abdomen with stripes.
@@ -306,8 +382,10 @@ function joltmoth(): CreatureModel {
   }
   // Four wings on pivots.
   const pivots: THREE.Group[] = [];
+  const wingScale = [1, 1.25, 1.5][stage - 1]!;
   for (const s of [-1, 1]) for (const back of [false, true]) {
     const pv = new THREE.Group();
+    pv.scale.setScalar(wingScale);
     pv.position.set(s * 0.12, 0.08, back ? -0.08 : 0.04);
     body.add(pv);
     const w = back ? 0.55 : 0.75;
@@ -333,10 +411,27 @@ function joltmoth(): CreatureModel {
   }
   // Tiny legs.
   for (const s of [-1, 1]) for (const z of [0.05, -0.05]) k.mesh(new THREE.CylinderGeometry(0.01, 0.008, 0.18, 4), fur, body, [s * 0.1, -0.18, z], undefined, [0, 0, s * 0.4]);
+  if (stage >= 2) {
+    // Stormoth: a forked lightning tail.
+    for (const sd of [-1, 1]) {
+      const bolt = k.mesh(new THREE.ConeGeometry(0.03, 0.5, 4), stripe, abdomen, [sd * 0.06, -0.08, -0.62], undefined, [-Math.PI / 2 - 0.2, 0, sd * 0.3]);
+      bolt.scale.z = 0.4;
+    }
+  }
+  if (stage >= 3) {
+    // Tempestra: a crown of spikes and a storm-cloud halo.
+    for (let i = 0; i < 5; i++) k.mesh(new THREE.ConeGeometry(0.025, 0.16, 4), stripe, head, [Math.sin(i * 1.25) * 0.1, 0.13, Math.cos(i * 1.25) * 0.1 - 0.02], undefined, [0, 0, Math.sin(i * 1.25) * -0.4]);
+    const halo = new THREE.Mesh(new THREE.TorusGeometry(0.32, 0.07, 8, 24), k.mat('#5b6070', { roughness: 1, flatShading: true, emissive: '#2a3dff', emissiveIntensity: 0.3 }));
+    halo.rotation.x = Math.PI / 2;
+    halo.position.set(0, 0.55, 0);
+    body.add(halo);
+  }
+  const size = [1, 1.15, 1.3][stage - 1]!;
   return {
-    species: 'joltmoth', root, body, height: 1.7, baseY: 1.05, mouth: new THREE.Vector3(0, 0.05, 0.45), materials,
-    animate(time, _dt, energy) {
-      const speed = 11 + energy * 14;
+    species: (['joltmoth', 'stormoth', 'tempestra'] as const)[stage - 1]!, root, body, height: 1.7, baseY: 1.05, mouth: new THREE.Vector3(0, 0.05, 0.45), materials,
+    size, legs: [], head, wings: pivots,
+    animate(time, _dt, energy, run = 0) {
+      const speed = 11 + energy * 14 + run * 16;
       for (const pv of pivots) {
         const s = pv.userData.s as number;
         const phase = pv.userData.back ? 0.5 : 0;
@@ -349,7 +444,12 @@ function joltmoth(): CreatureModel {
   };
 }
 
-const BUILDERS: Record<SpeciesId, () => CreatureModel> = { cindrix, brinkle, vinram, joltmoth };
+const BUILDERS: Record<SpeciesId, () => CreatureModel> = {
+  cindrix: () => cindrix(1), pyroxen: () => cindrix(2), calderox: () => cindrix(3),
+  brinkle: () => brinkle(1), tsunafin: () => brinkle(2), abyssmaw: () => brinkle(3),
+  vinram: () => vinram(1), thornhorn: () => vinram(2), elderoot: () => vinram(3),
+  joltmoth: () => joltmoth(1), stormoth: () => joltmoth(2), tempestra: () => joltmoth(3),
+};
 
 export function buildCreature(species: SpeciesId): CreatureModel {
   const m = BUILDERS[species]();

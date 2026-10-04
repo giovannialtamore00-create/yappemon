@@ -4,11 +4,12 @@
 import {
   CREATURE_GAP_M, DODGE_COOLDOWN_S, DODGE_COST, DODGE_INVULN_S, DODGE_STEP_M, DRIFT_LIMIT_M, DRIFT_SPEED, DT,
   FORCED_SWITCH_S, INTERRUPT_THRESHOLD, MOVES, QUEUE_MAX, RECALL_S, SENDOUT_S, SPECIES, SPEED_MULT,
-  STAB, STAMINA_MAX, STAMINA_PAUSE_S, STAMINA_REGEN_PER_S, TICK_HZ, secToTicks, typeMultiplier,
+  STAB, STAMINA_MAX, STAMINA_PAUSE_S, STAMINA_REGEN_PER_S, TICK_HZ, INTERMISSION_S, MAX_ROUNDS, ROUNDS_TO_WIN,
+  knowsMove, sameFamily, secToTicks, speciesAtStage, typeMultiplier,
 } from './data';
 import { nextRandom } from './rng';
 import type {
-  ActionRun, CreatureState, Effectiveness, Element, FailReason, Intent, MoveDef, PlayerIdx, QAction,
+  ActionRun, BaseSpeciesId, CreatureState, Effectiveness, Element, FailReason, Intent, MoveDef, PlayerIdx, QAction,
   SimEvent, SimState, SpeciesId, Strike, TrainerState,
 } from './types';
 
@@ -16,7 +17,7 @@ export function createCreature(species: SpeciesId): CreatureState {
   const def = SPECIES[species];
   return {
     species, hp: def.maxHp, maxHp: def.maxHp, stamina: STAMINA_MAX, regenPause: 0, fainted: false,
-    shieldTicks: 0, staticTicks: 0, rootTicks: 0, healTicks: 0, healPerTick: 0,
+    shieldTicks: 0, staticTicks: 0, rootTicks: 0, healTicks: 0, healPerTick: 0, mirrorTicks: 0,
   };
 }
 
@@ -27,12 +28,24 @@ function createTrainer(team: SpeciesId[]): TrainerState {
   };
 }
 
-export function createMatch(teams: [SpeciesId[], SpeciesId[]], seed: number): SimState {
-  const s: SimState = {
-    tick: 0, rng: seed >>> 0, nextId: 1, trainers: [createTrainer(teams[0]), createTrainer(teams[1])],
-    strikes: [], result: null,
-  };
+/** Fresh trainers for a round: every creature at the evolution stage matching the round. */
+function setupRound(s: SimState) {
+  const stage = Math.min(3, s.round);
+  s.trainers = [
+    createTrainer(s.teams[0].map((b) => speciesAtStage(b, stage))),
+    createTrainer(s.teams[1].map((b) => speciesAtStage(b, stage))),
+  ];
   s.trainers[1].driftDir = -1;
+  s.strikes = [];
+}
+
+/** `teams` are stage-1 species; round 1 uses them, round 2 their first evolution, round 3 the last. */
+export function createMatch(teams: [BaseSpeciesId[], BaseSpeciesId[]], seed: number): SimState {
+  const s: SimState = {
+    tick: 0, rng: seed >>> 0, nextId: 1, trainers: [createTrainer([]), createTrainer([])],
+    strikes: [], teams: [[...teams[0]], [...teams[1]]], round: 1, score: [0, 0], intermission: 0, result: null,
+  };
+  setupRound(s);
   return s;
 }
 
@@ -47,12 +60,12 @@ function rand(s: SimState): number {
 
 /** Pure damage formula, exported for tests. `roll` is in [0, 1). */
 export function computeDamage(
-  power: number, moveEl: Element, attackerEl: Element, defenderEl: Element, roll: number, shielded: boolean,
+  power: number, moveEl: Element, attackerEl: Element, defenderEl: Element, roll: number, shielded: boolean, stageMult = 1,
 ): { damage: number; eff: Effectiveness } {
   const mult = moveEl === 'normal' ? 1 : typeMultiplier(moveEl, defenderEl);
   const stab = moveEl !== 'normal' && moveEl === attackerEl ? STAB : 1;
   const variance = 0.9 + 0.2 * roll;
-  const raw = power * mult * stab * variance * (shielded ? 0.5 : 1);
+  const raw = power * stageMult * mult * stab * variance * (shielded ? 0.5 : 1);
   return { damage: Math.max(1, Math.round(raw)), eff: mult > 1 ? 'super' : mult < 1 ? 'weak' : 'neutral' };
 }
 
@@ -70,6 +83,16 @@ export function step(s: SimState, intents: [Intent[], Intent[]]): SimEvent[] {
   const ev: SimEvent[] = [];
   if (s.result) return ev;
   if (s.tick === 0) for (const p of [0, 1] as const) ev.push({ t: 'sendout', p, slot: 0 });
+  if (s.intermission > 0) {
+    // Between rounds: nothing moves; when the break ends, everyone comes back evolved.
+    if (--s.intermission === 0) {
+      setupRound(s);
+      ev.push({ t: 'round_start', round: s.round });
+      for (const p of [0, 1] as const) ev.push({ t: 'sendout', p, slot: 0 });
+    }
+    s.tick++;
+    return ev;
+  }
 
   for (const p of [0, 1] as const) for (const it of intents[p]) applyIntent(s, p, it, ev);
 
@@ -104,7 +127,7 @@ function applyIntent(s: SimState, p: PlayerIdx, it: Intent, ev: SimEvent[]) {
     case 'queue': {
       if (t.field === 'choosing' || t.field === 'out') return void ev.push({ t: 'invalid', p, reason: 'not_now' });
       const species = activeCreature(t).species;
-      const valid = it.actions.filter((a) => a.kind !== 'move' || MOVES[a.move].species === species);
+      const valid = it.actions.filter((a) => a.kind !== 'move' || knowsMove(species, a.move));
       if (valid.length < it.actions.length) ev.push({ t: 'invalid', p, reason: 'unknown_move' });
       if (valid.some((a) => a.kind === 'recall') && benchSlot(t) < 0) {
         ev.push({ t: 'invalid', p, reason: 'cannot_recall' });
@@ -121,7 +144,7 @@ function applyIntent(s: SimState, p: PlayerIdx, it: Intent, ev: SimEvent[]) {
     case 'choose':
       return choose(s, p, it.slot, ev);
     case 'go': {
-      const slot = t.team.findIndex((c, i) => c.species === it.species && !c.fainted && (t.field === 'choosing' || i !== t.active));
+      const slot = t.team.findIndex((c, i) => sameFamily(c.species, it.species) && !c.fainted && (t.field === 'choosing' || i !== t.active));
       if (t.field === 'choosing') {
         if (slot >= 0) choose(s, p, slot as 0 | 1, ev);
         else ev.push({ t: 'invalid', p, reason: 'not_now' });
@@ -174,12 +197,13 @@ function tickCreatureStatus(p: PlayerIdx, c: CreatureState, onField: boolean, ev
   if (c.regenPause > 0) c.regenPause--;
   else c.stamina = Math.min(STAMINA_MAX, c.stamina + (STAMINA_REGEN_PER_S * DT) * (c.staticTicks > 0 ? 0.5 : 1));
   if (!onField) return;
-  const dec = (k: 'shieldTicks' | 'staticTicks' | 'rootTicks', status: 'shield' | 'static' | 'root') => {
+  const dec = (k: 'shieldTicks' | 'staticTicks' | 'rootTicks' | 'mirrorTicks', status: 'shield' | 'static' | 'root' | 'mirror') => {
     if (c[k] > 0 && --c[k] === 0) ev.push({ t: 'status', p, status, on: false });
   };
   dec('shieldTicks', 'shield');
   dec('staticTicks', 'static');
   dec('rootTicks', 'root');
+  dec('mirrorTicks', 'mirror');
   if (c.healTicks > 0) {
     c.hp = Math.min(c.maxHp, c.hp + c.healPerTick);
     if (--c.healTicks === 0) ev.push({ t: 'status', p, status: 'heal', on: false });
@@ -187,7 +211,7 @@ function tickCreatureStatus(p: PlayerIdx, c: CreatureState, onField: boolean, ev
 }
 
 function clearStatuses(c: CreatureState) {
-  c.shieldTicks = c.staticTicks = c.rootTicks = c.healTicks = 0;
+  c.shieldTicks = c.staticTicks = c.rootTicks = c.healTicks = c.mirrorTicks = 0;
   c.healPerTick = 0;
 }
 
@@ -246,7 +270,7 @@ function startNext(s: SimState, p: PlayerIdx, ev: SimEvent[]) {
     } else {
       t.queue.shift();
       const m = MOVES[a.move];
-      if (m.species !== c.species) continue; // stale entry after a switch
+      if (!knowsMove(c.species, m.id)) continue; // stale entry after a switch
       if (c.stamina < m.cost) return fail(s, p, 'stamina', ev);
       spend(c, m.cost);
       t.action = newRun(s, a, secToTicks(m.windup * speedMult(t)));
@@ -317,6 +341,9 @@ function onActiveStart(s: SimState, p: PlayerIdx, ev: SimEvent[]) {
       c.healPerTick = m.effect.amount / c.healTicks;
       ev.push({ t: 'status', p, status: 'heal', on: true });
       ev.push({ t: 'heal', p, amount: m.effect.amount });
+    } else if (m.effect.kind === 'mirror') {
+      c.mirrorTicks = secToTicks(m.effect.seconds);
+      ev.push({ t: 'status', p, status: 'mirror', on: true });
     }
     ev.push({ t: 'launch', p, move: m.id });
     return;
@@ -327,13 +354,17 @@ function onActiveStart(s: SimState, p: PlayerIdx, ev: SimEvent[]) {
     ev.push({ t: 'launch', p, move: m.id });
     return fail(s, p, 'target_recalled', ev);
   }
-  const strike: Strike = {
-    id: s.nextId++, owner: p, ownerSlot: t.active, ownerActionUid: t.action!.uid, target: o, targetSlot: ot.active,
-    move: m.id, left: travelTicks(m), total: travelTicks(m), fromX: t.x, toX: ot.x,
-  };
-  ev.push({ t: 'launch', p, move: m.id, strike: strike.id });
-  if (m.delivery === 'melee') resolveStrike(s, strike, ev);
-  else s.strikes.push(strike);
+  const hits = m.hits ?? 1;
+  for (let i = 0; i < hits; i++) {
+    const delay = i * secToTicks(m.hitGap ?? 0.25);
+    const strike: Strike = {
+      id: s.nextId++, owner: p, ownerSlot: t.active, ownerActionUid: t.action!.uid, target: o, targetSlot: ot.active,
+      move: m.id, left: travelTicks(m) + delay, total: travelTicks(m), fromX: t.x, toX: ot.x,
+    };
+    ev.push({ t: 'launch', p, move: m.id, strike: strike.id });
+    if (m.delivery === 'melee') resolveStrike(s, strike, ev);
+    else s.strikes.push(strike);
+  }
 }
 
 export function travelTicks(m: MoveDef): number {
@@ -352,6 +383,9 @@ function tickStrikes(s: SimState, ev: SimEvent[]) {
 
 /** Fail the owner only if it is still the same creature on the field. */
 function failOwner(s: SimState, k: Strike, reason: FailReason, ev: SimEvent[]) {
+  if (k.quiet) return;
+  // Later strikes of the same multi-hit action don't fail it again.
+  for (const o of s.strikes) if (o.ownerActionUid === k.ownerActionUid) o.quiet = true;
   const ot = s.trainers[k.owner];
   if (ot.field === 'active' && ot.active === k.ownerSlot) fail(s, k.owner, reason, ev);
 }
@@ -383,13 +417,32 @@ function resolveStrike(s: SimState, k: Strike, ev: SimEvent[]) {
     return;
   }
   if (eff.kind !== 'damage') return;
-  const attackerEl = SPECIES[s.trainers[k.owner].team[k.ownerSlot]!.species].element;
-  const { damage, eff: e } = computeDamage(m.power, m.element, attackerEl, SPECIES[target.species].element, rand(s), target.shieldTicks > 0);
+  const attacker = s.trainers[k.owner].team[k.ownerSlot]!;
+  const attackerDef = SPECIES[attacker.species];
+  if (target.mirrorTicks > 0) {
+    // Tide Mirror: the hit bounces back at the attacker (computed against the attacker's own type).
+    target.mirrorTicks = 0;
+    ev.push({ t: 'status', p: k.target, status: 'mirror', on: false });
+    const ownerT = s.trainers[k.owner];
+    const back = computeDamage(m.power, m.element, attackerDef.element, attackerDef.element, rand(s), attacker.shieldTicks > 0, attackerDef.dmgMult);
+    ev.push({ t: 'reflect', p: k.target, target: k.owner, move: k.move, damage: back.damage });
+    failOwner(s, k, 'reflected', ev);
+    if (ownerT.field === 'active' && ownerT.active === k.ownerSlot && !attacker.fainted) {
+      attacker.hp = Math.max(0, attacker.hp - back.damage);
+      if (attacker.hp <= 0) faint(s, k.owner, ev);
+    }
+    return;
+  }
+  const { damage, eff: e } = computeDamage(m.power, m.element, attackerDef.element, SPECIES[target.species].element, rand(s), target.shieldTicks > 0, attackerDef.dmgMult);
   target.hp = Math.max(0, target.hp - damage);
   const run = tt.action;
-  const interrupted = damage >= INTERRUPT_THRESHOLD && !!run && run.phase === 'windup' && run.action.kind === 'move';
+  const interrupted = damage >= INTERRUPT_THRESHOLD && !!run && run.phase === 'windup' && run.action.kind === 'move' && !MOVES[run.action.move].armored;
   ev.push({ t: 'hit', p: k.owner, target: k.target, move: k.move, damage, eff: e, interrupted, heavy: m.heavy, strike: k.id });
   if (target.hp <= 0) return faint(s, k.target, ev);
+  if (m.alsoRoot) {
+    target.rootTicks = secToTicks(m.alsoRoot);
+    ev.push({ t: 'status', p: k.target, status: 'root', on: true });
+  }
   if (interrupted) fail(s, k.target, 'interrupted', ev);
 }
 
@@ -417,11 +470,23 @@ function faint(s: SimState, p: PlayerIdx, ev: SimEvent[]) {
   }
 }
 
+/** A round ends when one trainer has no creatures left; the match is best of 3 (see ROUNDS_TO_WIN). */
 function checkEnd(s: SimState, ev: SimEvent[]) {
   const out0 = s.trainers[0].field === 'out';
   const out1 = s.trainers[1].field === 'out';
   if (!out0 && !out1) return;
   const winner = out0 && out1 ? 'draw' : out0 ? 1 : 0;
-  s.result = { winner };
-  ev.push({ t: 'match_end', winner });
+  if (winner !== 'draw') s.score[winner]++;
+  const decided = s.score[0] >= ROUNDS_TO_WIN || s.score[1] >= ROUNDS_TO_WIN || s.round >= MAX_ROUNDS;
+  ev.push({ t: 'round_end', round: s.round, winner, score: [s.score[0], s.score[1]], next: decided ? null : s.round + 1 });
+  s.strikes = [];
+  for (const t of s.trainers) { t.action = null; t.queue = []; }
+  if (decided) {
+    const w = s.score[0] === s.score[1] ? 'draw' : s.score[0] > s.score[1] ? 0 : 1;
+    s.result = { winner: w };
+    ev.push({ t: 'match_end', winner: w });
+    return;
+  }
+  s.round++;
+  s.intermission = secToTicks(INTERMISSION_S);
 }

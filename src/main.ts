@@ -7,7 +7,7 @@ import { Hud } from './render/hud';
 import { createScene } from './render/scene';
 import { Showcase } from './render/showcase';
 import { SPECIES_IDS } from './sim/data';
-import type { Lang, SpeciesId } from './sim/types';
+import type { BaseSpeciesId, Lang } from './sim/types';
 import { Screens, setUiClickHandler } from './ui/screens';
 import { Speech, isSupportedBrowser } from './voice/speech';
 import { hostRoom, joinRoom, type Link, type Pending } from './net/link';
@@ -35,6 +35,7 @@ class App {
     event: (e, me, s) => this.sfx.event(e, me, s),
     fail: () => this.sfx.fail(),
     ui: () => this.sfx.ui(),
+    evolve: () => this.sfx.evolve(),
   };
   private battle: Battle | null = null;
   private link: Link | null = null;
@@ -129,7 +130,7 @@ class App {
     this.battle = null;
   }
 
-  private beginBattle(session: Session, teams: [SpeciesId[], SpeciesId[]], onEnd: (r: 'victory' | 'defeat' | 'draw') => void) {
+  private beginBattle(session: Session, teams: [BaseSpeciesId[], BaseSpeciesId[]], onEnd: (r: 'victory' | 'defeat' | 'draw') => void) {
     this.screens.clear();
     this.showcase.hide();
     this.battle = new Battle(this.ctx, this.hud, this.screens, session, teams, this.audio, (r) => {
@@ -187,8 +188,8 @@ class App {
     this.endBattle();
     this.link = link;
     link.onClose = () => this.disconnected();
-    let mine: SpeciesId[] | null = null;
-    let theirs: SpeciesId[] | null = null;
+    let mine: BaseSpeciesId[] | null = null;
+    let theirs: BaseSpeciesId[] | null = null;
     const ui = this.screens.teamSelect({
       subtitle: isSupportedBrowser() ? t('micAsk') : undefined,
       onHover: (sp) => this.showcase.show(sp),
@@ -201,7 +202,7 @@ class App {
     });
     const tryStart = () => {
       if (role !== 'host' || !mine || !theirs) return;
-      const teams: [SpeciesId[], SpeciesId[]] = [mine, theirs];
+      const teams: [BaseSpeciesId[], BaseSpeciesId[]] = [mine, theirs];
       link.send({ k: 'start', teams });
       const session = new HostSession(teams, link);
       link.onMessage = (m) => {
@@ -283,10 +284,10 @@ class App {
     });
   }
 
-  startPractice(team: SpeciesId[]) {
+  startPractice(team: BaseSpeciesId[]) {
     // URL options for testing: ?seed=123&botTeam=vinram,brinkle&bot=passive
     const q = new URLSearchParams(location.search);
-    const forced = (q.get('botTeam') ?? '').split(',').filter((x): x is SpeciesId => (SPECIES_IDS as string[]).includes(x));
+    const forced = (q.get('botTeam') ?? '').split(',').filter((x): x is BaseSpeciesId => (SPECIES_IDS as string[]).includes(x));
     const botTeam = forced.length === 2 ? forced : [...SPECIES_IDS].sort(() => Math.random() - 0.5).slice(0, 2);
     const seed = q.has('seed') ? Number(q.get('seed')) >>> 0 : undefined;
     const session = new LocalSession(team, botTeam, seed, q.get('bot') === 'passive');

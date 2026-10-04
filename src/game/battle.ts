@@ -5,7 +5,7 @@ import * as THREE from 'three';
 import { FAIL_REASON, getLang, t } from '../i18n';
 import { MOVES, SPECIES } from '../sim/data';
 import { activeCreature } from '../sim/sim';
-import type { PlayerIdx, SimEvent, SimState, SpeciesId } from '../sim/types';
+import type { PlayerIdx, SimEvent, SimState, SpeciesId, BaseSpeciesId } from '../sim/types';
 import { parse, toIntents } from '../voice/parser';
 import type { Hud } from '../render/hud';
 import type { SceneCtx } from '../render/scene';
@@ -18,10 +18,12 @@ export interface BattleAudio {
   event(e: SimEvent, me: PlayerIdx, s: SimState): void;
   fail(): void;
   ui(): void;
+  /** The flash moment of the evolution sequence. */
+  evolve(): void;
 }
 
 export class Battle {
-  readonly view: BattleView;
+  view: BattleView;
   private switchUi: { close(): void } | null = null;
   private ended = false;
   private hintShown = false;
@@ -31,17 +33,24 @@ export class Battle {
     private hud: Hud,
     private screens: Screens,
     readonly session: Session,
-    teams: [SpeciesId[], SpeciesId[]],
+    teams: [BaseSpeciesId[], BaseSpeciesId[]],
     private audio: BattleAudio | null,
     private onEnd: (result: 'victory' | 'defeat' | 'draw') => void,
   ) {
-    this.view = new BattleView(ctx, teams, session.me);
-    this.view.onFloat = (f) => this.floatText(f.text, f.pos, f.color, f.big);
+    this.view = this.makeView(teams);
     ctx.cameraMode = 'battle';
     hud.relabel();
     hud.show(true);
     hud.clearToasts();
     hud.onDebugCommand = (text) => this.command(text, true);
+  }
+
+  /** A fresh 3D view for the creatures of the current round (stage changes each round). */
+  private makeView(teams: [SpeciesId[], SpeciesId[]]): BattleView {
+    const v = new BattleView(this.ctx, teams, this.session.me);
+    v.onFloat = (f) => this.floatText(f.text, f.pos, f.color, f.big);
+    v.onEvolveBurst = () => this.audio?.evolve();
+    return v;
   }
 
   get me(): PlayerIdx {
@@ -81,7 +90,14 @@ export class Battle {
     const v = this.session.view();
     if (!v) return;
     if (events.length) {
-      this.view.handle(events, v.curr);
+      // A new round brings evolved creatures: swap in a new view and let it handle the rest.
+      const rs = events.findIndex((e) => e.t === 'round_start');
+      if (rs >= 0) {
+        this.view.handle(events.slice(0, rs), v.curr);
+        this.view.dispose();
+        this.view = this.makeView([v.curr.trainers[0].team.map((c) => c.species), v.curr.trainers[1].team.map((c) => c.species)]);
+        this.view.handle(events.slice(rs), v.curr);
+      } else this.view.handle(events, v.curr);
       for (const e of events) this.onEvent(e, v.curr);
     }
     this.view.update(dt, v.prev, v.curr, v.alpha);
@@ -106,6 +122,22 @@ export class Battle {
     const mine = 'p' in e && e.p === this.me;
     const lang = getLang();
     switch (e.t) {
+      case 'round_end': {
+        this.closeSwitch();
+        const who = e.winner === 'draw' ? t('draw') : e.winner === this.me ? t('roundWon') : t('roundLost');
+        const sub = `${t('score')} ${e.score[this.me]} – ${e.score[this.me === 0 ? 1 : 0]}` + (e.next ? ` · ${t('evolving')}` : '');
+        this.hud.banner(`${t('round')} ${e.round}: ${who}`, sub, e.next ? 4200 : 2000);
+        break;
+      }
+      case 'round_start': {
+        this.hud.banner(`${t('round')} ${e.round}`, t('fight'), 1600);
+        const names = s.trainers[this.me].team.map((c) => SPECIES[c.species].name).join(' & ');
+        this.hud.toast(t('evolvedInto', { names }), 'good', 3000);
+        break;
+      }
+      case 'reflect':
+        if (e.target === this.me) this.hud.toast(t('reflectedYou'), 'bad');
+        break;
       case 'hit':
         if (e.eff === 'super') this.hud.toast(t('super'), 'super');
         else if (e.eff === 'weak') this.hud.toast(t('weak'), 'weak');

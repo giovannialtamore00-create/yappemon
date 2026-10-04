@@ -24,7 +24,7 @@ export class Bot {
   }
 
   think(s: SimState): Intent[] {
-    if (s.result) return [];
+    if (s.result || s.intermission > 0) return [];
     const me = s.trainers[this.p];
     const foe = s.trainers[this.p === 0 ? 1 : 0];
 

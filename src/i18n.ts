@@ -68,6 +68,16 @@ const STR = {
     foeWinding: 'Charging: {move}!',
     foeFailed: "Opponent's move failed!",
     leave: 'Leave',
+    round: 'Round',
+    roundWon: 'you win!',
+    roundLost: 'opponent wins',
+    score: 'Score',
+    evolving: 'everyone evolves!',
+    fight: 'Fight!',
+    evolvedInto: 'Your team evolved: {names}!',
+    reflectedYou: 'Your attack was reflected back!',
+    evolvesTo: 'Evolves: {chain}',
+    bestOf3: 'Best of 3 rounds · creatures evolve every round',
   },
   it: {
     tagline: 'Comanda la tua creatura con la voce.',
@@ -136,6 +146,16 @@ const STR = {
     foeWinding: 'In carica: {move}!',
     foeFailed: "Mossa dell'avversario fallita!",
     leave: 'Esci',
+    round: 'Round',
+    roundWon: 'hai vinto!',
+    roundLost: "vince l'avversario",
+    score: 'Punteggio',
+    evolving: 'tutti si evolvono!',
+    fight: 'Lotta!',
+    evolvedInto: 'La tua squadra si è evoluta: {names}!',
+    reflectedYou: 'Il tuo attacco è stato riflesso!',
+    evolvesTo: 'Evoluzioni: {chain}',
+    bestOf3: 'Al meglio dei 3 round · le creature si evolvono a ogni round',
   },
 } satisfies Record<Lang, Record<string, string>>;
 
@@ -157,8 +177,8 @@ export const ELEMENT_LABEL: Record<Lang, Record<Element, string>> = {
 };
 
 export const FAIL_REASON: Record<Lang, Record<FailReason, string>> = {
-  en: { dodged: 'dodged', interrupted: 'interrupted', stamina: 'not enough stamina', target_recalled: 'target left the field', rooted: 'rooted, cannot dodge', no_bench: 'no creature to switch to' },
-  it: { dodged: 'schivata', interrupted: 'interrotta', stamina: 'energia insufficiente', target_recalled: 'il bersaglio è rientrato', rooted: 'bloccato, non può schivare', no_bench: 'nessuna creatura disponibile' },
+  en: { reflected: 'reflected back at you', dodged: 'dodged', interrupted: 'interrupted', stamina: 'not enough stamina', target_recalled: 'target left the field', rooted: 'rooted, cannot dodge', no_bench: 'no creature to switch to' },
+  it: { reflected: 'riflessa contro di te', dodged: 'schivata', interrupted: 'interrotta', stamina: 'energia insufficiente', target_recalled: 'il bersaglio è rientrato', rooted: 'bloccato, non può schivare', no_bench: 'nessuna creatura disponibile' },
 };
 
 export const ELEMENT_COLOR: Record<Element, string> = {

@@ -178,6 +178,40 @@ export class Sfx {
         this.noise(0.9, { filter: 'lowpass', freq: 5000, to: 80, vol: 0.6 });
         this.tone(2000, 0.15, { type: 'square', to: 100, vol: 0.2 });
         break;
+      case 'molten_leap':
+        this.whoosh(0.35, 0.3);
+        this.noise(0.5, { filter: 'lowpass', freq: 900, to: 100, vol: 0.45, delay: 0.05 });
+        this.tone(80, 0.4, { type: 'sawtooth', to: 40, vol: 0.2 });
+        break;
+      case 'tide_mirror':
+        [880, 1320, 1760].forEach((fq, i) => this.tone(fq, 0.4, { type: 'sine', vol: 0.1, delay: i * 0.05 }));
+        this.noise(0.4, { filter: 'bandpass', freq: 2500, q: 5, vol: 0.12 });
+        break;
+      case 'bramble_stampede':
+        for (let i = 0; i < 5; i++) this.tone(110, 0.08, { type: 'triangle', to: 60, vol: 0.25, delay: i * 0.06 });
+        this.noise(0.3, { filter: 'bandpass', freq: 1800, q: 3, vol: 0.2 });
+        break;
+      case 'chain_storm':
+        for (let i = 0; i < 3; i++) this.tone(1600 + i * 300, 0.07, { type: 'square', to: 250, vol: 0.13, delay: i * 0.25 });
+        break;
+      case 'volcanic_ruin':
+        this.noise(1.6, { filter: 'lowpass', freq: 1200, to: 60, vol: 0.7 });
+        this.tone(45, 1.4, { type: 'sawtooth', vol: 0.3, to: 25 });
+        this.noise(0.5, { filter: 'highpass', freq: 3000, vol: 0.2, delay: 0.1 });
+        break;
+      case 'maelstrom':
+        this.noise(1.4, { filter: 'bandpass', freq: 300, to: 1500, q: 2, vol: 0.45, attack: 0.3 });
+        this.tone(150, 1.2, { type: 'sine', to: 400, vol: 0.12 });
+        break;
+      case 'ancient_bloom':
+        [523, 659, 784, 1046, 1318].forEach((fq, i) => this.tone(fq, 0.6, { type: 'triangle', vol: 0.1, delay: i * 0.08 }));
+        this.noise(1, { filter: 'bandpass', freq: 1200, q: 2, vol: 0.06, attack: 0.3 });
+        break;
+      case 'sky_judgement':
+        this.noise(1.3, { filter: 'lowpass', freq: 8000, to: 60, vol: 0.75 });
+        this.tone(3000, 0.2, { type: 'square', to: 80, vol: 0.25 });
+        this.tone(55, 1.2, { type: 'sawtooth', vol: 0.25, to: 30, delay: 0.05 });
+        break;
     }
   }
 
@@ -187,6 +221,27 @@ export class Sfx {
     this.noise(0.08, { filter: 'lowpass', freq: 3000, vol: v * 0.6 });
     if (eff === 'super') { this.tone(1046, 0.18, { type: 'triangle', vol: 0.15, delay: 0.05 }); this.tone(1568, 0.25, { type: 'triangle', vol: 0.12, delay: 0.12 }); }
     if (eff === 'weak') this.tone(300, 0.15, { type: 'triangle', to: 200, vol: 0.1, delay: 0.05 });
+  }
+
+  /** Evolution flash: rising sweep resolving into a bright chord. */
+  evolve() {
+    if (!this.ctx) return;
+    [392, 523, 659, 784, 1046].forEach((fq, i) => this.tone(fq, 0.9, { type: 'triangle', vol: 0.12, delay: i * 0.03, bus: this.musicBus }));
+    this.noise(0.8, { filter: 'highpass', freq: 4000, vol: 0.12 });
+    this.tone(200, 0.5, { type: 'sine', to: 1200, vol: 0.15 });
+  }
+
+  /** Short sting at the end of a round. */
+  roundEnd(won: boolean) {
+    const seq = won ? [659, 784, 988] : [440, 392, 349];
+    seq.forEach((fq, i) => this.tone(fq, 0.25, { type: 'triangle', vol: 0.18, delay: i * 0.12, bus: this.musicBus }));
+  }
+
+  /** Rising shimmer while creatures charge up to evolve. */
+  evolveCharge() {
+    if (!this.ctx) return;
+    this.tone(220, 3, { type: 'sine', to: 880, vol: 0.08, attack: 1, bus: this.musicBus });
+    this.tone(330, 3, { type: 'triangle', to: 1320, vol: 0.05, attack: 1, bus: this.musicBus });
   }
 
   faint() {
@@ -282,6 +337,14 @@ export class Sfx {
       case 'status':
         if (e.on && e.status === 'root') this.noise(0.4, { filter: 'bandpass', freq: 800, q: 3, vol: 0.2 });
         if (e.on && e.status === 'static') this.noise(0.3, { filter: 'highpass', freq: 4000, vol: 0.12 });
+        break;
+      case 'round_end':
+        if (!e.next) break; // the match jingle covers the last round
+        this.roundEnd(e.winner === me);
+        setTimeout(() => this.evolveCharge(), 1800);
+        break;
+      case 'reflect':
+        this.tone(1200, 0.2, { type: 'sine', to: 2400, vol: 0.15 });
         break;
       case 'match_end':
         this.jingle(e.winner === 'draw' ? 'draw' : e.winner === me ? 'victory' : 'defeat');

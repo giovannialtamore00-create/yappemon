@@ -2,8 +2,8 @@
 // at ~20 Hz plus the events since the last snapshot; the client (player 1) sends only intents and
 // renders snapshots with a small interpolation delay.
 
-import { DT, MOVES, SPECIES_IDS } from '../sim/data';
-import type { Intent, MoveId, PlayerIdx, QAction, SimEvent, SimState, SpeciesId } from '../sim/types';
+import { ALL_SPECIES_IDS, DT, MOVES, SPECIES_IDS } from '../sim/data';
+import type { Intent, MoveId, PlayerIdx, QAction, SimEvent, SimState, SpeciesId, BaseSpeciesId } from '../sim/types';
 import { SimRunner, type Session, type SessionView } from '../game/session';
 import type { Link } from './link';
 
@@ -12,11 +12,12 @@ const INTERP_DELAY_MS = 110;
 
 // ---------------------------------------------------------------- validation of remote input
 
-const isSpecies = (x: unknown): x is SpeciesId => typeof x === 'string' && (SPECIES_IDS as string[]).includes(x);
+const isSpecies = (x: unknown): x is SpeciesId => typeof x === 'string' && (ALL_SPECIES_IDS as string[]).includes(x);
+const isBase = (x: unknown): x is BaseSpeciesId => typeof x === 'string' && (SPECIES_IDS as string[]).includes(x);
 
-export function sanitizeTeam(x: unknown): SpeciesId[] | null {
-  if (!Array.isArray(x) || x.length !== 2 || !x.every(isSpecies) || x[0] === x[1]) return null;
-  return x as SpeciesId[];
+export function sanitizeTeam(x: unknown): BaseSpeciesId[] | null {
+  if (!Array.isArray(x) || x.length !== 2 || !x.every(isBase) || x[0] === x[1]) return null;
+  return x as BaseSpeciesId[];
 }
 
 function sanitizeAction(a: unknown): QAction | null {
@@ -54,7 +55,7 @@ export class HostSession implements Session {
   private pendingEvents: SimEvent[] = [];
   private snapAcc = 0;
 
-  constructor(teams: [SpeciesId[], SpeciesId[]], private link: Link, seed = (Math.random() * 2 ** 32) >>> 0) {
+  constructor(teams: [BaseSpeciesId[], BaseSpeciesId[]], private link: Link, seed = (Math.random() * 2 ** 32) >>> 0) {
     this.runner = new SimRunner(teams, seed);
   }
 

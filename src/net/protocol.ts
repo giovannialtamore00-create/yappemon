@@ -1,6 +1,6 @@
 // Wire protocol between host and client. JSON over a reliable PeerJS DataConnection.
 
-import type { Intent, SimEvent, SimState, SpeciesId } from '../sim/types';
+import type { Intent, SimEvent, SimState, BaseSpeciesId } from '../sim/types';
 
 export const PROTOCOL_VERSION = 1;
 export const PEER_PREFIX = 'cbattle-';
@@ -27,10 +27,10 @@ export type Msg =
   | { k: 'quit' }
   | { k: 'rematch' }
   // client → host
-  | { k: 'ready'; team: SpeciesId[] }
+  | { k: 'ready'; team: BaseSpeciesId[] }
   | { k: 'intents'; list: Intent[] }
   // host → client
-  | { k: 'start'; teams: [SpeciesId[], SpeciesId[]] }
+  | { k: 'start'; teams: [BaseSpeciesId[], BaseSpeciesId[]] }
   | { k: 'snap'; state: SimState; events: SimEvent[] }
   | { k: 'rematch_go' };
 

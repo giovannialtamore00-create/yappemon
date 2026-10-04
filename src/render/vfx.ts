@@ -331,10 +331,20 @@ export class Vfx {
         break;
       }
       case 'spark_dart':
+      case 'chain_storm':
         o.position.copy(pos);
         o.lookAt(to);
         this.emit('electric', pos, 3, 0.06);
+        if (move === 'chain_storm' && Math.random() < 0.3) this.lightning(from, pos, 0.06, '#7ae8ff', 0.3);
         break;
+      case 'maelstrom': {
+        const ground = pos.clone().setY(0.15);
+        o.position.copy(ground);
+        o.rotation.y += dt * 9;
+        o.scale.setScalar(0.8 + k * 0.6);
+        this.emit('splash', ground.clone().setY(0.4), 4, 0.7);
+        break;
+      }
       case 'thunder_lance': {
         o.position.copy(pos);
         o.lookAt(to);
@@ -393,6 +403,20 @@ export class Vfx {
       }
       case 'vine_snare':
         return new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 1, 6), new THREE.MeshStandardMaterial({ color: '#3f8f2e', emissive: '#1a4f10', emissiveIntensity: 0.5 }));
+      case 'maelstrom': {
+        const g = new THREE.Group();
+        const water = new THREE.MeshStandardMaterial({ color: '#2a7fe0', transparent: true, opacity: 0.7, emissive: '#1a4fa8', emissiveIntensity: 0.5, side: THREE.DoubleSide });
+        for (let i = 0; i < 3; i++) {
+          const ring = new THREE.Mesh(new THREE.TorusGeometry(0.4 + i * 0.3, 0.07, 6, 24, Math.PI * 1.6), water);
+          ring.rotation.x = -Math.PI / 2;
+          ring.rotation.z = i * 2;
+          ring.position.y = 0.1 + i * 0.2;
+          g.add(ring);
+        }
+        g.add(new THREE.Mesh(new THREE.ConeGeometry(0.35, 0.9, 16, 1, true), additive('#7fd0ff', 0.5)));
+        return g;
+      }
+      case 'chain_storm':
       case 'spark_dart': {
         const m = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.45, 6), new THREE.MeshBasicMaterial({ color: '#fffbd0' }));
         m.rotation.x = Math.PI / 2;

@@ -41,6 +41,24 @@ export const MOVE_ALIASES: Record<MoveId, string[]> = {
     'campo statico', 'campo', 'statico', 'campo statica'],
   thunder_lance: ['thunder lance', 'thunder', 'lance', 'thunder lands', 'thunder dance', 'thunder lens', 'thunder launch', 'lightning',
     'lancia di tuono', 'lancia', 'tuono', 'lancia tuono', 'lancia del tuono', 'fulmine'],
+  // Stage 2
+  molten_leap: ['molten leap', 'molten', 'leap', 'molten lip', 'motel leap', 'malt and leap', 'jump',
+    'balzo fuso', 'balzo', 'fuso', 'balzo fusso', 'salto fuso', 'salto'],
+  tide_mirror: ['tide mirror', 'mirror', 'tide', 'tied mirror', 'tight mirror', 'reflect',
+    'specchio di marea', 'specchio', 'specchio marea', 'riflesso'],
+  bramble_stampede: ['bramble stampede', 'bramble', 'stampede', 'rumble stampede', 'brambles',
+    'carica di rovi', 'rovi', 'carica rovi', 'carica di rove', 'rovo'],
+  chain_storm: ['chain storm', 'chain', 'chainstorm', 'change storm', 'jane storm',
+    'tempesta a catena', 'catena', 'tempesta catena', 'tempesta'],
+  // Stage 3
+  volcanic_ruin: ['volcanic ruin', 'volcanic', 'ruin', 'volcano', 'volcanic rain', 'volcanic ruins',
+    'rovina vulcanica', 'vulcanica', 'rovina', 'vulcano', 'rovina vulcano'],
+  maelstrom: ['maelstrom', 'mail storm', 'male storm', 'whirlpool', 'mael strom', 'mel strom',
+    'gorgo abissale', 'gorgo', 'abissale', 'vortice', 'gorgo abbissale'],
+  ancient_bloom: ['ancient bloom', 'bloom', 'ancient', 'ancient blue', 'ancient broom',
+    'fioritura antica', 'fioritura', 'antica', 'fiori', 'fioritura antiga'],
+  sky_judgement: ['sky judgement', 'sky judgment', 'judgement', 'judgment', 'sky', 'skye judgement',
+    'giudizio celeste', 'giudizio', 'celeste', 'giudizio celestre'],
 };
 
 export const SPECIES_ALIASES: Record<SpeciesId, string[]> = {
@@ -48,6 +66,14 @@ export const SPECIES_ALIASES: Record<SpeciesId, string[]> = {
   brinkle: ['brinkle', 'brinkel', 'brinkley', 'brinkly', 'wrinkle', 'twinkle', 'brincle', 'princle', 'brinkol', 'brinchel'],
   vinram: ['vinram', 'vin ram', 'vine ram', 'venram', 'vinrum', 'ben ram', 'finram', 'vinran', 'vin rum', 'win ram'],
   joltmoth: ['joltmoth', 'jolt moth', 'jolt mot', 'joel moth', 'gold moth', 'holt moth', 'jolt mouth', 'yolt moth', 'jolt mod', 'jolt math'],
+  pyroxen: ['pyroxen', 'pyroxene', 'pyro zen', 'pirossene', 'pyrox', 'pairoxen'],
+  tsunafin: ['tsunafin', 'tsuna fin', 'tuna fin', 'tsunami fin', 'sunafin', 'zunafin'],
+  thornhorn: ['thornhorn', 'thorn horn', 'torn horn', 'tornhorn', 'thorne horn', 'horn horn'],
+  stormoth: ['stormoth', 'storm moth', 'stormouth', 'storm mot', 'stor moth'],
+  calderox: ['calderox', 'calder ox', 'caldera ox', 'calderocks', 'caldarox', 'calderoks'],
+  abyssmaw: ['abyssmaw', 'abyss maw', 'abyss more', 'abiss mo', 'abyss ma', 'abissmo'],
+  elderoot: ['elderoot', 'elder root', 'elder route', 'elderot', 'elder rut'],
+  tempestra: ['tempestra', 'tempest ra', 'tempest', 'tempesta ra', 'tempestre'],
 };
 
 export const DODGE_ALIASES = ['dodge', 'dodge it', 'doge', 'dodger', 'dodges', 'dog', 'evade', 'sidestep', 'side step', 'move aside', 'duck',

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   Bot, MOVES, SPECIES, STAMINA_MAX, TICK_HZ, activeCreature, computeDamage, createMatch, step, typeMultiplier,
-  type Intent, type SimEvent, type SimState, type SpeciesId,
+  type BaseSpeciesId, type Intent, type SimEvent, type SimState, type SpeciesId,
 } from '../src/sim';
 
 const none: [Intent[], Intent[]] = [[], []];
@@ -13,7 +13,7 @@ function run(s: SimState, ticks: number, intents?: [Intent[], Intent[]]): SimEve
 }
 const sec = (x: number) => Math.round(x * TICK_HZ);
 /** A match where both creatures are already on the field. */
-function ready(a: SpeciesId[], b: SpeciesId[], seed = 1) {
+function ready(a: BaseSpeciesId[], b: BaseSpeciesId[], seed = 1) {
   const s = createMatch([a, b], seed);
   run(s, sec(1.1));
   return s;
@@ -239,17 +239,121 @@ describe('fainting and switching', () => {
     const ev = run(s, 1, [[{ type: 'queue', actions: [{ kind: 'recall' }] }], []]);
     expect(ev).toContainEqual({ t: 'invalid', p: 0, reason: 'cannot_recall' });
   });
-  it('match ends when both creatures of a trainer fainted', () => {
+  it('a round ends when both creatures of a trainer fainted', () => {
     const s = ready(['cindrix'], ['vinram', 'brinkle']);
-    activeCreature(s.trainers[1]).hp = 1;
-    s.trainers[1].team[1]!.hp = 1;
-    run(s, sec(1.5), [[q('shell_ram')], []]);
-    run(s, 1, [[], [{ type: 'choose', slot: 1 }]]);
-    run(s, sec(1.2));
-    const ev = run(s, sec(1.5), [[q('shell_ram')], []]);
+    knockOutTrainer(s, 1);
+    expect(s.score).toEqual([1, 0]);
+    expect(s.result).toBeNull();
+    expect(s.intermission).toBeGreaterThan(0);
+  });
+});
+
+/** Player 0 (Cindrix lead, using Shell Ram) knocks out both of `loser`'s creatures. */
+function knockOutTrainer(s: SimState, loser: 0 | 1): SimEvent[] {
+  const winner = loser === 0 ? 1 : 0;
+  const t = s.trainers[loser];
+  for (const c of t.team) c.hp = 1;
+  const melee = (sp: string) => SPECIES[sp as SpeciesId].moves[0]!;
+  const evs: SimEvent[] = [];
+  for (let i = 0; i < sec(20) && !evs.some((e) => e.t === 'round_end'); i++) {
+    const w = s.trainers[winner];
+    const intents: [Intent[], Intent[]] = [[], []];
+    if (w.field === 'active' && !w.action && !w.queue.length) intents[winner] = [q(melee(activeCreature(w).species))];
+    if (t.field === 'choosing') intents[loser] = [{ type: 'choose', slot: t.team.findIndex((c) => !c.fainted) as 0 | 1 }];
+    evs.push(...step(s, intents));
+  }
+  return evs;
+}
+
+describe('rounds and evolution', () => {
+  it('round 2 uses stage-2 forms, round 3 the final stage', () => {
+    const s = ready(['cindrix', 'brinkle'], ['vinram', 'joltmoth']);
+    expect(s.trainers[0].team.map((c) => c.species)).toEqual(['cindrix', 'brinkle']);
+    const ev1 = knockOutTrainer(s, 1);
+    expect(ev1).toContainEqual({ t: 'round_end', round: 1, winner: 0, score: [1, 0], next: 2 });
+    const brk = run(s, s.intermission + 1);
+    expect(brk).toContainEqual({ t: 'round_start', round: 2 });
+    expect(s.round).toBe(2);
+    expect(s.trainers[0].team.map((c) => c.species)).toEqual(['pyroxen', 'tsunafin']);
+    expect(s.trainers[1].team.map((c) => c.species)).toEqual(['thornhorn', 'stormoth']);
+    expect(s.trainers[0].team[0]!.hp).toBe(SPECIES.pyroxen.maxHp);
+    run(s, sec(1.1));
+    knockOutTrainer(s, 0);
+    expect(s.score).toEqual([1, 1]);
+    run(s, s.intermission + 1);
+    expect(s.trainers[0].team.map((c) => c.species)).toEqual(['calderox', 'abyssmaw']);
+    expect(s.trainers[1].team.map((c) => c.species)).toEqual(['elderoot', 'tempestra']);
+  });
+  it('first to 2 rounds wins the match', () => {
+    const s = ready(['cindrix', 'brinkle'], ['vinram', 'joltmoth']);
+    knockOutTrainer(s, 1);
+    run(s, s.intermission + 1 + sec(1.1));
+    const ev = knockOutTrainer(s, 1);
+    expect(ev).toContainEqual({ t: 'round_end', round: 2, winner: 0, score: [2, 0], next: null });
     expect(ev).toContainEqual({ t: 'match_end', winner: 0 });
     expect(s.result).toEqual({ winner: 0 });
     expect(step(s, none)).toEqual([]); // frozen
+  });
+  it('intents are ignored during the break between rounds', () => {
+    const s = ready(['cindrix'], ['vinram']);
+    knockOutTrainer(s, 1);
+    expect(run(s, 1, [[q('shell_ram')], []]).some((e) => e.t === 'action_start')).toBe(false);
+  });
+  it('evolutions keep earlier moves and learn one more each stage', () => {
+    expect(SPECIES.cindrix.moves).toHaveLength(4);
+    expect(SPECIES.pyroxen.moves).toEqual([...SPECIES.cindrix.moves, 'molten_leap']);
+    expect(SPECIES.calderox.moves).toEqual([...SPECIES.pyroxen.moves, 'volcanic_ruin']);
+    expect(SPECIES.tempestra.moves).toHaveLength(6);
+  });
+  it('evolved forms hit harder', () => {
+    const base = computeDamage(20, 'normal', 'fire', 'fire', 0.5, false, SPECIES.cindrix.dmgMult).damage;
+    const evo = computeDamage(20, 'normal', 'fire', 'fire', 0.5, false, SPECIES.calderox.dmgMult).damage;
+    expect(evo).toBeGreaterThan(base);
+  });
+});
+
+/** Puts both sides into round 2 (stage-2 forms on the field). */
+function stage2(a: BaseSpeciesId[], b: BaseSpeciesId[]) {
+  const s = ready(a, b);
+  knockOutTrainer(s, 1);
+  run(s, s.intermission + 1 + sec(1.1));
+  return s;
+}
+
+describe('stage 2/3 move mechanics', () => {
+  it('Tide Mirror reflects the next hit and fails the attacker', () => {
+    const s = stage2(['brinkle'], ['cindrix']);
+    run(s, sec(0.6), [[q('tide_mirror')], []]);
+    expect(activeCreature(s.trainers[0]).mirrorTicks).toBeGreaterThan(0);
+    const hpFoe = activeCreature(s.trainers[1]).hp;
+    const ev = run(s, sec(1), [[], [q('shell_ram')]]);
+    expect(ev.find((e) => e.t === 'reflect')).toMatchObject({ p: 0, target: 1, move: 'shell_ram' });
+    expect(ev).toContainEqual({ t: 'fail', p: 1, reason: 'reflected' });
+    expect(activeCreature(s.trainers[0]).hp).toBe(SPECIES.tsunafin.maxHp);
+    expect(activeCreature(s.trainers[1]).hp).toBeLessThan(hpFoe);
+  });
+  it('Bramble Stampede cannot be interrupted', () => {
+    const s = stage2(['vinram'], ['cindrix']);
+    step(s, [[q('bramble_stampede')], []]);
+    activeCreature(s.trainers[0]).hp = 999;
+    const ev = run(s, sec(0.95), [[], [q('cinder_spit')]]);
+    const hit = ev.find((e) => e.t === 'hit' && e.p === 1);
+    expect(hit && 'damage' in hit && hit.damage).toBeGreaterThanOrEqual(25);
+    expect(ev.some((e) => e.t === 'fail' && e.p === 0)).toBe(false);
+  });
+  it('Chain Storm fires 3 separate strikes', () => {
+    const s = stage2(['joltmoth'], ['vinram']);
+    const ev = run(s, sec(3), [[q('chain_storm')], []]);
+    expect(ev.filter((e) => e.t === 'hit' && e.move === 'chain_storm')).toHaveLength(3);
+  });
+  it('Maelstrom damages and roots', () => {
+    const s = stage2(['brinkle'], ['cindrix']);
+    knockOutTrainer(s, 0); // 1–1 → round 3
+    run(s, s.intermission + 1 + sec(1.1));
+    expect(activeCreature(s.trainers[0]).species).toBe('abyssmaw');
+    const ev = run(s, sec(3.5), [[q('maelstrom')], []]);
+    expect(ev.find((e) => e.t === 'hit' && e.move === 'maelstrom')).toBeTruthy();
+    expect(ev).toContainEqual({ t: 'status', p: 1, status: 'root', on: true });
   });
 });
 
@@ -278,6 +382,6 @@ describe('determinism and bot', () => {
     expect(SPECIES.brinkle.maxHp).toBe(120);
     expect(SPECIES.vinram.maxHp).toBe(125);
     expect(SPECIES.joltmoth.maxHp).toBe(95);
-    expect(Object.values(MOVES)).toHaveLength(16);
+    expect(Object.values(MOVES)).toHaveLength(24);
   });
 });

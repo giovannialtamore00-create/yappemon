@@ -55,6 +55,10 @@ export class Hud {
   private transcript = h('div', 'transcript');
   private mic = h('div', 'mic');
   private floats = h('div', 'floats');
+  private roundEl = h('div', 'round-info');
+  private bannerEl = h('div', 'banner hidden');
+  private bannerTimer = 0;
+  private roundKey = '';
   private debug = h('input', 'debug-input') as HTMLInputElement;
   private toasts: HTMLElement;
   private movesKey = '';
@@ -70,7 +74,7 @@ export class Hud {
     this.leaveBtn.textContent = `✕ ${t('leave')}`;
     this.queueLabel.textContent = t('queue');
     this.debug.placeholder = t('debugHint');
-    this.movesKey = this.queueKey = '#stale';
+    this.movesKey = this.queueKey = this.roundKey = '#stale';
     this.me.key = this.foe.key = '';
   }
 
@@ -96,7 +100,7 @@ export class Hud {
     });
     const leave = this.leaveBtn;
     leave.addEventListener('click', () => this.onLeave());
-    root.append(this.foe.root, this.me.root, this.moves, bottom, this.floats, this.debug, leave);
+    root.append(this.foe.root, this.me.root, this.moves, bottom, this.floats, this.debug, leave, this.roundEl, this.bannerEl);
     this.setMic('off');
   }
 
@@ -116,7 +120,33 @@ export class Hud {
 
   // ------------------------------------------------------------ per frame
 
+  /** Big centered announcement (round results, evolution, fight!). */
+  banner(title: string, sub = '', ms = 2000) {
+    this.bannerEl.innerHTML = '';
+    this.bannerEl.append(h('div', 'banner-title', title));
+    if (sub) this.bannerEl.append(h('div', 'banner-sub', sub));
+    this.bannerEl.className = 'banner';
+    void this.bannerEl.offsetWidth; // restart the CSS animation
+    this.bannerEl.classList.add('show');
+    window.clearTimeout(this.bannerTimer);
+    this.bannerTimer = window.setTimeout(() => this.bannerEl.classList.add('hidden'), ms);
+  }
+
+  private updateRound(s: SimState, me: PlayerIdx) {
+    const key = `${s.round}|${s.score.join()}|${getLang()}`;
+    if (key === this.roundKey) return;
+    this.roundKey = key;
+    this.roundEl.innerHTML = '';
+    const pips = (n: number, cls: string) => {
+      const w = h('span', `pips ${cls}`);
+      for (let i = 0; i < 2; i++) w.append(h('span', `pip${i < n ? ' on' : ''}`));
+      return w;
+    };
+    this.roundEl.append(pips(s.score[me], 'mine'), h('span', 'round-label', `${t('round')} ${Math.min(3, s.round)}/3`), pips(s.score[me === 0 ? 1 : 0], 'theirs'));
+  }
+
   update(s: SimState, me: PlayerIdx) {
+    this.updateRound(s, me);
     const mine = s.trainers[me];
     const theirs = s.trainers[me === 0 ? 1 : 0];
     this.updatePanel(this.me, mine);

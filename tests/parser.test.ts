@@ -176,3 +176,39 @@ describe('chatter does not trigger commands', () => {
     expect(moves('cinder spit then cinder spit', 'cindrix')).toEqual(['cinder_spit', 'cinder_spit']);
   });
 });
+
+describe('evolutions: new moves and names', () => {
+  const cases: [string, SpeciesId, (MoveId | string)[]][] = [
+    ['molten leap', 'pyroxen', ['molten_leap']],
+    ['balzo fuso poi sputo di brace', 'pyroxen', ['molten_leap', 'cinder_spit']],
+    ['volcanic ruin', 'calderox', ['volcanic_ruin']],
+    ['rovina vulcanica', 'calderox', ['volcanic_ruin']],
+    ['tide mirror', 'tsunafin', ['tide_mirror']],
+    ['specchio di marea', 'abyssmaw', ['tide_mirror']],
+    ['maelstrom', 'abyssmaw', ['maelstrom']],
+    ['gorgo abissale', 'abyssmaw', ['maelstrom']],
+    ['bramble stampede', 'thornhorn', ['bramble_stampede']],
+    ['carica di rovi', 'elderoot', ['bramble_stampede']],
+    ['ancient bloom', 'elderoot', ['ancient_bloom']],
+    ['fioritura antica', 'elderoot', ['ancient_bloom']],
+    ['chain storm then dodge', 'stormoth', ['chain_storm', 'dodge']],
+    ['tempesta a catena', 'tempestra', ['chain_storm']],
+    ['sky judgement', 'tempestra', ['sky_judgement']],
+    ['giudizio celeste', 'tempestra', ['sky_judgement']],
+    // evolved forms keep their earlier moves
+    ['cinder spit', 'calderox', ['cinder_spit']],
+    ['thunder lance', 'tempestra', ['thunder_lance']],
+    // names of evolved creatures
+    ['go pyroxen', 'tsunafin', ['go:pyroxen']],
+    ['vai tempestra', 'calderox', ['go:tempestra']],
+    ['go thorn horn', 'stormoth', ['go:thornhorn']],
+  ];
+  for (const [text, sp, want] of cases) it(`"${text}" (${sp})`, () => expect(moves(text, sp)).toEqual(want));
+  it('stage-1 creatures do not know later moves', () => {
+    expect(moves('molten leap', 'cindrix')).not.toContain('molten_leap');
+    expect(moves('sky judgement', 'stormoth')).not.toContain('sky_judgement');
+  });
+  it('go <base name> while the evolved form is active is ignored', () => {
+    expect(toIntents(parse('go cindrix', { activeSpecies: 'pyroxen' }).commands, { activeSpecies: 'pyroxen' })).toEqual([]);
+  });
+});
