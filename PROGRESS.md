@@ -1,6 +1,6 @@
 # PROGRESS
 
-**Current milestone:** 9 — Parking-lot phase (final)
+**Current milestone:** COMPLETE — all 9 milestones done; final summary delivered to the user (2026-10-04).
 **Phase:** all build milestones done on `main`. BLOCKERS.md has no parked technical problems; only items that need the user.
 
 ## Done
@@ -20,7 +20,7 @@
 
 ## Next steps (in order)
 1. Parking lot: nothing parked. Items needing the user are in BLOCKERS.md ("Needs the user").
-2. Final summary to the user + final checkpoint.
+2. ✅ Final summary delivered. If resumed: wait for user feedback from real voice/online tests; add misheard words to `src/voice/aliases.ts`.
 
 ## Context for a fresh session
 - Windows; use the Bash tool (Git Bash). Commands: `npm test`, `npm run build`, `npm run dev`, plus the scripts above.
