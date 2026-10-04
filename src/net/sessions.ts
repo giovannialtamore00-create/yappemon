@@ -23,7 +23,11 @@ export function sanitizeTeam(x: unknown): BaseSpeciesId[] | null {
 function sanitizeAction(a: unknown): QAction | null {
   if (typeof a !== 'object' || a === null) return null;
   const k = (a as { kind?: unknown }).kind;
-  if (k === 'dodge' || k === 'recall') return { kind: k };
+  if (k === 'recall' || k === 'alert') return { kind: k };
+  if (k === 'dodge') {
+    const dir = (a as { dir?: unknown }).dir;
+    return dir === 1 || dir === -1 ? { kind: 'dodge', dir } : { kind: 'dodge' };
+  }
   const m = (a as { move?: unknown }).move;
   if (k === 'move' && typeof m === 'string' && m in MOVES) return { kind: 'move', move: m as MoveId };
   return null;

@@ -2,10 +2,11 @@
 // `step()` mutates the state in place and returns the events of that tick.
 
 import {
-  CREATURE_GAP_M, DODGE_COOLDOWN_S, DODGE_COST, DODGE_INVULN_S, DODGE_STEP_M, DRIFT_LIMIT_M, DRIFT_SPEED, DT,
-  FORCED_SWITCH_S, INTERRUPT_THRESHOLD, MOVES, QUEUE_MAX, RECALL_S, SENDOUT_S, SPECIES, SPEED_MULT,
-  STAB, STAMINA_MAX, STAMINA_PAUSE_S, STAMINA_REGEN_PER_S, TICK_HZ, INTERMISSION_S, MAX_ROUNDS, ROUNDS_TO_WIN,
-  knowsMove, sameFamily, secToTicks, speciesAtStage, typeMultiplier,
+  ALERT_COST, ALERT_EVADE, ALERT_S, ALERT_STRAFE_MULT, ARENA_X_M, ATTACKING_EXPOSED, DASH_M, DASH_S, DODGE_COOLDOWN_S,
+  DODGE_COST, DODGE_INVULN_S, DODGE_WINDOW_S, DT, FORCED_SWITCH_S, HALF_FAR_M, HALF_NEAR_M, HOME_Z_M, INTERRUPT_THRESHOLD,
+  MOVES, PREFERRED_GAP_M, QUEUE_MAX, QUICK_WINDUP_S, RECALL_S, SENDOUT_S, SPECIES, SPEED_MULT, STAB, STAMINA_MAX,
+  STAMINA_PAUSE_S, STAMINA_REGEN_PER_S, STEP_SPEED, STRAFE_MAX_S, STRAFE_MIN_S, STRAFE_SPEED, TICK_HZ, INTERMISSION_S,
+  MAX_ROUNDS, ROUNDS_TO_WIN, knowsMove, sameFamily, secToTicks, speciesAtStage, typeMultiplier,
 } from './data';
 import { nextRandom } from './rng';
 import type {
@@ -21,10 +22,15 @@ export function createCreature(species: SpeciesId): CreatureState {
   };
 }
 
-function createTrainer(team: SpeciesId[]): TrainerState {
+/** Player 0 lives on the z > 0 half of the arena, player 1 on z < 0. */
+const side = (p: PlayerIdx) => (p === 0 ? 1 : -1);
+
+function createTrainer(p: PlayerIdx, team: SpeciesId[]): TrainerState {
   return {
     team: team.map(createCreature), active: 0, field: 'sending', fieldTicks: secToTicks(SENDOUT_S),
-    action: null, queue: [], dodgeCooldown: 0, invulnTicks: 0, x: 0, driftDir: 1,
+    action: null, queue: [], dodgeCooldown: 0, invulnTicks: 0,
+    x: 0, z: side(p) * HOME_Z_M, driftDir: p === 0 ? 1 : -1, strafeTicks: secToTicks(1.2),
+    dodgeReady: 0, dodgeDir: 0, dashTicks: 0, dashDir: 1, alertTicks: 0,
   };
 }
 
@@ -32,17 +38,16 @@ function createTrainer(team: SpeciesId[]): TrainerState {
 function setupRound(s: SimState) {
   const stage = Math.min(3, s.round);
   s.trainers = [
-    createTrainer(s.teams[0].map((b) => speciesAtStage(b, stage))),
-    createTrainer(s.teams[1].map((b) => speciesAtStage(b, stage))),
+    createTrainer(0, s.teams[0].map((b) => speciesAtStage(b, stage))),
+    createTrainer(1, s.teams[1].map((b) => speciesAtStage(b, stage))),
   ];
-  s.trainers[1].driftDir = -1;
   s.strikes = [];
 }
 
 /** `teams` are stage-1 species; round 1 uses them, round 2 their first evolution, round 3 the last. */
 export function createMatch(teams: [BaseSpeciesId[], BaseSpeciesId[]], seed: number): SimState {
   const s: SimState = {
-    tick: 0, rng: seed >>> 0, nextId: 1, trainers: [createTrainer([]), createTrainer([])],
+    tick: 0, rng: seed >>> 0, nextId: 1, trainers: [createTrainer(0, []), createTrainer(1, [])],
     strikes: [], teams: [[...teams[0]], [...teams[1]]], round: 1, score: [0, 0], intermission: 0, result: null,
   };
   setupRound(s);
@@ -77,6 +82,17 @@ function speedMult(t: TrainerState) {
   return SPEED_MULT[SPECIES[activeCreature(t).species].speed];
 }
 
+/**
+ * Chance (0–1) that `move` hits a creature in state `target`: accuracy × state modifier
+ * (busy with a move ×1.2, alert ×0.7, otherwise ×1). Dodges are handled separately.
+ */
+export function hitChance(move: MoveDef, target: TrainerState): number {
+  const mod = target.action?.action.kind === 'move' ? ATTACKING_EXPOSED : target.alertTicks > 0 ? ALERT_EVADE : 1;
+  return Math.min(1, (move.accuracy / 100) * mod);
+}
+
+export const distance = (a: TrainerState, b: TrainerState) => Math.hypot(a.x - b.x, a.z - b.z);
+
 // ---------------------------------------------------------------- step
 
 export function step(s: SimState, intents: [Intent[], Intent[]]): SimEvent[] {
@@ -107,14 +123,16 @@ export function step(s: SimState, intents: [Intent[], Intent[]]): SimEvent[] {
 
 function pushActions(s: SimState, p: PlayerIdx, actions: QAction[], ev: SimEvent[]) {
   const t = s.trainers[p];
-  if (actions.length === 0) return;
-  if (actions[0]!.kind === 'dodge') {
-    // Dodge jumps the queue: it cancels a windup/recovery so it can be used reactively.
-    if (t.action && t.action.phase !== 'active' && t.action.action.kind !== 'dodge') t.action = null;
-    t.queue = [...actions, ...t.queue];
-  } else {
-    t.queue = [...t.queue, ...actions];
+  // A command that starts with "dodge" arms the window right away, even mid-move; the rest is queued.
+  let i = 0;
+  while (i < actions.length && t.field === 'active') {
+    const a = actions[i]!;
+    if (a.kind !== 'dodge') break;
+    if (!armDodge(s, p, a, ev)) return;
+    i++;
   }
+  if (i === actions.length) return;
+  t.queue = [...t.queue, ...actions.slice(i)];
   if (t.queue.length > QUEUE_MAX) {
     t.queue.length = QUEUE_MAX;
     ev.push({ t: 'queue_full', p });
@@ -173,9 +191,51 @@ function sendOut(s: SimState, p: PlayerIdx, slot: number, ev: SimEvent[]) {
   t.fieldTicks = secToTicks(SENDOUT_S);
   t.action = null;
   t.queue = [];
+  resetStance(s, p, ev);
   t.x = 0;
-  t.invulnTicks = 0;
+  t.z = side(p) * HOME_Z_M;
   ev.push({ t: 'sendout', p, slot });
+}
+
+/** Clears the dodge window, dash and alert (new creature on the field, or fainted). */
+function resetStance(s: SimState, p: PlayerIdx, ev: SimEvent[]) {
+  const t = s.trainers[p];
+  if (t.dodgeReady > 0) ev.push({ t: 'dodge_ready', p, on: false });
+  if (t.alertTicks > 0) ev.push({ t: 'alert', p, on: false });
+  t.dodgeReady = t.dashTicks = t.alertTicks = t.invulnTicks = 0;
+  t.dodgeDir = 0;
+}
+
+/** Spends the dodge cost and arms the window. Returns false (after failing) when it can't. */
+function armDodge(s: SimState, p: PlayerIdx, a: Extract<QAction, { kind: 'dodge' }>, ev: SimEvent[]): boolean {
+  const t = s.trainers[p];
+  const c = activeCreature(t);
+  if (c.rootTicks > 0) return fail(s, p, 'rooted', ev), false;
+  if (c.stamina < DODGE_COST) return fail(s, p, 'stamina', ev), false;
+  spend(c, DODGE_COST);
+  if (t.dodgeReady === 0) ev.push({ t: 'dodge_ready', p, on: true });
+  t.dodgeReady = secToTicks(DODGE_WINDOW_S);
+  t.dodgeDir = a.dir ?? 0;
+  return true;
+}
+
+/** The armed window catches an attack: dash sideways, invulnerable for a moment. */
+function dash(s: SimState, p: PlayerIdx, ev: SimEvent[]) {
+  const t = s.trainers[p];
+  // The requested side is from the creature's point of view; player 1 faces +z, so its left is world +x.
+  let dir: 1 | -1;
+  if (t.dodgeDir !== 0) dir = (p === 0 ? t.dodgeDir : -t.dodgeDir) as 1 | -1;
+  else dir = t.x > 1 ? -1 : t.x < -1 ? 1 : rand(s) < 0.5 ? -1 : 1;
+  t.dodgeReady = 0;
+  t.dodgeDir = 0;
+  ev.push({ t: 'dodge_ready', p, on: false });
+  // A windup (or recovery) in progress is lost, stamina included; alert keeps going.
+  if (t.action?.action.kind === 'move') t.action = null;
+  t.dashTicks = secToTicks(DASH_S);
+  t.dashDir = dir;
+  t.invulnTicks = secToTicks(DODGE_INVULN_S);
+  t.dodgeCooldown = secToTicks(DODGE_COOLDOWN_S);
+  ev.push({ t: 'dodge', p, dir });
 }
 
 // ---------------------------------------------------------------- per-trainer tick
@@ -190,6 +250,14 @@ function fail(s: SimState, p: PlayerIdx, reason: FailReason, ev: SimEvent[]) {
   t.action = null;
   t.queue = [];
   ev.push({ t: 'fail', p, reason });
+}
+
+/** `p` took a hit: whatever it had queued is lost (the current action keeps going). */
+function breakCombo(s: SimState, p: PlayerIdx, ev: SimEvent[]) {
+  const t = s.trainers[p];
+  if (!t.queue.length) return;
+  ev.push({ t: 'combo_broken', p, lost: t.queue.length });
+  t.queue = [];
 }
 
 function tickCreatureStatus(p: PlayerIdx, c: CreatureState, onField: boolean, ev: SimEvent[]) {
@@ -220,6 +288,11 @@ function tickTrainer(s: SimState, p: PlayerIdx, ev: SimEvent[]) {
   t.team.forEach((c, i) => tickCreatureStatus(p, c, i === t.active && t.field === 'active', ev));
   if (t.dodgeCooldown > 0) t.dodgeCooldown--;
   if (t.invulnTicks > 0) t.invulnTicks--;
+  if (t.dodgeReady > 0 && --t.dodgeReady === 0) {
+    t.dodgeDir = 0;
+    ev.push({ t: 'dodge_ready', p, on: false });
+  }
+  if (t.alertTicks > 0 && --t.alertTicks === 0) ev.push({ t: 'alert', p, on: false });
 
   if (t.field === 'sending') {
     if (--t.fieldTicks <= 0) t.field = 'active';
@@ -236,15 +309,39 @@ function tickTrainer(s: SimState, p: PlayerIdx, ev: SimEvent[]) {
 
   if (!t.action) startNext(s, p, ev);
   if (t.action) advanceAction(s, p, ev);
-  else drift(s, t);
+  if (t.field === 'active') move(s, p);
 }
 
-function drift(_s: SimState, t: TrainerState) {
+const clampX = (x: number) => Math.max(-ARENA_X_M, Math.min(ARENA_X_M, x));
+
+/**
+ * Movement: a dash in progress slides sideways; otherwise a free (or alert) creature strafes along x and
+ * steps in/out to keep its preferred distance, always on its own half. Busy or rooted creatures stand still.
+ */
+function move(s: SimState, p: PlayerIdx) {
+  const t = s.trainers[p];
   const c = activeCreature(t);
+  if (t.dashTicks > 0) {
+    t.dashTicks--;
+    t.x = clampX(t.x + (t.dashDir * DASH_M) / secToTicks(DASH_S));
+    return;
+  }
   if (c.rootTicks > 0) return;
-  t.x += t.driftDir * DRIFT_SPEED[SPECIES[c.species].speed] * DT;
-  if (t.x > DRIFT_LIMIT_M) { t.x = DRIFT_LIMIT_M; t.driftDir = -1; }
-  if (t.x < -DRIFT_LIMIT_M) { t.x = -DRIFT_LIMIT_M; t.driftDir = 1; }
+  if (t.action && t.action.action.kind !== 'alert') return;
+  const def = SPECIES[c.species];
+  if (--t.strafeTicks <= 0) {
+    t.driftDir = t.driftDir === 1 ? -1 : 1;
+    t.strafeTicks = secToTicks(STRAFE_MIN_S + (STRAFE_MAX_S - STRAFE_MIN_S) * rand(s));
+  }
+  t.x += t.driftDir * STRAFE_SPEED[def.speed] * (t.alertTicks > 0 ? ALERT_STRAFE_MULT : 1) * DT;
+  if (t.x >= ARENA_X_M) { t.x = ARENA_X_M; t.driftDir = -1; }
+  if (t.x <= -ARENA_X_M) { t.x = -ARENA_X_M; t.driftDir = 1; }
+  // Step in/out (along z) toward the preferred distance from the opponent.
+  const foe = s.trainers[other(p)];
+  const wantAbsZ = Math.max(HALF_NEAR_M, Math.min(HALF_FAR_M, PREFERRED_GAP_M[def.family] - Math.abs(foe.z)));
+  const dz = side(p) * wantAbsZ - t.z;
+  const maxStep = STEP_SPEED * DT;
+  t.z += Math.max(-maxStep, Math.min(maxStep, dz));
 }
 
 function newRun(s: SimState, action: QAction, windupTicks: number): ActionRun {
@@ -257,12 +354,18 @@ function startNext(s: SimState, p: PlayerIdx, ev: SimEvent[]) {
   while (!t.action && t.queue.length) {
     const a = t.queue[0]!;
     if (a.kind === 'dodge') {
-      if (c.rootTicks > 0) return fail(s, p, 'rooted', ev);
-      if (t.dodgeCooldown > 0) return; // wait for cooldown, keep queue
-      if (c.stamina < DODGE_COST) return fail(s, p, 'stamina', ev);
+      // Instant: arms the window and moves on to the next command.
       t.queue.shift();
-      spend(c, DODGE_COST);
-      t.action = newRun(s, a, 1);
+      if (!armDodge(s, p, a, ev)) return;
+      continue;
+    } else if (a.kind === 'alert') {
+      t.queue.shift();
+      if (c.stamina < ALERT_COST) return fail(s, p, 'stamina', ev);
+      spend(c, ALERT_COST);
+      // Occupies the action slot for the whole stance (queued attacks wait); can't be interrupted.
+      t.action = { action: a, phase: 'active', left: secToTicks(ALERT_S), total: secToTicks(ALERT_S), uid: s.nextId++ };
+      t.alertTicks = secToTicks(ALERT_S);
+      ev.push({ t: 'alert', p, on: true });
     } else if (a.kind === 'recall') {
       t.queue.shift();
       if (benchSlot(t) < 0) return fail(s, p, 'no_bench', ev);
@@ -273,7 +376,7 @@ function startNext(s: SimState, p: PlayerIdx, ev: SimEvent[]) {
       if (!knowsMove(c.species, m.id)) continue; // stale entry after a switch
       if (c.stamina < m.cost) return fail(s, p, 'stamina', ev);
       spend(c, m.cost);
-      t.action = newRun(s, a, secToTicks(m.windup * speedMult(t)));
+      t.action = newRun(s, a, secToTicks(m.quick ? QUICK_WINDUP_S : m.windup * speedMult(t)));
     }
     ev.push({ t: 'action_start', p, action: a });
   }
@@ -308,13 +411,11 @@ function advanceAction(s: SimState, p: PlayerIdx, ev: SimEvent[]) {
 }
 
 function activeTicks(t: TrainerState, a: QAction) {
-  if (a.kind === 'dodge') return secToTicks(DODGE_INVULN_S);
-  if (a.kind === 'recall') return 1;
+  if (a.kind !== 'move') return 1;
   return secToTicks(MOVES[a.move].active * speedMult(t));
 }
 function recoveryTicks(t: TrainerState, a: QAction) {
-  if (a.kind === 'dodge') return secToTicks(0.2);
-  if (a.kind === 'recall') return 0;
+  if (a.kind !== 'move') return 0;
   return secToTicks(MOVES[a.move].recovery * speedMult(t));
 }
 
@@ -322,15 +423,7 @@ function onActiveStart(s: SimState, p: PlayerIdx, ev: SimEvent[]) {
   const t = s.trainers[p];
   const a = t.action!.action;
   const c = activeCreature(t);
-  if (a.kind === 'dodge') {
-    const dir: 1 | -1 = t.x > 1 ? -1 : t.x < -1 ? 1 : rand(s) < 0.5 ? -1 : 1;
-    t.x = Math.max(-DRIFT_LIMIT_M - 0.5, Math.min(DRIFT_LIMIT_M + 0.5, t.x + dir * DODGE_STEP_M));
-    t.invulnTicks = secToTicks(DODGE_INVULN_S);
-    t.dodgeCooldown = secToTicks(DODGE_COOLDOWN_S);
-    ev.push({ t: 'dodge', p, dir });
-    return;
-  }
-  if (a.kind === 'recall') return;
+  if (a.kind !== 'move') return;
   const m = MOVES[a.move];
   if (m.delivery === 'self') {
     if (m.effect.kind === 'shield') {
@@ -355,11 +448,12 @@ function onActiveStart(s: SimState, p: PlayerIdx, ev: SimEvent[]) {
     return fail(s, p, 'target_recalled', ev);
   }
   const hits = m.hits ?? 1;
+  const travel = travelTicks(m, distance(t, ot));
   for (let i = 0; i < hits; i++) {
     const delay = i * secToTicks(m.hitGap ?? 0.25);
     const strike: Strike = {
       id: s.nextId++, owner: p, ownerSlot: t.active, ownerActionUid: t.action!.uid, target: o, targetSlot: ot.active,
-      move: m.id, left: travelTicks(m) + delay, total: travelTicks(m), fromX: t.x, toX: ot.x,
+      move: m.id, left: travel + delay, total: travel, fromX: t.x, fromZ: t.z, toX: ot.x, toZ: ot.z,
     };
     ev.push({ t: 'launch', p, move: m.id, strike: strike.id });
     if (m.delivery === 'melee') resolveStrike(s, strike, ev);
@@ -367,9 +461,10 @@ function onActiveStart(s: SimState, p: PlayerIdx, ev: SimEvent[]) {
   }
 }
 
-export function travelTicks(m: MoveDef): number {
+/** Ticks from launch to impact over `dist` metres. */
+export function travelTicks(m: MoveDef, dist: number): number {
   if (m.delivery === 'melee') return 0;
-  if (m.speed) return Math.max(1, Math.round((CREATURE_GAP_M / m.speed) * TICK_HZ));
+  if (m.speed) return Math.max(1, Math.round((dist / m.speed) * TICK_HZ));
   return secToTicks(m.hitDelay ?? 0.1);
 }
 
@@ -381,13 +476,18 @@ function tickStrikes(s: SimState, ev: SimEvent[]) {
   for (const k of due) resolveStrike(s, k, ev);
 }
 
+/** The owner's creature is still the one on the field (it wasn't recalled or knocked out meanwhile). */
+const ownerOnField = (s: SimState, k: Strike) => {
+  const ot = s.trainers[k.owner];
+  return ot.field === 'active' && ot.active === k.ownerSlot;
+};
+
 /** Fail the owner only if it is still the same creature on the field. */
 function failOwner(s: SimState, k: Strike, reason: FailReason, ev: SimEvent[]) {
   if (k.quiet) return;
   // Later strikes of the same multi-hit action don't fail it again.
   for (const o of s.strikes) if (o.ownerActionUid === k.ownerActionUid) o.quiet = true;
-  const ot = s.trainers[k.owner];
-  if (ot.field === 'active' && ot.active === k.ownerSlot) fail(s, k.owner, reason, ev);
+  if (ownerOnField(s, k)) fail(s, k.owner, reason, ev);
 }
 
 function resolveStrike(s: SimState, k: Strike, ev: SimEvent[]) {
@@ -399,22 +499,23 @@ function resolveStrike(s: SimState, k: Strike, ev: SimEvent[]) {
     return failOwner(s, k, 'target_recalled', ev);
   }
   const m = MOVES[k.move];
-  if (tt.invulnTicks > 0) {
-    ev.push({ t: 'dodged', p: k.owner, target: k.target, move: k.move, strike: k.id });
-    return failOwner(s, k, 'dodged', ev);
+  // Missing never costs the attacker its queue: mid-dash, caught by the dodge window, or a failed accuracy roll.
+  if (tt.invulnTicks > 0) return void ev.push({ t: 'dodged', p: k.owner, target: k.target, move: k.move, strike: k.id });
+  const run = tt.action;
+  if (tt.dodgeReady > 0 && !m.quick && target.rootTicks === 0 && tt.dodgeCooldown === 0
+      && run?.action.kind !== 'recall' && !(run?.action.kind === 'move' && run.phase === 'active')) {
+    dash(s, k.target, ev);
+    return void ev.push({ t: 'dodged', p: k.owner, target: k.target, move: k.move, strike: k.id });
   }
+  if (rand(s) >= hitChance(m, tt)) return void ev.push({ t: 'miss', p: k.owner, target: k.target, move: k.move, strike: k.id });
+
   const eff = m.effect;
-  if (eff.kind === 'root') {
-    target.rootTicks = secToTicks(eff.seconds);
+  if (eff.kind === 'root' || eff.kind === 'static') {
+    if (eff.kind === 'root') target.rootTicks = secToTicks(eff.seconds);
+    else target.staticTicks = secToTicks(eff.seconds);
     ev.push({ t: 'hit', p: k.owner, target: k.target, move: k.move, damage: 0, eff: 'neutral', interrupted: false, heavy: false, strike: k.id });
-    ev.push({ t: 'status', p: k.target, status: 'root', on: true });
-    return;
-  }
-  if (eff.kind === 'static') {
-    target.staticTicks = secToTicks(eff.seconds);
-    ev.push({ t: 'hit', p: k.owner, target: k.target, move: k.move, damage: 0, eff: 'neutral', interrupted: false, heavy: false, strike: k.id });
-    ev.push({ t: 'status', p: k.target, status: 'static', on: true });
-    return;
+    ev.push({ t: 'status', p: k.target, status: eff.kind, on: true });
+    return breakCombo(s, k.target, ev);
   }
   if (eff.kind !== 'damage') return;
   const attacker = s.trainers[k.owner].team[k.ownerSlot]!;
@@ -423,19 +524,18 @@ function resolveStrike(s: SimState, k: Strike, ev: SimEvent[]) {
     // Tide Mirror: the hit bounces back at the attacker (computed against the attacker's own type).
     target.mirrorTicks = 0;
     ev.push({ t: 'status', p: k.target, status: 'mirror', on: false });
-    const ownerT = s.trainers[k.owner];
     const back = computeDamage(m.power, m.element, attackerDef.element, attackerDef.element, rand(s), attacker.shieldTicks > 0, attackerDef.dmgMult);
     ev.push({ t: 'reflect', p: k.target, target: k.owner, move: k.move, damage: back.damage });
-    failOwner(s, k, 'reflected', ev);
-    if (ownerT.field === 'active' && ownerT.active === k.ownerSlot && !attacker.fainted) {
+    // The reflected hit counts as the attacker getting hit: its queued commands are lost.
+    if (ownerOnField(s, k) && !attacker.fainted) {
       attacker.hp = Math.max(0, attacker.hp - back.damage);
       if (attacker.hp <= 0) faint(s, k.owner, ev);
+      else breakCombo(s, k.owner, ev);
     }
     return;
   }
   const { damage, eff: e } = computeDamage(m.power, m.element, attackerDef.element, SPECIES[target.species].element, rand(s), target.shieldTicks > 0, attackerDef.dmgMult);
   target.hp = Math.max(0, target.hp - damage);
-  const run = tt.action;
   const interrupted = damage >= INTERRUPT_THRESHOLD && !!run && run.phase === 'windup' && run.action.kind === 'move' && !MOVES[run.action.move].armored;
   ev.push({ t: 'hit', p: k.owner, target: k.target, move: k.move, damage, eff: e, interrupted, heavy: m.heavy, strike: k.id });
   if (target.hp <= 0) return faint(s, k.target, ev);
@@ -443,6 +543,7 @@ function resolveStrike(s: SimState, k: Strike, ev: SimEvent[]) {
     target.rootTicks = secToTicks(m.alsoRoot);
     ev.push({ t: 'status', p: k.target, status: 'root', on: true });
   }
+  breakCombo(s, k.target, ev);
   if (interrupted) fail(s, k.target, 'interrupted', ev);
 }
 
@@ -454,7 +555,7 @@ function faint(s: SimState, p: PlayerIdx, ev: SimEvent[]) {
   clearStatuses(c);
   t.action = null;
   t.queue = [];
-  t.invulnTicks = 0;
+  resetStance(s, p, ev);
   ev.push({ t: 'faint', p, slot: t.active });
   // The opponent's pending moves have no target any more.
   const o = s.trainers[other(p)];

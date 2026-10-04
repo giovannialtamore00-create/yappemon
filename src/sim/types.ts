@@ -184,7 +184,7 @@ export interface Strike {
   fromZ: number;
   toX: number;
   toZ: number;
-  /** Set when an earlier strike of the same action was dodged (no second failure). */
+  /** Set when an earlier strike of the same action already failed it (target recalled): no second failure. */
   quiet?: boolean;
 }
 
@@ -208,7 +208,7 @@ export interface SimState {
 
 export type Effectiveness = 'super' | 'weak' | 'neutral';
 
-export type FailReason = 'dodged' | 'interrupted' | 'stamina' | 'target_recalled' | 'rooted' | 'no_bench' | 'reflected';
+export type FailReason = 'interrupted' | 'stamina' | 'target_recalled' | 'rooted' | 'no_bench';
 
 export type SimEvent =
   | { t: 'action_start'; p: PlayerIdx; action: QAction }

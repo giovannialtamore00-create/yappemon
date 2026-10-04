@@ -1,8 +1,18 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import {
-  Bot, MOVES, SPECIES, STAMINA_MAX, TICK_HZ, activeCreature, computeDamage, createMatch, step, typeMultiplier,
-  type BaseSpeciesId, type Intent, type SimEvent, type SimState, type SpeciesId,
+  ARENA_X_M, Bot, DODGE_COST, HALF_FAR_M, HALF_NEAR_M, MOVES, MOVE_IDS, SPECIES, STAMINA_MAX, TICK_HZ, activeCreature,
+  computeDamage, createMatch, hitChance, step, travelTicks, typeMultiplier,
+  type BaseSpeciesId, type Intent, type MoveId, type SimEvent, type SimState, type SpeciesId,
 } from '../src/sim';
+
+// Accuracy rolls are random; tests about other mechanics make every move hit (restored after each test).
+const REAL_ACCURACY = Object.fromEntries(MOVE_IDS.map((m) => [m, MOVES[m].accuracy])) as Record<MoveId, number>;
+function sureHits() {
+  for (const m of MOVE_IDS) MOVES[m].accuracy = 100;
+}
+afterEach(() => {
+  for (const m of MOVE_IDS) MOVES[m].accuracy = REAL_ACCURACY[m];
+});
 
 const none: [Intent[], Intent[]] = [[], []];
 
@@ -20,6 +30,7 @@ function ready(a: BaseSpeciesId[], b: BaseSpeciesId[], seed = 1) {
 }
 const q = (...moves: (keyof typeof MOVES)[]): Intent => ({ type: 'queue', actions: moves.map((m) => ({ kind: 'move', move: m })) });
 const dodge: Intent = { type: 'queue', actions: [{ kind: 'dodge' }] };
+const alert: Intent = { type: 'queue', actions: [{ kind: 'alert' }] };
 
 describe('type chart', () => {
   it('matches the spec', () => {
@@ -57,6 +68,7 @@ describe('damage formula', () => {
     expect(computeDamage(20, 'normal', 'fire', 'fire', 0.5, true).damage).toBe(10);
   });
   it('applies in the sim and emits effectiveness', () => {
+    sureHits();
     const s = ready(['cindrix'], ['vinram']);
     const ev = run(s, sec(2.5), [[q('cinder_spit')], []]);
     const hit = ev.find((e) => e.t === 'hit');
@@ -98,6 +110,7 @@ describe('stamina', () => {
     expect(s.trainers[0].action).toBeNull();
   });
   it('static field halves regen', () => {
+    sureHits();
     const s = ready(['joltmoth'], ['cindrix']);
     run(s, sec(1.5), [[q('static_field')], []]);
     const c = activeCreature(s.trainers[1]);
@@ -111,6 +124,7 @@ describe('stamina', () => {
 
 describe('queue and failure', () => {
   it('runs queued actions back to back', () => {
+    sureHits();
     const s = ready(['cindrix'], ['vinram']);
     const ev = run(s, sec(5), [[q('shell_ram', 'cinder_spit', 'shell_ram')], []]);
     expect(ev.filter((e) => e.t === 'action_start' && e.p === 0)).toHaveLength(3);
@@ -122,37 +136,19 @@ describe('queue and failure', () => {
     expect(ev).toContainEqual({ t: 'queue_full', p: 0 });
     expect(s.trainers[0].queue.length + (s.trainers[0].action ? 1 : 0)).toBeLessThanOrEqual(4);
   });
-  it('a dodged move clears the WHOLE remaining queue', () => {
-    const s = ready(['cindrix'], ['vinram']);
-    // Opponent dodges right as the spit is about to land.
-    step(s, [[q('cinder_spit', 'shell_ram', 'shell_ram')], []]);
-    let dodgedAt = -1;
-    const evs: SimEvent[] = [];
-    for (let i = 0; i < sec(3); i++) {
-      const strike = s.strikes[0];
-      const intents: [Intent[], Intent[]] = strike && strike.left === 4 ? [[], [dodge]] : none;
-      const ev = step(s, intents);
-      evs.push(...ev);
-      if (ev.some((e) => e.t === 'dodged')) { dodgedAt = i; break; }
-    }
-    expect(dodgedAt).toBeGreaterThan(0);
-    expect(evs).toContainEqual({ t: 'fail', p: 0, reason: 'dodged' });
-    expect(s.trainers[0].queue).toEqual([]);
-    expect(s.trainers[0].action).toBeNull();
-    // The creature then idles: no further actions start by themselves.
-    const later = run(s, sec(2));
-    expect(later.filter((e) => e.t === 'action_start' && e.p === 0)).toHaveLength(0);
-  });
   it('a hit of 25+ interrupts a windup and clears the victim queue', () => {
+    sureHits();
     const s = ready(['cindrix'], ['vinram']);
-    // Vinram winds up a slow Thorn Quake; Cindrix lands a super-effective spit (≥36 dmg) during it.
+    // Vinram winds up a (stretched) Thorn Quake; Cindrix lands a super-effective Magma Burst (≥42 dmg) during it.
     step(s, [[], [q('thorn_quake', 'horn_charge')]]);
-    const ev = run(s, sec(1.2), [[q('cinder_spit')], []]);
+    s.trainers[1].action!.left = sec(4);
+    const ev = run(s, sec(2.5), [[q('magma_burst')], []]);
     expect(ev.find((e) => e.t === 'hit' && e.p === 0)).toMatchObject({ interrupted: true });
     expect(ev).toContainEqual({ t: 'fail', p: 1, reason: 'interrupted' });
     expect(s.trainers[1].queue).toEqual([]);
   });
   it('small hits do not interrupt', () => {
+    sureHits();
     const s = ready(['cindrix'], ['vinram']);
     step(s, [[], [q('thorn_quake')]]);
     const ev = run(s, sec(1), [[q('shell_ram')], []]);
@@ -180,23 +176,238 @@ describe('queue and failure', () => {
   });
 });
 
-describe('dodge', () => {
-  it('jumps the queue and gives an invulnerable window, with a cooldown', () => {
+describe('accuracy and combos', () => {
+  it('hitChance = accuracy × target state', () => {
+    const s = ready(['cindrix'], ['vinram']);
+    const foe = s.trainers[1];
+    expect(hitChance(MOVES.cinder_spit, foe)).toBeCloseTo(0.9);
+    expect(hitChance(MOVES.thunder_lance, foe)).toBeCloseTo(0.75);
+    expect(hitChance(MOVES.shell_ram, foe)).toBe(1);
+    // Busy with a move: ×1.2 (capped at 1).
+    step(s, [[], [q('thorn_quake')]]);
+    expect(hitChance(MOVES.cinder_spit, foe)).toBe(1);
+    expect(hitChance(MOVES.thunder_lance, foe)).toBeCloseTo(0.9);
+    // Alert: ×0.7.
+    const t = ready(['cindrix'], ['vinram']);
+    step(t, [[], [alert]]);
+    expect(hitChance(MOVES.cinder_spit, t.trainers[1])).toBeCloseTo(0.63);
+    expect(hitChance(MOVES.shell_ram, t.trainers[1])).toBeCloseTo(0.7);
+  });
+  it('accuracy rolls hit roughly as often as hitChance says', () => {
+    let hits = 0, misses = 0;
+    for (let seed = 1; seed <= 200; seed++) {
+      const s = ready(['joltmoth'], ['cindrix'], seed);
+      const ev = run(s, sec(3), [[q('thunder_lance')], []]);
+      hits += ev.filter((e) => e.t === 'hit' && e.p === 0).length;
+      misses += ev.filter((e) => e.t === 'miss' && e.p === 0).length;
+    }
+    expect(hits + misses).toBe(200);
+    expect(hits / 200).toBeGreaterThan(0.65); // 75 %
+    expect(hits / 200).toBeLessThan(0.85);
+  });
+  it('a miss keeps the attacker queue', () => {
+    const s = ready(['cindrix'], ['vinram']);
+    MOVES.cinder_spit.accuracy = 0;
+    const ev = run(s, sec(4), [[q('cinder_spit', 'shell_ram', 'shell_ram')], []]);
+    expect(ev).toContainEqual(expect.objectContaining({ t: 'miss', p: 0, target: 1, move: 'cinder_spit' }));
+    expect(ev.some((e) => e.t === 'fail')).toBe(false);
+    expect(ev.filter((e) => e.t === 'action_start' && e.p === 0)).toHaveLength(3);
+    expect(ev.filter((e) => e.t === 'hit' && e.p === 0)).toHaveLength(2);
+  });
+  it('getting hit clears your remaining queue (not the current action)', () => {
+    sureHits();
+    const s = ready(['cindrix'], ['vinram']);
+    step(s, [[], [q('thorn_quake', 'leaf_volley', 'leaf_volley')]]);
+    const ev = run(s, sec(0.5), [[q('shell_ram')], []]);
+    expect(ev).toContainEqual({ t: 'combo_broken', p: 1, lost: 2 });
+    expect(s.trainers[1].queue).toEqual([]);
+    expect(s.trainers[1].action?.action).toEqual({ kind: 'move', move: 'thorn_quake' });
+  });
+  it('no combo_broken when nothing was queued', () => {
+    sureHits();
+    const s = ready(['cindrix'], ['vinram']);
+    const ev = run(s, sec(1), [[q('shell_ram')], []]);
+    expect(ev.some((e) => e.t === 'hit')).toBe(true);
+    expect(ev.some((e) => e.t === 'combo_broken')).toBe(false);
+  });
+  it('quick moves wind up in 0.15 s whatever the speed class', () => {
+    for (const [sp, mv] of [['vinram', 'horn_charge'], ['joltmoth', 'wing_flick']] as const) {
+      const s = ready([sp], ['cindrix']);
+      step(s, [[q(mv)], []]);
+      expect(s.trainers[0].action?.total).toBe(sec(0.15));
+    }
+    for (const m of ['shell_ram', 'bubble_bump', 'horn_charge', 'wing_flick'] as const) {
+      expect(MOVES[m]).toMatchObject({ quick: true, accuracy: 100, cost: 20 });
+    }
+  });
+  it('every non-quick attack winds up at least 0.6 s', () => {
+    for (const m of Object.values(MOVES)) {
+      if (m.delivery !== 'self' && !m.quick) expect(m.windup).toBeGreaterThanOrEqual(0.6);
+    }
+  });
+  it('strike travel time depends on the real distance', () => {
+    expect(travelTicks(MOVES.cinder_spit, 7)).toBe(sec(0.5));
+    expect(travelTicks(MOVES.cinder_spit, 3.5)).toBe(sec(0.25));
+    expect(travelTicks(MOVES.shell_ram, 7)).toBe(0);
+  });
+});
+
+describe('dodge window', () => {
+  it('costs 5 and arms a 2 s window without interrupting the current move', () => {
     const s = ready(['cindrix'], ['vinram']);
     step(s, [[q('magma_burst')], []]);
     run(s, 5);
-    const ev = run(s, 3, [[dodge], []]);
-    expect(ev).toContainEqual(expect.objectContaining({ t: 'dodge', p: 0 }));
-    expect(s.trainers[0].invulnTicks).toBeGreaterThan(0);
-    expect(s.trainers[0].dodgeCooldown).toBeGreaterThan(0);
-    expect(activeCreature(s.trainers[0]).stamina).toBeLessThanOrEqual(STAMINA_MAX - 35 - 15 + 1);
+    const ev = run(s, 1, [[dodge], []]);
+    expect(DODGE_COST).toBe(5);
+    expect(ev).toContainEqual({ t: 'dodge_ready', p: 0, on: true });
+    expect(s.trainers[0].dodgeReady).toBe(sec(2) - 1); // armed on intent, then one tick elapsed
+    expect(s.trainers[0].action?.action).toEqual({ kind: 'move', move: 'magma_burst' });
+    expect(activeCreature(s.trainers[0]).stamina).toBe(STAMINA_MAX - MOVES.magma_burst.cost - 5);
+  });
+  it('auto-dodges the first normal attack and the attacker keeps its queue', () => {
+    sureHits();
+    const s = ready(['cindrix'], ['vinram']);
+    step(s, [[], [dodge]]);
+    const ev = run(s, sec(3), [[q('cinder_spit', 'cinder_spit')], []]);
+    expect(ev).toContainEqual(expect.objectContaining({ t: 'dodge', p: 1 }));
+    expect(ev).toContainEqual(expect.objectContaining({ t: 'dodged', p: 0, target: 1, move: 'cinder_spit' }));
+    expect(ev).toContainEqual({ t: 'dodge_ready', p: 1, on: false });
+    expect(ev.some((e) => e.t === 'fail')).toBe(false);
+    expect(ev.filter((e) => e.t === 'action_start' && e.p === 0)).toHaveLength(2);
+    // Only the first attack is dodged: the window is used up.
+    expect(ev.filter((e) => e.t === 'hit' && e.p === 0)).toHaveLength(1);
+  });
+  it('quick moves go through the window', () => {
+    sureHits();
+    const s = ready(['cindrix'], ['vinram']);
+    step(s, [[], [dodge]]);
+    const ev = run(s, sec(0.8), [[q('shell_ram')], []]);
+    expect(ev.find((e) => e.t === 'hit' && e.p === 0)).toBeTruthy();
+    expect(ev.some((e) => e.t === 'dodge')).toBe(false);
+    expect(s.trainers[1].dodgeReady).toBeGreaterThan(0);
+  });
+  it('the dash cancels the dodger’s own windup', () => {
+    sureHits();
+    const s = ready(['cindrix'], ['vinram']);
+    step(s, [[], [q('thorn_quake')]]);
+    step(s, [[], [dodge]]);
+    const ev = run(s, sec(1.2), [[q('cinder_spit')], []]);
+    expect(ev).toContainEqual(expect.objectContaining({ t: 'dodge', p: 1 }));
+    expect(s.trainers[1].action).toBeNull();
+    expect(ev.some((e) => e.t === 'launch' && e.p === 1)).toBe(false);
+  });
+  it('expires silently after 2 s', () => {
+    const s = ready(['cindrix'], ['vinram']);
+    step(s, [[dodge], []]);
+    const ev = run(s, sec(2));
+    expect(ev).toContainEqual({ t: 'dodge_ready', p: 0, on: false });
+    expect(ev.some((e) => e.t === 'dodge')).toBe(false);
+    expect(s.trainers[0].dodgeReady).toBe(0);
+  });
+  it('dashes to the requested side (player 1 faces the other way)', () => {
+    sureHits();
+    for (const [p, dir, world] of [[0, -1, -1], [0, 1, 1], [1, -1, 1], [1, 1, -1]] as const) {
+      const s = ready(['cindrix'], ['cindrix']);
+      s.trainers[p].x = 0;
+      const d: Intent = { type: 'queue', actions: [{ kind: 'dodge', dir }] };
+      const intents: [Intent[], Intent[]] = p === 0 ? [[d], [q('cinder_spit')]] : [[q('cinder_spit')], [d]];
+      const ev = run(s, sec(2), intents);
+      expect(ev).toContainEqual({ t: 'dodge', p, dir: world });
+    }
+  });
+  it('a queued dodge arms when reached', () => {
+    const s = ready(['cindrix'], ['vinram']);
+    const ev = run(s, sec(1), [[{ type: 'queue', actions: [{ kind: 'move', move: 'shell_ram' }, { kind: 'dodge' }] }], []]);
+    expect(ev).toContainEqual({ t: 'dodge_ready', p: 0, on: true });
+  });
+  it('fails without enough stamina', () => {
+    const s = ready(['cindrix'], ['vinram']);
+    activeCreature(s.trainers[0]).stamina = 3;
+    const ev = run(s, 1, [[dodge], []]);
+    expect(ev).toContainEqual({ t: 'fail', p: 0, reason: 'stamina' });
+    expect(s.trainers[0].dodgeReady).toBe(0);
   });
   it('cannot dodge while rooted', () => {
+    sureHits();
     const s = ready(['vinram'], ['cindrix']);
-    run(s, sec(1.6), [[q('vine_snare')], []]);
+    run(s, sec(1.8), [[q('vine_snare')], []]);
     expect(activeCreature(s.trainers[1]).rootTicks).toBeGreaterThan(0);
     const ev = run(s, 2, [[], [dodge]]);
     expect(ev).toContainEqual({ t: 'fail', p: 1, reason: 'rooted' });
+  });
+});
+
+describe('alert', () => {
+  it('costs 15, lasts 3 s and delays queued attacks', () => {
+    const s = ready(['cindrix'], ['vinram']);
+    const ev = step(s, [[{ type: 'queue', actions: [{ kind: 'alert' }, { kind: 'move', move: 'shell_ram' }] }], []]);
+    expect(ev).toContainEqual({ t: 'alert', p: 0, on: true });
+    expect(activeCreature(s.trainers[0]).stamina).toBe(STAMINA_MAX - 15);
+    ev.push(...run(s, sec(1)));
+    expect(s.trainers[0].alertTicks).toBeGreaterThan(0);
+    expect(ev.some((e) => e.t === 'launch' && e.p === 0)).toBe(false);
+    const later = run(s, sec(2.5));
+    expect(later).toContainEqual({ t: 'alert', p: 0, on: false });
+    expect(later).toContainEqual(expect.objectContaining({ t: 'launch', p: 0, move: 'shell_ram' }));
+  });
+  it('is not interrupted by big hits', () => {
+    sureHits();
+    const s = ready(['vinram'], ['cindrix']);
+    step(s, [[alert], []]);
+    const ev = run(s, sec(2.5), [[], [q('cinder_spit')]]);
+    expect(ev.find((e) => e.t === 'hit' && e.p === 1)).toBeTruthy();
+    expect(ev.some((e) => e.t === 'fail')).toBe(false);
+    expect(s.trainers[0].action?.action.kind).toBe('alert');
+  });
+  it('fails without enough stamina', () => {
+    const s = ready(['cindrix'], ['vinram']);
+    activeCreature(s.trainers[0]).stamina = 10;
+    const ev = run(s, 1, [[alert], []]);
+    expect(ev).toContainEqual({ t: 'fail', p: 0, reason: 'stamina' });
+  });
+});
+
+describe('movement', () => {
+  it('idle creatures strafe; creatures doing a move stand still', () => {
+    const s = ready(['cindrix'], ['vinram']);
+    const x0 = s.trainers[0].x;
+    run(s, sec(0.5));
+    expect(s.trainers[0].x).not.toBeCloseTo(x0, 2);
+    step(s, [[q('magma_burst')], []]);
+    const { x, z } = s.trainers[0];
+    run(s, sec(1));
+    expect(s.trainers[0].x).toBe(x);
+    expect(s.trainers[0].z).toBe(z);
+  });
+  it('steps toward the preferred distance', () => {
+    const s = ready(['vinram'], ['brinkle']);
+    run(s, sec(8));
+    // Each moves its own z; both stay on their own half.
+    expect(s.trainers[0].z).toBeGreaterThanOrEqual(HALF_NEAR_M);
+    expect(s.trainers[1].z).toBeLessThanOrEqual(-HALF_NEAR_M);
+    expect(Math.abs(s.trainers[0].z - s.trainers[1].z)).toBeLessThan(6);
+  });
+  it('stays in bounds for a whole bot match', () => {
+    const s = createMatch([['joltmoth', 'cindrix'], ['brinkle', 'vinram']], 9);
+    const a = new Bot(0, 10);
+    const b = new Bot(1, 11);
+    for (let n = 0; !s.result && n < TICK_HZ * 600; n++) {
+      step(s, [a.think(s), b.think(s)]);
+      for (const [p, t] of s.trainers.entries()) {
+        expect(Math.abs(t.x)).toBeLessThanOrEqual(ARENA_X_M + 1e-9);
+        const z = p === 0 ? t.z : -t.z;
+        expect(z).toBeGreaterThanOrEqual(HALF_NEAR_M - 1e-9);
+        expect(z).toBeLessThanOrEqual(HALF_FAR_M + 1e-9);
+      }
+    }
+    expect(s.result).not.toBeNull();
+  });
+  it('a send-out puts the creature at its home spot', () => {
+    const s = ready(['cindrix', 'joltmoth'], ['vinram']);
+    run(s, sec(3), [[{ type: 'queue', actions: [{ kind: 'recall' }] }], []]);
+    expect(activeCreature(s.trainers[0]).species).toBe('joltmoth');
+    const fresh = createMatch([['cindrix'], ['vinram']], 1);
+    expect([fresh.trainers[0].x, fresh.trainers[0].z, fresh.trainers[1].z]).toEqual([0, 3, -3]);
   });
 });
 
@@ -323,18 +534,21 @@ function stage2(a: BaseSpeciesId[], b: BaseSpeciesId[]) {
 }
 
 describe('stage 2/3 move mechanics', () => {
-  it('Tide Mirror reflects the next hit and fails the attacker', () => {
+  it('Tide Mirror reflects the next hit; the attacker counts as hit (queue lost)', () => {
+    sureHits();
     const s = stage2(['brinkle'], ['cindrix']);
     run(s, sec(0.6), [[q('tide_mirror')], []]);
     expect(activeCreature(s.trainers[0]).mirrorTicks).toBeGreaterThan(0);
     const hpFoe = activeCreature(s.trainers[1]).hp;
-    const ev = run(s, sec(1), [[], [q('shell_ram')]]);
+    const ev = run(s, sec(0.5), [[], [q('shell_ram', 'shell_ram')]]);
     expect(ev.find((e) => e.t === 'reflect')).toMatchObject({ p: 0, target: 1, move: 'shell_ram' });
-    expect(ev).toContainEqual({ t: 'fail', p: 1, reason: 'reflected' });
+    expect(ev).toContainEqual({ t: 'combo_broken', p: 1, lost: 1 });
+    expect(ev.some((e) => e.t === 'fail')).toBe(false);
     expect(activeCreature(s.trainers[0]).hp).toBe(SPECIES.tsunafin.maxHp);
     expect(activeCreature(s.trainers[1]).hp).toBeLessThan(hpFoe);
   });
   it('Bramble Stampede cannot be interrupted', () => {
+    sureHits();
     const s = stage2(['vinram'], ['cindrix']);
     step(s, [[q('bramble_stampede')], []]);
     activeCreature(s.trainers[0]).hp = 999;
@@ -344,11 +558,13 @@ describe('stage 2/3 move mechanics', () => {
     expect(ev.some((e) => e.t === 'fail' && e.p === 0)).toBe(false);
   });
   it('Chain Storm fires 3 separate strikes', () => {
+    sureHits();
     const s = stage2(['joltmoth'], ['vinram']);
     const ev = run(s, sec(3), [[q('chain_storm')], []]);
     expect(ev.filter((e) => e.t === 'hit' && e.move === 'chain_storm')).toHaveLength(3);
   });
   it('Maelstrom damages and roots', () => {
+    sureHits();
     const s = stage2(['brinkle'], ['cindrix']);
     knockOutTrainer(s, 0); // 1–1 → round 3
     run(s, s.intermission + 1 + sec(1.1));

@@ -217,8 +217,8 @@ export const ELEMENT_LABEL: Record<Lang, Record<Element, string>> = {
 };
 
 export const FAIL_REASON: Record<Lang, Record<FailReason, string>> = {
-  en: { reflected: 'reflected back at you', dodged: 'dodged', interrupted: 'interrupted', stamina: 'not enough stamina', target_recalled: 'target left the field', rooted: 'rooted, cannot dodge', no_bench: 'no creature to switch to' },
-  it: { reflected: 'riflessa contro di te', dodged: 'schivata', interrupted: 'interrotta', stamina: 'energia insufficiente', target_recalled: 'il bersaglio è rientrato', rooted: 'bloccato, non può schivare', no_bench: 'nessuna creatura disponibile' },
+  en: { interrupted: 'interrupted', stamina: 'not enough stamina', target_recalled: 'target left the field', rooted: 'rooted, cannot dodge', no_bench: 'no creature to switch to' },
+  it: { interrupted: 'interrotta', stamina: 'energia insufficiente', target_recalled: 'il bersaglio è rientrato', rooted: 'bloccato, non può schivare', no_bench: 'nessuna creatura disponibile' },
 };
 
 export const ELEMENT_COLOR: Record<Element, string> = {

@@ -1,7 +1,7 @@
 # PROGRESS
 
 **Current work:** Movement / dynamic fighting update on branch **`movement`** (NOT merged). `main` = last released version (playable, all tests green).
-**Status:** step 1 of 8 done — `src/sim/types.ts` updated (committed). Nothing else changed yet. Build/tests on this branch do NOT pass until step 2 is done (types changed, sim not yet).
+**Status:** steps 1–2 of 8 done (types; sim + data + tests, `npx tsc --noEmit && npx vitest run` green). Next: step 3 (voice parser).
 
 The user approved the plan (DECISIONS #61–66). Don't merge into `main` or change anything on `main` without the user's permission. The live link is no longer needed (the user said so), so `dist/` can be rebuilt freely.
 
@@ -38,7 +38,7 @@ The user approved the plan (DECISIONS #61–66). Don't merge into `main` or chan
 
 ## Steps (commit after each)
 1. ✅ types.
-2. Sim + data changes above; rewrite/extend `tests/sim.test.ts` (accuracy + state modifiers via `hitChance`, miss keeps queue, hit clears queue + combo_broken, dodge window auto-dodges normal attacks but not quick ones, window expiry, dodge cost 5, alert, movement stays in bounds and is deterministic, bot-vs-bot still finishes). `npx tsc --noEmit && npx vitest run` green.
+2. ✅ Sim + data changes above; rewrite/extend `tests/sim.test.ts` (accuracy + state modifiers via `hitChance`, miss keeps queue, hit clears queue + combo_broken, dodge window auto-dodges normal attacks but not quick ones, window expiry, dodge cost 5, alert, movement stays in bounds and is deterministic, bot-vs-bot still finishes). `npx tsc --noEmit && npx vitest run` green.
 3. Voice parser (dodge direction, alert) + tests.
 4. Bot.
 5. View + motion (positions, facing, reach, dash, miss/combo visuals).
@@ -51,3 +51,10 @@ The user approved the plan (DECISIONS #61–66). Don't merge into `main` or chan
 - Headless WebGL needs chromium args `--use-angle=swiftshader --enable-unsafe-swiftshader` (already in the scripts). Three headless pages render slowly (~5 fps): use generous timeouts.
 - Page test hook: `window.__yappemon.say(text)`, `.state()`, `.app` (e.g. `app.battle.session.runner` in practice mode). URL options: `?seed=7&botTeam=vinram,brinkle&bot=passive`.
 - Already released on `main` (don't regress): best-of-3 rounds with 3 evolution stages, per-move animations (`src/render/motion.ts`), spectator rooms, 8-bit music (`src/audio/music.ts`), bottom move bar, energy gauge, commands row, EN/IT voice, balance (super effective ×1.25, costs ×1.35), no ambient loop.
+
+## Implementation notes (step 2)
+- `dodge` event `dir` is the **world-x** direction of the dash (already converted from the requested side); the view can use it directly.
+- The 1 s dash cooldown only blocks the *window* from triggering another dash (re-arming is allowed; an attack landing during the cooldown rolls accuracy normally).
+- The window also triggers during alert (alert keeps going) but not during a recall or while the dodger's own move is in its `active` phase.
+- `FailReason` no longer has `dodged` / `reflected` (FAIL_REASON strings removed in `src/i18n.ts`). `net/sessions.ts` sanitizer now passes `alert` and `dodge.dir`.
+- Tests use `sureHits()` (all accuracies 100, restored after each test) where they test other mechanics.
