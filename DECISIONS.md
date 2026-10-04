@@ -43,3 +43,4 @@ Judgment calls made where the spec was silent. Newest at the bottom.
 39. **Opponent windup is shown in their HUD panel** ("Charging: Magma Burst!", pulsing red for heavy moves) — voice latency makes reacting to animation alone too hard.
 40. **Leave button** during battle (top-right, click) returns to the lobby; online it notifies the opponent.
 41. **Phone layout:** panels side-by-side at the top, move list as a 2-column grid above the voice box, toasts lower. The game targets desktop Chrome/Edge but Android Chrome also supports speech recognition.
+42. **Heavy windups lengthened** to Magma Burst 1.7 s, Tidal Crash 1.5 s, Thorn Quake 1.5 s (×1.15 slow), Thunder Lance 1.4 s (×0.85 fast) — supersedes the heavy numbers in #14. Speech recognition delivers final results ~0.6–1.2 s after speaking, so shorter windups made voice dodging nearly impossible. Longer windups also make interrupting (25+ dmg) a real tactic.

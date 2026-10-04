@@ -37,28 +37,29 @@ export const SPECIES_IDS: SpeciesId[] = ['cindrix', 'brinkle', 'vinram', 'joltmo
 
 const dmg = { kind: 'damage' } as const;
 
-// Timings: light melee ≈ 0.9 s total, projectiles ≈ 1 s, heavies ≈ 2.3–2.6 s with long windups.
+// Timings: light melee ≈ 0.9 s total, projectiles ≈ 1 s, heavies ≈ 2.4–2.9 s with long (1.4–1.7 s) windups
+// so a voice "dodge" (recognizer latency ≈ 0.6–1.2 s) can land in time.
 export const MOVES: Record<MoveId, MoveDef> = {
   // Cindrix
   shell_ram: { id: 'shell_ram', species: 'cindrix', element: 'normal', cost: 10, power: 12, delivery: 'melee', effect: dmg, windup: 0.35, active: 0.25, recovery: 0.35, heavy: false, name: { en: 'Shell Ram', it: 'Carica Corazzata' } },
   cinder_spit: { id: 'cinder_spit', species: 'cindrix', element: 'fire', cost: 15, power: 16, delivery: 'projectile', effect: dmg, windup: 0.45, active: 0.15, recovery: 0.45, speed: 14, heavy: false, name: { en: 'Cinder Spit', it: 'Sputo di Brace' } },
   heat_shell: { id: 'heat_shell', species: 'cindrix', element: 'fire', cost: 20, power: 0, delivery: 'self', effect: { kind: 'shield', factor: 0.5, seconds: 4 }, windup: 0.3, active: 0.2, recovery: 0.3, heavy: false, name: { en: 'Heat Shell', it: 'Guscio Rovente' } },
-  magma_burst: { id: 'magma_burst', species: 'cindrix', element: 'fire', cost: 35, power: 30, delivery: 'ground', effect: dmg, windup: 1.4, active: 0.5, recovery: 0.7, hitDelay: 0.15, heavy: true, name: { en: 'Magma Burst', it: 'Esplosione di Magma' } },
+  magma_burst: { id: 'magma_burst', species: 'cindrix', element: 'fire', cost: 35, power: 30, delivery: 'ground', effect: dmg, windup: 1.7, active: 0.5, recovery: 0.7, hitDelay: 0.15, heavy: true, name: { en: 'Magma Burst', it: 'Esplosione di Magma' } },
   // Brinkle
   bubble_bump: { id: 'bubble_bump', species: 'brinkle', element: 'normal', cost: 10, power: 12, delivery: 'melee', effect: dmg, windup: 0.35, active: 0.25, recovery: 0.35, heavy: false, name: { en: 'Bubble Bump', it: 'Spinta di Bolla' } },
   water_jet: { id: 'water_jet', species: 'brinkle', element: 'water', cost: 15, power: 16, delivery: 'beam', effect: dmg, windup: 0.5, active: 0.4, recovery: 0.35, hitDelay: 0.15, heavy: false, name: { en: 'Water Jet', it: "Getto d'Acqua" } },
   healing_rain: { id: 'healing_rain', species: 'brinkle', element: 'water', cost: 25, power: 0, delivery: 'self', effect: { kind: 'heal', amount: 18, seconds: 3 }, windup: 0.6, active: 0.3, recovery: 0.4, heavy: false, name: { en: 'Healing Rain', it: 'Pioggia Curativa' } },
-  tidal_crash: { id: 'tidal_crash', species: 'brinkle', element: 'water', cost: 35, power: 30, delivery: 'wave', effect: dmg, windup: 1.2, active: 0.4, recovery: 0.7, speed: 9, heavy: true, name: { en: 'Tidal Crash', it: 'Schianto di Marea' } },
+  tidal_crash: { id: 'tidal_crash', species: 'brinkle', element: 'water', cost: 35, power: 30, delivery: 'wave', effect: dmg, windup: 1.5, active: 0.4, recovery: 0.7, speed: 9, heavy: true, name: { en: 'Tidal Crash', it: 'Schianto di Marea' } },
   // Vinram
   horn_charge: { id: 'horn_charge', species: 'vinram', element: 'normal', cost: 10, power: 13, delivery: 'melee', effect: dmg, windup: 0.4, active: 0.25, recovery: 0.4, heavy: false, name: { en: 'Horn Charge', it: 'Carica di Corna' } },
   leaf_volley: { id: 'leaf_volley', species: 'vinram', element: 'grass', cost: 15, power: 15, delivery: 'projectile', effect: dmg, windup: 0.45, active: 0.2, recovery: 0.45, speed: 12, heavy: false, name: { en: 'Leaf Volley', it: 'Raffica di Foglie' } },
   vine_snare: { id: 'vine_snare', species: 'vinram', element: 'grass', cost: 20, power: 0, delivery: 'projectile', effect: { kind: 'root', seconds: 2 }, windup: 0.5, active: 0.2, recovery: 0.4, speed: 11, heavy: false, name: { en: 'Vine Snare', it: 'Laccio di Liane' } },
-  thorn_quake: { id: 'thorn_quake', species: 'vinram', element: 'grass', cost: 35, power: 30, delivery: 'ground', effect: dmg, windup: 1.3, active: 0.5, recovery: 0.7, speed: 10, heavy: true, name: { en: 'Thorn Quake', it: 'Terremoto di Spine' } },
+  thorn_quake: { id: 'thorn_quake', species: 'vinram', element: 'grass', cost: 35, power: 30, delivery: 'ground', effect: dmg, windup: 1.5, active: 0.5, recovery: 0.7, speed: 10, heavy: true, name: { en: 'Thorn Quake', it: 'Terremoto di Spine' } },
   // Joltmoth
   wing_flick: { id: 'wing_flick', species: 'joltmoth', element: 'normal', cost: 10, power: 11, delivery: 'melee', effect: dmg, windup: 0.3, active: 0.2, recovery: 0.3, heavy: false, name: { en: 'Wing Flick', it: "Colpo d'Ala" } },
   spark_dart: { id: 'spark_dart', species: 'joltmoth', element: 'electric', cost: 15, power: 15, delivery: 'projectile', effect: dmg, windup: 0.4, active: 0.15, recovery: 0.4, speed: 22, heavy: false, name: { en: 'Spark Dart', it: 'Dardo Scintilla' } },
   static_field: { id: 'static_field', species: 'joltmoth', element: 'electric', cost: 20, power: 0, delivery: 'beam', effect: { kind: 'static', seconds: 5 }, windup: 0.5, active: 0.3, recovery: 0.4, hitDelay: 0.2, heavy: false, name: { en: 'Static Field', it: 'Campo Statico' } },
-  thunder_lance: { id: 'thunder_lance', species: 'joltmoth', element: 'electric', cost: 35, power: 29, delivery: 'projectile', effect: dmg, windup: 1.1, active: 0.3, recovery: 0.7, speed: 45, heavy: true, name: { en: 'Thunder Lance', it: 'Lancia di Tuono' } },
+  thunder_lance: { id: 'thunder_lance', species: 'joltmoth', element: 'electric', cost: 35, power: 29, delivery: 'projectile', effect: dmg, windup: 1.4, active: 0.3, recovery: 0.7, speed: 45, heavy: true, name: { en: 'Thunder Lance', it: 'Lancia di Tuono' } },
 };
 
 export const MOVE_IDS = Object.keys(MOVES) as MoveId[];
