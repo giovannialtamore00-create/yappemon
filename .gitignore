@@ -7,3 +7,4 @@ playwright-report/
 screenshots/
 *.log
 .claude/settings.local.json
+dist-movement/

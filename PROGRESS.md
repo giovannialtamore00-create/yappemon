@@ -31,3 +31,4 @@
 - Page test hook: `window.__yappemon.say(text)`, `.state()`, `.app`. URL test options: `?seed=7&botTeam=vinram,brinkle&bot=passive`.
 - GitHub CLI is NOT installed/logged in (the kickoff winget install was waiting on a UAC prompt when the user left). Deployment = the user runs `scripts/publish.ps1` (README §2).
 - Gotcha: don't put text with backticks inside `node -e "..."` in bash — bash runs them as commands. Use the Write/Edit tools for such text.
+- ⚠️ On branch `movement`: NEVER `npm run build` into `dist/` (the live tunnel serves dist/ from main). Test builds: `npx tsc --noEmit && npx vite build --outDir dist-movement`. Browser tests use the dev server, so they're fine.
