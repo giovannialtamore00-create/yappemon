@@ -108,9 +108,18 @@ describe('ProsodyAnalyzer', () => {
     expect(u[3]!.scores.longestVoicedS).toBeGreaterThan(0.9);
   });
 
-  it('boosts stack', () => {
-    const u = run([...CAL, { hz: 230, attackS: 0.003, amp: 0.3, dur: 1.0 }]);
-    expect(u[3]!.boosts).toEqual({ snap: true, hype: true, full: true });
+  it('never two boosts: only the strongest relative to its threshold', () => {
+    // all three reached; pitch +8.5 st is barely over 7, the 1.2 s hold is far over its threshold
+    const u = run([...CAL, { hz: 228, attackS: 0.003, amp: 0.2, dur: 1.2 }]);
+    const s = u[3]!.strength;
+    expect(s.snap).toBeGreaterThan(1);
+    expect(s.hype).toBeGreaterThan(1);
+    expect(s.full).toBeGreaterThan(Math.max(s.snap, s.hype));
+    expect(u[3]!.boosts).toEqual({ ...none, full: true });
+    // a loud bark with a smaller pitch jump → snap only
+    const v = run([...CAL, { hz: 230, attackS: 0.003, amp: 0.6 }]);
+    expect(v[3]!.strength.hype).toBeGreaterThan(1);
+    expect(v[3]!.boosts).toEqual({ ...none, snap: true });
   });
 
   it('boosted words do not shift the baseline', () => {

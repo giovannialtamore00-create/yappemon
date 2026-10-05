@@ -3,6 +3,7 @@
 //   snap  — sharp attack: the word hits loud and suddenly
 //   hype  — pitch rise: voice clearly higher than the speaker's usual pitch
 //   full  — stretching: a long held vowel ("fiiiire")
+// At most one boost per utterance: the one strongest relative to its own threshold (strength 1 = just made it).
 // The baseline (normal voice) is learned from the speaker's recent non-boosted utterances.
 
 /** Detection thresholds. All PLACEHOLDER values, to be tuned with real voices. */
@@ -22,13 +23,18 @@ export const PROSODY = {
   calibrationUtterances: 3,
   baselineWindow: 10,
   /** snap: reaches within 3 dB of its early peak this fast, and that peak is this much louder than usual. */
-  snapAttackMs: 30, // PLACEHOLDER
-  snapLoudDb: 6, // PLACEHOLDER
-  /** hype: high pitch (90th percentile) this many semitones above the usual median pitch. */
-  hypeSemitones: 4, // PLACEHOLDER
-  /** full: longest unbroken voiced run at least this long, and at least `fullVsUsual` × the usual one. */
-  fullMinS: 0.5, // PLACEHOLDER
-  fullVsUsual: 2, // PLACEHOLDER
+  snapAttackMs: 80, // PLACEHOLDER
+  snapLoudDb: 4, // PLACEHOLDER
+  /** hype: high pitch (90th percentile) this many semitones above the usual high pitch. */
+  hypeSemitones: 7, // PLACEHOLDER
+  /** full: longest held sound at least this long, and at least `fullVsUsual` × the usual one. */
+  fullMinS: 0.45, // PLACEHOLDER
+  fullVsUsual: 1.5, // PLACEHOLDER
+  /** Held sound: pitch may move at most this much per 10 ms hop, loudness stays within this of the peak. */
+  heldStepSemis: 2, // PLACEHOLDER
+  heldDropDb: 14, // PLACEHOLDER
+  /** Pitch frames this far from the word median are ignored (octave errors). */
+  outlierSemis: 7,
   minVoicedFrames: 5,
   pitchMinHz: 70,
   pitchMaxHz: 600,
@@ -52,6 +58,9 @@ export interface Utterance {
   startS: number;
   endS: number;
   scores: UtteranceScores;
+  /** Each boost's measure relative to its threshold (≥ 1 = reached); NaN while calibrating. */
+  strength: Record<keyof Boosts, number>;
+  /** At most one true: the strongest boost that reached its threshold. */
   boosts: Boosts;
   /** False while the baseline is still being learned (no boosts yet). */
   calibrated: boolean;
@@ -136,7 +145,7 @@ export class ProsodyAnalyzer {
   private utt: Hop[] | null = null;
   private uttStart = 0;
   private quietHops = 0;
-  private history: { peakDb: number; medianHz: number; longestS: number }[] = [];
+  private history: { peakDb: number; highHz: number; longestS: number }[] = [];
 
   constructor(readonly sampleRate: number) {
     this.hop = Math.round((sampleRate * PROSODY.hopMs) / 1000);
@@ -214,39 +223,57 @@ export class ProsodyAnalyzer {
     const reach = early.findIndex((h) => h.db >= earlyPeak - 3);
     const attackMs = reach * PROSODY.hopMs;
     const peakDb = Math.max(...hops.map((h) => h.db));
-    // pitch is held for two hops; voiced runs tolerate one missing pitch frame (2 hops)
-    const voiced = hops.map((h) => h.hz).filter((x): x is number => x !== null);
-    let longest = 0, run = 0, gap = 0;
-    for (const { hz } of hops) {
-      if (hz !== null) { run += 1 + gap; gap = 0; }
-      else if (run > 0 && gap < 2) gap++;
-      else { run = 0; gap = 0; }
+    // Pitch frames far from the word's median are octave errors or noise, not voice.
+    const rawVoiced = hops.map((h) => h.hz).filter((x): x is number => x !== null);
+    const rawMedian = median(rawVoiced);
+    const clean = (hz: number | null) => hz !== null && Math.abs(semitones(hz, rawMedian)) <= PROSODY.outlierSemis ? hz : null;
+    const voiced = rawVoiced.map(clean).filter((x): x is number => x !== null);
+    // Held sound: unbroken voiced hops with level pitch and loudness (a sung/stretched vowel, not a phrase).
+    // A run survives one missed pitch frame (2 hops).
+    let longest = 0, run = 0, gap = 0, prevHz = 0;
+    for (const h of hops) {
+      const hz = clean(h.hz);
+      const loudEnough = h.db >= peakDb - PROSODY.heldDropDb;
+      const steady = hz !== null && loudEnough && (run === 0 || Math.abs(semitones(hz, prevHz)) <= PROSODY.heldStepSemis);
+      if (steady) { run += 1 + gap; gap = 0; }
+      else if (run > 0 && gap < 2 && loudEnough) gap++;
+      else { run = hz !== null && loudEnough ? 1 : 0; gap = 0; }
+      if (hz !== null) prevHz = hz;
       longest = Math.max(longest, run);
     }
     const longestVoicedS = longest * hopS;
-    const medianHz = voiced.length >= PROSODY.minVoicedFrames ? median(voiced) : NaN;
+    const enoughVoice = voiced.length >= PROSODY.minVoicedFrames;
+    const medianHz = enoughVoice ? median(voiced) : NaN;
+    const highHz = enoughVoice ? percentile(voiced, 0.9) : NaN;
 
     const calibrated = this.calibrated;
     const base = {
       peakDb: median(this.history.map((h) => h.peakDb)),
-      hz: median(this.history.map((h) => h.medianHz).filter((x) => !Number.isNaN(x))),
+      highHz: median(this.history.map((h) => h.highHz).filter((x) => !Number.isNaN(x))),
       longestS: median(this.history.map((h) => h.longestS)),
     };
     const loudDb = calibrated ? earlyPeak - base.peakDb : NaN;
-    const pitchSemis = calibrated && voiced.length >= PROSODY.minVoicedFrames && !Number.isNaN(base.hz)
-      ? semitones(percentile(voiced, 0.9), base.hz) : NaN;
+    // Like with like: this word's high pitch vs the usual high pitch.
+    const pitchSemis = calibrated && enoughVoice && !Number.isNaN(base.highHz) ? semitones(highHz, base.highHz) : NaN;
     const scores: UtteranceScores = { attackMs, loudDb, pitchSemis, longestVoicedS };
-    const boosts: Boosts = calibrated ? {
-      snap: attackMs <= PROSODY.snapAttackMs && loudDb >= PROSODY.snapLoudDb,
-      hype: pitchSemis >= PROSODY.hypeSemitones,
-      full: longestVoicedS >= Math.max(PROSODY.fullMinS, PROSODY.fullVsUsual * base.longestS),
-    } : { ...NO_BOOSTS };
+    // snap needs both a fast attack and loudness, so it is as strong as the weaker of the two (attack part capped at 2).
+    const strength = {
+      snap: Math.min(loudDb / PROSODY.snapLoudDb, Math.min(2, PROSODY.snapAttackMs / Math.max(attackMs, PROSODY.hopMs))),
+      hype: pitchSemis / PROSODY.hypeSemitones,
+      full: longestVoicedS / Math.max(PROSODY.fullMinS, PROSODY.fullVsUsual * base.longestS),
+    };
+    const boosts: Boosts = { ...NO_BOOSTS };
+    if (calibrated) {
+      const best = (Object.keys(strength) as (keyof Boosts)[])
+        .filter((k) => strength[k] >= 1).sort((a, b) => strength[b] - strength[a])[0];
+      if (best) boosts[best] = true;
+    }
 
     // Only normal-sounding utterances teach the baseline.
-    if (!boosts.snap && !boosts.hype && !boosts.full) {
-      this.history.push({ peakDb, medianHz, longestS: longestVoicedS });
+    if (!calibrated || !(strength.snap >= 1 || strength.hype >= 1 || strength.full >= 1)) {
+      this.history.push({ peakDb, highHz, longestS: longestVoicedS });
       if (this.history.length > PROSODY.baselineWindow) this.history.shift();
     }
-    this.onUtterance({ startS, endS: startS + hops.length * hopS, scores, boosts, calibrated, peakDb, medianHz });
+    this.onUtterance({ startS, endS: startS + hops.length * hopS, scores, strength, boosts, calibrated, peakDb, medianHz });
   }
 }

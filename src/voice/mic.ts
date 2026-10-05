@@ -26,9 +26,9 @@ export class MicProsody {
 
   async start() {
     if (this.ctx) return;
-    // Auto gain would flatten the loudness we want to measure.
+    // Auto gain would flatten the loudness we want to measure; noise suppression smooths word onsets.
     this.stream = await navigator.mediaDevices.getUserMedia({
-      audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: false, channelCount: 1 },
+      audio: { echoCancellation: true, noiseSuppression: false, autoGainControl: false, channelCount: 1 },
     });
     const ctx = new AudioContext();
     const url = URL.createObjectURL(new Blob([WORKLET], { type: 'application/javascript' }));

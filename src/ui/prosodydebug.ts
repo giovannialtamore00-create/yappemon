@@ -28,8 +28,11 @@ export function mountProsodyDebug(mic = new MicProsody()) {
     const s = u.scores;
     const tags = (Object.keys(LABEL) as (keyof typeof LABEL)[]).filter((k) => u.boosts[k])
       .map((k) => `<b style="color:${LABEL[k][1]}">${LABEL[k][0]}</b>`).join(' ');
-    rows.unshift(`<div>${u.calibrated ? '' : '(calibrating) '}attack ${s.attackMs}ms · loud ${fmt(s.loudDb, 1)}dB · `
-      + `pitch ${fmt(s.pitchSemis, 1)}st · held ${s.longestVoicedS.toFixed(2)}s ${tags}</div>`);
+    // strength 1.0 = just reached the threshold; only the strongest one ≥ 1 fires
+    const st = u.strength;
+    rows.unshift(`<div style="margin-top:3px">${u.calibrated ? '' : '(calibrating) '}snap ${fmt(st.snap, 2)} · hype ${fmt(st.hype, 2)} · `
+      + `full ${fmt(st.full, 2)} ${tags}<br><span style="opacity:.55">attack ${s.attackMs}ms · loud ${fmt(s.loudDb, 1)}dB · `
+      + `pitch ${fmt(s.pitchSemis, 1)}st · held ${s.longestVoicedS.toFixed(2)}s</span></div>`);
     rows.length = Math.min(rows.length, 8);
     log.innerHTML = rows.join('');
   };

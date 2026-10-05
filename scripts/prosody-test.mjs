@@ -54,8 +54,8 @@ try {
   }
   console.log(text.split('\n').slice(0, 10).join('\n'));
   // newest first: each test word must be its own utterance with exactly its own boost
-  const rows = text.split('\n').filter((l) => l.startsWith('attack') || l.startsWith('(calibrating)')).slice(0, 4);
-  const want = [/held [\d.]+s FULL POWER!$/, /held [\d.]+s SNAP!$/, /held [\d.]+s HYPE!$/, /held [\d.]+s$/];
+  const rows = text.split('\n').filter((l) => l.startsWith('snap') || l.startsWith('(calibrating)')).slice(0, 4);
+  const want = [/full \S+ FULL POWER!$/, /full \S+ SNAP!$/, /full \S+ HYPE!$/, /full \S+$/];
   want.forEach((re, i) => { if (!re.test(rows[i] ?? '')) errors.push(`row ${i}: expected ${re}, got "${rows[i]}"`); });
   if (!/calibrated/.test(text)) errors.push('never calibrated');
 } finally {
