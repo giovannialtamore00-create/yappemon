@@ -18,10 +18,12 @@ Stack: TypeScript, Vite, Three.js, PeerJS, Web Speech API, Vitest, Playwright. N
 `npm run dev` · `npm test` · `npm run build` · `node scripts/smoke.mjs --full` (more in docs/testing.md)
 
 ## Status
-- **Branch:** `loadout-evolutions` (from `main`; `main` has the movement update, merged locally, not pushed).
-- **Done on this branch:** move-choice panel before every round; distinct shapes per evolution stage (decisions #71–72).
-  Verified: unit tests, smoke, flow, net, spectator, Italian voice, loadout-shots, creature-sheet.
-- **Next:** user tries it (`npm run dev`) and approves merging into `main`. Ask before merging.
+- **Branch:** `verbal-enhancements`, from `loadout-evolutions` (move-choice panel + evolution shapes, #71–72), which still
+  awaits the user's OK to merge into `main` (`main` has the movement update, merged locally, not pushed). Ask before merging.
+- **Feature:** verbal boosts = how a command is said: SNAP (sharp attack), HYPE (pitch rise), FULL POWER (stretched vowel). See decision #73.
+  Milestones: M1 voice measurement · M2 sim effects (+ sanitizer, docs) · M3 voice→intents, flash words + sounds, FULL POWER cooldown icon (ZZZ…).
+- **Done:** M1 (`src/voice/prosody.ts`, `mic.ts`, `?prosody=1` debug panel; `tests/prosody.test.ts`, `scripts/prosody-test.mjs`).
+- **Next:** PAUSE. User tests their own voice at `npm run dev` → `/?prosody=1`; tune the `PROSODY` thresholds (PLACEHOLDERs). Then M2.
 - **Known issues:** none open. The live deploy link isn't needed for now, so `dist/` can be rebuilt freely.
 
 ## Docs (read only what the task needs)

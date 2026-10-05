@@ -49,6 +49,7 @@ src/game/    session (local/host/client) and battle controller
 | `render/hud.ts` | DOM HUD: panels, queue chips, move bar, energy gauge, commands row, transcript, toasts, damage numbers | `Hud`, `MicStatus`, `ToastKind` |
 | `render/showcase.ts` | Menu background: one creature turning | `Showcase` |
 | `ui/screens.ts` | Click menus: lobby, room code, team select, loadout panel, forced switch, end screen, disconnect | `Screens`, `onUiClick`, `setUiClickHandler` |
+| `ui/prosodydebug.ts` | `?prosody=1` developer panel: live mic meters, utterance scores, boosts | `mountProsodyDebug` |
 | `sim/types.ts` | Pure sim types | `SpeciesId`, `MoveId`, `MoveDef`, `SpeciesDef`, `Intent`, `SimState`, `SimEvent`, `CreatureState`, `TrainerState` |
 | `sim/data.ts` | **All game data and tuning constants** | `SPECIES`, `MOVES`, constants below, `scaledCost`, `typeMultiplier`, `speciesAtStage`, `evolutionLine`, `defaultLoadout`, `validLoadout` |
 | `sim/sim.ts` | The sim: `step()` mutates state, returns the tick's events | `createMatch`, `step`, `computeDamage`, `hitChance`, `createCreature`, `activeCreature`, `benchSlot`, `distance`, `travelTicks` |
@@ -58,6 +59,8 @@ src/game/    session (local/host/client) and battle controller
 | `voice/speech.ts` | Web Speech wrapper, auto-restart, interim text to HUD | `Speech`, `SpeechStatus`, `isSupportedBrowser`, `SPEECH_LANG` |
 | `voice/parser.ts` | Transcript → commands → intents (normalize, phonetic fold, Levenshtein) | `parse`, `toIntents`, `normalize`, `fold`, `levenshtein`, `Command`, `ParseContext`, `ParseResult` |
 | `voice/aliases.ts` | EN+IT phrases, mishearings, fillers, connectors | `MOVE_ALIASES`, `SPECIES_ALIASES`, `DODGE_ALIASES`, `ALERT_ALIASES`, `RECALL_ALIASES`, `STOP_ALIASES`, `PICK_ALIASES` |
+| `voice/prosody.ts` | Pure: mic samples → utterances → scores vs the speaker's baseline → boosts (snap/hype/full); thresholds in `PROSODY` | `ProsodyAnalyzer`, `detectPitch`, `PROSODY`, `Utterance`, `Boosts` |
+| `voice/mic.ts` | getUserMedia + AudioWorklet tap feeding a `ProsodyAnalyzer` (runs beside Web Speech) | `MicProsody` |
 
 ## Where data lives
 
@@ -68,5 +71,5 @@ src/game/    session (local/host/client) and battle controller
 
 ## Tests and CI
 
-- `tests/sim.test.ts` (rules, determinism, rounds, loadout), `tests/parser.test.ts` (EN/IT parser), `tests/net.test.ts` (protocol, sanitizers). Run with `npm test` (`vite.config.ts`: `tests/**/*.test.ts`, node env). Headless scripts: [testing.md](testing.md).
+- `tests/sim.test.ts` (rules, determinism, rounds, loadout), `tests/parser.test.ts` (EN/IT parser), `tests/net.test.ts` (protocol, sanitizers), `tests/prosody.test.ts` (pitch, utterance split, boosts on synthetic audio). Run with `npm test` (`vite.config.ts`: `tests/**/*.test.ts`, node env). Headless scripts: [testing.md](testing.md).
 - `.github/workflows/deploy.yml`: on push to `main`: `npm ci` → `npm test` → `npm run build` → GitHub Pages. See [deploy.md](deploy.md).

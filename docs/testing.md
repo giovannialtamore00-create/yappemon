@@ -19,6 +19,7 @@ Playwright needs Chromium once: `npx playwright install chromium`.
 | `smoke.mjs [--full]` | Practice vs Bot end-to-end, screenshots in `./screenshots` |
 | `flow-test.mjs` | Italian UI, voice forced switch, leave, phone layout |
 | `italian-voice-test.mjs` | Italian voice commands incl. dodge window / alert |
+| `prosody-test.mjs` | Verbal boosts: fake mic plays a synthetic WAV; debug panel must show HYPE!, SNAP!, FULL POWER! on the right words |
 | `net-test.mjs` | Two headless players over the real PeerJS broker (needs internet) |
 | `spectator-test.mjs` | Spectator room with two players |
 | `preview-test.mjs` | Production build served under `/yappemon/` |
@@ -37,6 +38,6 @@ Playwright needs Chromium once: `npx playwright install chromium`.
 - Windows; use the Bash tool (Git Bash). For multi-line code edits, write a small `.cjs` script to the scratchpad and run it with node, or use the Edit tool. Never put backticks inside `node -e "..."` in bash.
 - Headless WebGL needs chromium args `--use-angle=swiftshader --enable-unsafe-swiftshader` (already in the scripts). Headless pages render slowly (~5 fps): use generous timeouts.
 - Page test hook: `window.__yappemon.say(text)`, `.state()`, `.app` (e.g. `app.battle.session.runner` in practice mode).
-- URL options: `?seed=7&botTeam=vinram,brinkle&bot=passive&loadout=0` (`loadout=0` skips the move-choice panel).
+- URL options: `?seed=7&botTeam=vinram,brinkle&bot=passive&loadout=0` (`loadout=0` skips the move-choice panel). `?prosody=1` adds the voice-boost debug panel (live loudness/pitch, per-utterance scores) for tuning thresholds with a real mic.
 - In battle, the backtick key (`` ` ``) opens a hidden text box that goes through the same voice parser.
 - Sim tests use `sureHits()` (all accuracies 100, restored after each test) when testing other mechanics.

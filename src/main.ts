@@ -390,3 +390,5 @@ class App {
 }
 
 new App();
+// ?prosody=1: developer panel for tuning verbal boosts.
+if (new URLSearchParams(location.search).has('prosody')) void import('./ui/prosodydebug').then((m) => m.mountProsodyDebug());
