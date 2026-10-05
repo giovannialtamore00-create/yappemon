@@ -21,6 +21,8 @@ export type Command =
 export interface ParseContext {
   /** When set, only this creature's moves are considered (much more robust). */
   activeSpecies?: SpeciesId;
+  /** When set, only these moves (the creature's chosen loadout) are considered. */
+  moves?: MoveId[];
 }
 
 export interface ParseResult {
@@ -154,6 +156,7 @@ function matchSegment(seg: string[], ctx: ParseContext): { found: Match[]; lefto
   const words = seg.filter((w) => (!FILLERS.has(w) || PHRASE_TOKENS.has(w)) && !(w in DODGE_DIR_WORDS));
   const candidates: Match[] = [];
   for (const ph of PHRASES) {
+    if (ph.cmd.kind === 'move' && ctx.moves && !ctx.moves.includes(ph.cmd.move)) continue;
     if (ph.cmd.kind === 'move' && ctx.activeSpecies && !knowsMove(ctx.activeSpecies, ph.cmd.move)) continue;
     const need = threshold(ph.text);
     for (let n = Math.max(1, ph.tokens - 1); n <= ph.tokens + 1; n++) {

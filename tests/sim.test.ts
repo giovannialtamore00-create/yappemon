@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import {
-  ARENA_X_M, Bot, PREFERRED_GAP_M, DODGE_COST, HALF_FAR_M, HALF_NEAR_M, MOVES, MOVE_IDS, SPECIES, STAMINA_MAX, TICK_HZ, activeCreature,
+  ARENA_X_M, Bot, LOADOUT_S, PREFERRED_GAP_M, defaultLoadout, DODGE_COST, HALF_FAR_M, HALF_NEAR_M, MOVES, MOVE_IDS, SPECIES, STAMINA_MAX, TICK_HZ, activeCreature,
   computeDamage, createMatch, hitChance, step, travelTicks, typeMultiplier,
   type BaseSpeciesId, type Intent, type MoveId, type SimEvent, type SimState, type SpeciesId,
 } from '../src/sim';
@@ -24,7 +24,7 @@ function run(s: SimState, ticks: number, intents?: [Intent[], Intent[]]): SimEve
 const sec = (x: number) => Math.round(x * TICK_HZ);
 /** A match where both creatures are already on the field. */
 function ready(a: BaseSpeciesId[], b: BaseSpeciesId[], seed = 1) {
-  const s = createMatch([a, b], seed);
+  const s = createMatch([a, b], seed, { loadoutS: 0 });
   run(s, sec(1.1));
   return s;
 }
@@ -410,7 +410,7 @@ describe('movement', () => {
     const s = ready(['cindrix', 'joltmoth'], ['vinram']);
     run(s, sec(3), [[{ type: 'queue', actions: [{ kind: 'recall' }] }], []]);
     expect(activeCreature(s.trainers[0]).species).toBe('joltmoth');
-    const fresh = createMatch([['cindrix'], ['vinram']], 1);
+    const fresh = createMatch([['cindrix'], ['vinram']], 1, { loadoutS: 0 });
     expect([fresh.trainers[0].x, fresh.trainers[0].z, fresh.trainers[1].z]).toEqual([0, 3, -3]);
   });
 });
@@ -618,5 +618,74 @@ describe('determinism and bot', () => {
     expect(SPECIES.vinram.maxHp).toBe(125);
     expect(SPECIES.joltmoth.maxHp).toBe(95);
     expect(Object.values(MOVES)).toHaveLength(24);
+  });
+});
+
+describe('loadout phase', () => {
+  const ready2: [Intent[], Intent[]] = [[{ type: 'ready' }], [{ type: 'ready' }]];
+  it('a match starts with the move choice; the round begins when both are ready', () => {
+    const s = createMatch([['cindrix'], ['vinram']], 1);
+    const ev = run(s, sec(2));
+    expect(ev).toContainEqual({ t: 'loadout_start', round: 1, seconds: LOADOUT_S });
+    expect(ev.some((e) => e.t === 'sendout')).toBe(false);
+    expect(s.trainers[0].field).toBe('sending');
+    expect(run(s, 1, [[q('cinder_spit')], []]).some((e) => e.t === 'action_start')).toBe(false); // no fighting yet
+    const start = run(s, 2, ready2);
+    expect(start).toContainEqual({ t: 'ready', p: 0 });
+    expect(start).toContainEqual({ t: 'loadout_end', round: 1 });
+    expect(start).toContainEqual({ t: 'sendout', p: 0, slot: 0 });
+    expect(s.loadout).toBe(0);
+  });
+  it('ends by itself when time is up', () => {
+    const s = createMatch([['cindrix'], ['vinram']], 1, { loadoutS: 2 });
+    const ev = run(s, sec(2) + 1, [[{ type: 'ready' }], []]);
+    expect(ev).toContainEqual({ t: 'loadout_end', round: 1 });
+  });
+  it('defaults: stage 1 brings its 4 moves; an evolution swaps its newest move into the last slot', () => {
+    expect(defaultLoadout('cindrix')).toEqual(['shell_ram', 'cinder_spit', 'heat_shell', 'magma_burst']);
+    expect(defaultLoadout('pyroxen', ['shell_ram', 'cinder_spit', 'heat_shell', 'magma_burst'])).toEqual(['shell_ram', 'cinder_spit', 'heat_shell', 'molten_leap']);
+    expect(defaultLoadout('calderox', ['magma_burst', 'cinder_spit', 'heat_shell', 'shell_ram'])).toEqual(['magma_burst', 'cinder_spit', 'heat_shell', 'volcanic_ruin']);
+    expect(defaultLoadout('calderox', ['volcanic_ruin', 'cinder_spit', 'heat_shell', 'shell_ram'])).toEqual(['volcanic_ruin', 'cinder_spit', 'heat_shell', 'shell_ram']);
+  });
+  it('a chosen loadout is kept into the next round and limits the moves you can use', () => {
+    const s = createMatch([['cindrix', 'brinkle'], ['vinram', 'joltmoth']], 1);
+    run(s, 2, ready2);
+    run(s, sec(1.1));
+    knockOutTrainer(s, 1);
+    run(s, s.intermission);
+    expect(s.loadout).toBeGreaterThan(0);
+    expect(activeCreature(s.trainers[0]).species).toBe('pyroxen');
+    const pick: MoveId[] = ['molten_leap', 'magma_burst', 'cinder_spit', 'shell_ram'];
+    run(s, 1, [[{ type: 'loadout', slot: 0, moves: pick }], []]);
+    expect(activeCreature(s.trainers[0]).moves).toEqual(pick);
+    expect(s.loadouts[0][0]).toEqual(pick);
+    run(s, 2, ready2);
+    run(s, sec(1.1));
+    const ev = run(s, 1, [[q('heat_shell')], []]);
+    expect(ev).toContainEqual({ t: 'invalid', p: 0, reason: 'unknown_move' });
+    // Round 3: the pick is carried, with Volcanic Ruin swapped into the last slot.
+    knockOutTrainer(s, 0);
+    run(s, s.intermission);
+    expect(activeCreature(s.trainers[0]).moves).toEqual(['molten_leap', 'magma_burst', 'cinder_spit', 'volcanic_ruin']);
+  });
+  it('rejects invalid loadouts', () => {
+    const s = createMatch([['cindrix'], ['vinram']], 1);
+    const bad: MoveId[][] = [
+      ['shell_ram', 'cinder_spit', 'heat_shell'],
+      ['shell_ram', 'shell_ram', 'heat_shell', 'magma_burst'],
+      ['shell_ram', 'cinder_spit', 'heat_shell', 'water_jet'],
+      ['shell_ram', 'cinder_spit', 'heat_shell', 'molten_leap'], // not learned yet at stage 1
+    ];
+    for (const moves of bad) {
+      const ev = run(s, 1, [[{ type: 'loadout', slot: 0, moves }], []]);
+      expect(ev).toContainEqual({ t: 'invalid', p: 0, reason: 'not_now' });
+    }
+    expect(activeCreature(s.trainers[0]).moves).toEqual(defaultLoadout('cindrix'));
+  });
+  it('changes are locked once ready, and ignored outside the phase', () => {
+    const s = createMatch([['brinkle'], ['vinram']], 1);
+    run(s, 1, [[{ type: 'ready' }], []]);
+    run(s, 1, [[{ type: 'loadout', slot: 0, moves: ['water_jet', 'bubble_bump', 'healing_rain', 'tidal_crash'] }], []]);
+    expect(activeCreature(s.trainers[0]).moves).toEqual(defaultLoadout('brinkle'));
   });
 });

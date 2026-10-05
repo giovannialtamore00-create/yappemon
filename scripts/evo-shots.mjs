@@ -23,7 +23,7 @@ const st = () => page.evaluate(() => { const s = window.__yappemon.state(); retu
 const weaken = (p) => page.evaluate((pp) => { for (const c of window.__yappemon.state().trainers[pp].team) c.hp = 1; }, p);
 
 try {
-  await page.goto(`${url}?seed=5&botTeam=brinkle,joltmoth&bot=passive`);
+  await page.goto(`${url}?seed=5&botTeam=brinkle,joltmoth&bot=passive&loadout=0`);
   await wait(800);
   await page.getByRole('button', { name: /Practice/ }).click();
   await page.locator('.creature-card').nth(0).click(); // cindrix

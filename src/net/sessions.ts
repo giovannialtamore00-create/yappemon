@@ -43,6 +43,9 @@ export function sanitizeIntents(list: unknown): Intent[] {
     if (i.type === 'stop') out.push({ type: 'stop' });
     else if (i.type === 'choose' && (i.slot === 0 || i.slot === 1)) out.push({ type: 'choose', slot: i.slot });
     else if (i.type === 'go' && isSpecies(i.species)) out.push({ type: 'go', species: i.species });
+    else if (i.type === 'ready') out.push({ type: 'ready' });
+    else if (i.type === 'loadout' && (i.slot === 0 || i.slot === 1) && Array.isArray(i.moves) && i.moves.length <= 8
+      && i.moves.every((m) => typeof m === 'string' && m in MOVES)) out.push({ type: 'loadout', slot: i.slot, moves: i.moves as MoveId[] });
     else if (i.type === 'queue' && Array.isArray(i.actions)) {
       const actions = i.actions.slice(0, 4).map(sanitizeAction).filter((a): a is QAction => a !== null);
       if (actions.length) out.push({ type: 'queue', actions });

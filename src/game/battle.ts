@@ -6,7 +6,10 @@ import { FAIL_REASON, getLang, t } from '../i18n';
 import { MOVES, SPECIES } from '../sim/data';
 import { activeCreature } from '../sim/sim';
 import type { PlayerIdx, SimEvent, SimState, SpeciesId, BaseSpeciesId } from '../sim/types';
-import { parse, toIntents } from '../voice/parser';
+import { normalize, parse, toIntents } from '../voice/parser';
+
+/** Said while the move-choice panel is open: start the round. */
+const READY_WORDS = /\b(ready|i m ready|im ready|let s go|lets go|fight|pronto|pronta|pronti|sono pronto|sono pronta|combatti|via)\b/;
 import type { Hud } from '../render/hud';
 import type { SceneCtx } from '../render/scene';
 import { BattleView } from '../render/view';
@@ -30,6 +33,7 @@ export interface BattleAudio {
 export class Battle {
   view: BattleView;
   private switchUi: { close(): void } | null = null;
+  private loadoutUi: { close(): void; ready(): void } | null = null;
   private ended = false;
   private hintShown = false;
   /** Watching only (spectator-hosted room): no commands, side camera, neutral messages. */
@@ -84,10 +88,17 @@ export class Battle {
     const s = this.state();
     if (!s || s.result || !alts.length) return;
     const tr = s.trainers[this.me];
+    if (s.loadout > 0) {
+      // Move-choice panel open: only "ready" is understood.
+      if (alts.some((a) => READY_WORDS.test(normalize(a)))) { this.hud.setTranscript(alts[0]!, true, true); this.loadoutUi?.ready(); }
+      else this.hud.setTranscript(alts[0]!, true, false);
+      return;
+    }
     const activeSpecies = activeCreature(tr).species;
+    const moves = activeCreature(tr).moves;
     const forcedSwitch = tr.field === 'choosing';
     for (const text of alts) {
-      const intents = toIntents(parse(text, { activeSpecies }).commands, { forcedSwitch, activeSpecies });
+      const intents = toIntents(parse(text, { activeSpecies, moves }).commands, { forcedSwitch, activeSpecies });
       if (intents.length) {
         this.hud.setTranscript(text, true, true);
         this.session.send(intents);
@@ -121,7 +132,7 @@ export class Battle {
     this.audio?.musicSet(v.curr.round, mine.field === 'active' ? Math.min(1, Math.max(0, (0.35 - frac) / 0.2)) : 0);
     if (!this.spectator && !this.hintShown && v.curr.trainers[this.me].field === 'active') {
       this.hintShown = true;
-      const first = SPECIES[activeCreature(v.curr.trainers[this.me]).species].moves[1];
+      const first = activeCreature(v.curr.trainers[this.me]).moves[1]!;
       this.hud.setHint(t('sayHint', { move: MOVES[first].name[getLang()] }));
     }
   }
@@ -140,6 +151,13 @@ export class Battle {
     const lang = getLang();
     const who = (p: number) => t('player', { n: p + 1 });
     switch (e.t) {
+      case 'loadout_start':
+        if (this.spectator) this.hud.banner(t('choosingMoves'), '', 3000);
+        else this.openLoadout(s, e.round, e.seconds);
+        break;
+      case 'loadout_end':
+        this.closeLoadout();
+        break;
       case 'round_end': {
         this.closeSwitch();
         if (e.next) this.audio?.musicDuck(true);
@@ -224,8 +242,24 @@ export class Battle {
     this.switchUi = null;
   }
 
+  private openLoadout(s: SimState, round: number, seconds: number) {
+    this.closeLoadout();
+    this.loadoutUi = this.screens.loadout({
+      round, seconds,
+      team: s.trainers[this.me].team.map((c) => ({ species: c.species, moves: c.moves })),
+      onChange: (slot, moves) => this.session.send([{ type: 'loadout', slot, moves }]),
+      onReady: () => this.session.send([{ type: 'ready' }]),
+    });
+  }
+
+  private closeLoadout() {
+    this.loadoutUi?.close();
+    this.loadoutUi = null;
+  }
+
   dispose() {
     this.closeSwitch();
+    this.closeLoadout();
     this.view.dispose();
     this.session.dispose();
     this.hud.show(false);

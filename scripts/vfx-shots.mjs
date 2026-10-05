@@ -24,7 +24,7 @@ try {
     const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
     page.on('pageerror', (e) => errors.push(`${sp}: ${e.message}`));
     const foe = sp === 'brinkle' ? 'cindrix,vinram' : 'brinkle,vinram';
-    await page.goto(`${url}?seed=3&botTeam=${foe}&bot=passive`);
+    await page.goto(`${url}?seed=3&botTeam=${foe}&bot=passive&loadout=0`);
     await page.waitForTimeout(800);
     await page.getByRole('button', { name: /Practice/ }).click();
     await page.locator('.creature-card').nth(ORDER.indexOf(sp)).click();

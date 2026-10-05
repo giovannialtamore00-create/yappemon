@@ -102,7 +102,11 @@ export type Intent =
   | { type: 'queue'; actions: QAction[] }
   | { type: 'stop' }
   | { type: 'choose'; slot: 0 | 1 }
-  | { type: 'go'; species: SpeciesId };
+  | { type: 'go'; species: SpeciesId }
+  /** During the loadout phase: the moves team slot `slot` brings into the round. */
+  | { type: 'loadout'; slot: number; moves: MoveId[] }
+  /** During the loadout phase: done choosing. */
+  | { type: 'ready' };
 
 export type ActionPhase = 'windup' | 'active' | 'recovery';
 
@@ -132,6 +136,8 @@ export interface CreatureState {
   healPerTick: number;
   /** Tide Mirror: the next damaging hit is reflected while > 0. */
   mirrorTicks: number;
+  /** The moves chosen for this round (LOADOUT_SIZE of the species' learned moves). */
+  moves: MoveId[];
 }
 
 /**
@@ -204,6 +210,12 @@ export interface SimState {
   score: [number, number];
   /** Ticks left in the between-rounds break (result banner + evolution); 0 while fighting. */
   intermission: number;
+  /** Ticks left in the move-choice phase before a round (0 = fighting), its full length, and who is ready. */
+  loadout: number;
+  loadoutLen: number;
+  ready: [boolean, boolean];
+  /** Chosen moves per player and team slot; carried into the next round (evolved forms keep earlier moves). */
+  loadouts: [MoveId[][], MoveId[][]];
   /** null while running. */
   result: null | { winner: PlayerIdx | 'draw' };
 }
@@ -239,4 +251,8 @@ export type SimEvent =
   /** A round is over; the next round (if any) starts after the intermission with evolved creatures. */
   | { t: 'round_end'; round: number; winner: PlayerIdx | 'draw'; score: [number, number]; next: number | null }
   | { t: 'round_start'; round: number }
+  /** Move-choice phase before round `round` begins (creatures not on the field yet). */
+  | { t: 'loadout_start'; round: number; seconds: number }
+  | { t: 'loadout_end'; round: number }
+  | { t: 'ready'; p: PlayerIdx }
   | { t: 'match_end'; winner: PlayerIdx | 'draw' };

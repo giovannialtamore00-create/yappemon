@@ -50,6 +50,12 @@ try {
   await wait(600);
   await shot('02-team');
   await page.getByRole('button', { name: /Ready|Pronto/ }).click();
+  // Move-choice panel before round 1: read it, then start with the voice command 'ready'.
+  await page.locator('.loadout').waitFor({ timeout: 10000 });
+  await wait(400);
+  await shot('02b-loadout');
+  await page.evaluate(() => window.__yappemon.say('ready'));
+  await page.locator('.loadout').waitFor({ state: 'detached', timeout: 10000 });
   await wait(2500);
   await shot('03-battle-start');
   const say = (t) => page.evaluate((x) => window.__yappemon.say(x), t);

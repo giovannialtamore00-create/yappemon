@@ -1,8 +1,9 @@
 // Click-driven menus: lobby, room code, team select, forced switch, end screen, disconnect.
 
 import { ELEMENT_COLOR, ELEMENT_LABEL, getLang, t } from '../i18n';
-import { MOVES, SPECIES, SPECIES_IDS, evolutionLine } from '../sim/data';
-import type { BaseSpeciesId, Lang, SpeciesId } from '../sim/types';
+import { LOADOUT_SIZE, MOVES, SPECIES, SPECIES_IDS, evolutionLine } from '../sim/data';
+import type { BaseSpeciesId, Lang, MoveId, SpeciesId } from '../sim/types';
+import { MOVE_DESC } from '../movedesc';
 
 const h = <K extends keyof HTMLElementTagNameMap>(tag: K, cls?: string, text?: string) => {
   const e = document.createElement(tag);
@@ -190,6 +191,110 @@ export class Screens {
       timer.textContent = t('autoIn', { s: left });
     }, 1000);
     return { close: () => { window.clearInterval(iv); if (s.isConnected) this.clear(); } };
+  }
+
+  // ------------------------------------------------------------ loadout (move choice before a round)
+
+  /**
+   * Pick LOADOUT_SIZE moves per creature from everything it has learned. Click a move in one list, then a move
+   * in the other list to swap them. Every change is reported with `onChange` (the sim keeps the last valid one).
+   */
+  loadout(o: {
+    round: number; seconds: number; team: { species: SpeciesId; moves: MoveId[] }[];
+    onChange(slot: number, moves: MoveId[]): void; onReady(): void;
+  }) {
+    const lang = getLang();
+    const s = this.overlay('loadout');
+    const card = h('div', 'card loadout-card');
+    card.append(h('h2', '', t('loadoutTitle', { n: o.round })), h('p', 'muted', t('loadoutHint')));
+    const cols = h('div', 'lo-cols');
+    const picks = o.team.map((c) => [...c.moves]);
+    let sel: { slot: number; move: MoveId } | null = null;
+    let locked = false;
+
+    const tile = (sp: SpeciesId, id: MoveId, onClick: () => void, selected: boolean) => {
+      const m = MOVES[id];
+      const def = SPECIES[sp];
+      const b = h('button', `lo-move${selected ? ' sel' : ''}`);
+      b.style.setProperty('--el', ELEMENT_COLOR[m.element]);
+      const top = h('div', 'lo-top');
+      top.append(h('span', 'lo-name', m.name[lang]));
+      if (m.species === sp && def.stage > 1) top.append(h('span', 'lo-new', t('newTag')));
+      const meta = h('div', 'mc-meta');
+      meta.append(h('span', 'mc-type', ELEMENT_LABEL[lang][m.element]));
+      if (m.quick) meta.append(h('span', 'mc-quick', t('quickTag')));
+      if (m.delivery !== 'self') meta.append(h('span', 'mc-acc', `${m.accuracy}%`));
+      meta.append(h('span', 'mc-cost', String(m.cost)));
+      b.append(top, meta, h('div', 'lo-desc', MOVE_DESC[id][lang].replace('{d}', String(Math.round(m.power * def.dmgMult)))));
+      b.title = m.name[lang === 'it' ? 'en' : 'it'];
+      b.disabled = locked;
+      b.addEventListener('click', () => { onUiClick(); onClick(); });
+      return b;
+    };
+
+    const render = () => {
+      cols.innerHTML = '';
+      o.team.forEach((c, slot) => {
+        const def = SPECIES[c.species];
+        const col = h('div', 'lo-col');
+        const head = h('div', 'lo-head');
+        const tag = h('span', 'mc-type', ELEMENT_LABEL[lang][def.element]);
+        tag.style.setProperty('--el', ELEMENT_COLOR[def.element]);
+        head.append(h('span', 'lo-creature', def.name), tag);
+        const chosen = h('div', 'lo-grid');
+        const pool = h('div', 'lo-grid pool');
+        const rest = def.moves.filter((m) => !picks[slot]!.includes(m));
+        const pick = (move: MoveId, inLoadout: boolean) => {
+          if (sel && sel.slot === slot && sel.move !== move) {
+            const selIn = picks[slot]!.includes(sel.move);
+            if (selIn !== inLoadout) {
+              // Swap: the pool move takes the loadout move's place.
+              const out = inLoadout ? move : sel.move;
+              const inn = inLoadout ? sel.move : move;
+              picks[slot]![picks[slot]!.indexOf(out)] = inn;
+              sel = null;
+              o.onChange(slot, [...picks[slot]!]);
+              return render();
+            }
+          }
+          sel = sel && sel.slot === slot && sel.move === move ? null : { slot, move };
+          render();
+        };
+        for (const m of picks[slot]!) chosen.append(tile(c.species, m, () => pick(m, true), sel?.slot === slot && sel.move === m));
+        for (const m of rest) pool.append(tile(c.species, m, () => pick(m, false), sel?.slot === slot && sel.move === m));
+        col.append(head, h('div', 'lo-label', `${t('loadoutChosen')} (${LOADOUT_SIZE})`), chosen, h('div', 'lo-label', t('loadoutPool')));
+        col.append(rest.length ? pool : h('p', 'muted lo-empty', t('loadoutPoolEmpty')));
+        if (sel?.slot === slot) col.append(h('p', 'lo-swap', t('loadoutSwap')));
+        cols.append(col);
+      });
+    };
+    render();
+
+    const timer = h('p', 'muted', t('startsIn', { s: Math.ceil(o.seconds) }));
+    const ready = button(t('readyBtn'), () => setReady(), 'btn big primary');
+    const row = h('div', 'end-row');
+    row.append(ready);
+    card.append(cols, row, h('p', 'muted lo-say', t('sayReady')), timer);
+    s.append(card);
+    const setReady = () => {
+      if (locked) return;
+      locked = true;
+      sel = null;
+      ready.disabled = true;
+      ready.textContent = t('readyWaiting');
+      render();
+      o.onReady();
+    };
+    let left = Math.ceil(o.seconds);
+    const iv = window.setInterval(() => {
+      left = Math.max(0, left - 1);
+      timer.textContent = t('startsIn', { s: left });
+    }, 1000);
+    return {
+      /** Voice "ready" goes through here too. */
+      ready: setReady,
+      close: () => { window.clearInterval(iv); if (s.isConnected) this.clear(); },
+    };
   }
 
   // ------------------------------------------------------------ end screen

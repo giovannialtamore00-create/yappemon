@@ -34,6 +34,8 @@ const pick = async (p, a, b) => {
   await p.locator('.creature-card').nth(a).click();
   await p.locator('.creature-card').nth(b).click();
   await p.getByRole('button', { name: /Ready/ }).click();
+  // Move-choice panel before every round: keep the default moves and press Ready.
+  await p.evaluate(() => { window.setInterval(() => { const b = document.querySelector('.loadout .btn.primary'); if (b && !b.disabled) b.click(); }, 300); });
 };
 
 let ok = true;

@@ -370,12 +370,14 @@ class App {
   }
 
   startPractice(team: BaseSpeciesId[]) {
-    // URL options for testing: ?seed=123&botTeam=vinram,brinkle&bot=passive
+    // URL options for testing: ?seed=123&botTeam=vinram,brinkle&bot=passive&loadout=0
     const q = new URLSearchParams(location.search);
     const forced = (q.get('botTeam') ?? '').split(',').filter((x): x is BaseSpeciesId => (SPECIES_IDS as string[]).includes(x));
     const botTeam = forced.length === 2 ? forced : [...SPECIES_IDS].sort(() => Math.random() - 0.5).slice(0, 2);
     const seed = q.has('seed') ? Number(q.get('seed')) >>> 0 : undefined;
-    const session = new LocalSession(team, botTeam, seed, q.get('bot') === 'passive');
+    // ?loadout=<seconds> sets the move-choice time (0 skips the panel), for automated tests.
+    const loadout = q.has('loadout') ? Math.max(0, Number(q.get('loadout')) || 0) : undefined;
+    const session = new LocalSession(team, botTeam, seed, q.get('bot') === 'passive', loadout);
     this.beginBattle(session, [team, botTeam], (result) => {
       this.speech.stop();
       this.screens.end({

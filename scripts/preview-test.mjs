@@ -14,6 +14,8 @@ try {
   await page.locator('.creature-card').nth(1).click();
   await page.locator('.creature-card').nth(2).click();
   await page.getByRole('button', { name: /Ready|Pronto/ }).click();
+  // Move-choice panel before every round: keep the default moves and press Ready.
+  await page.evaluate(() => { window.setInterval(() => { const b = document.querySelector('.loadout .btn.primary'); if (b && !b.disabled) b.click(); }, 300); });
   await page.waitForFunction(() => window.__yappemon.state()?.tick > 30, null, { timeout: 10000 });
 } catch (e) { errors.push(e.message); }
 await browser.close();

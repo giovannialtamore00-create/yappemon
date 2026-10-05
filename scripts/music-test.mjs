@@ -19,7 +19,7 @@ const rms = () => page.evaluate(() => new Promise((res) => {
   setTimeout(() => { clearInterval(iv); sfx.musicGain.disconnect(an); res(Math.sqrt(sum / n)); }, 1500);
 }));
 try {
-  await page.goto(`${url}?seed=3&botTeam=vinram,brinkle&bot=passive`);
+  await page.goto(`${url}?seed=3&botTeam=vinram,brinkle&bot=passive&loadout=0`);
   await page.getByRole('button', { name: /Practice/ }).click();
   await page.locator('.creature-card').nth(0).click();
   await page.locator('.creature-card').nth(1).click();

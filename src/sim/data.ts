@@ -65,6 +65,10 @@ export const ROUNDS_TO_WIN = 2;
 export const MAX_ROUNDS = 3;
 /** Break between rounds: result banner, then the evolution animation. */
 export const INTERMISSION_S = 7;
+/** Moves a creature brings into a round, chosen from everything it has learned. */
+export const LOADOUT_SIZE = 4;
+/** Before every round: time to pick (and read) the moves; ends early when both players are ready. */
+export const LOADOUT_S = 30;
 
 const CINDRIX_MOVES: MoveId[] = ['shell_ram', 'cinder_spit', 'heat_shell', 'magma_burst'];
 const BRINKLE_MOVES: MoveId[] = ['bubble_bump', 'water_jet', 'healing_rain', 'tidal_crash'];
@@ -106,6 +110,23 @@ export function evolutionLine(base: BaseSpeciesId): SpeciesId[] {
 }
 
 export const knowsMove = (species: SpeciesId, move: MoveId) => SPECIES[species].moves.includes(move);
+
+/**
+ * Default loadout: stage 1 brings its 4 moves; an evolved form keeps the previous loadout with its newest move
+ * swapped into the last slot (so a freshly learned move is always tried unless the player changes it).
+ */
+export function defaultLoadout(species: SpeciesId, prev?: MoveId[]): MoveId[] {
+  const pool = SPECIES[species].moves;
+  const base = prev && prev.length === LOADOUT_SIZE && prev.every((m) => pool.includes(m)) ? [...prev] : pool.slice(0, LOADOUT_SIZE);
+  const newest = pool[pool.length - 1]!;
+  if (!base.includes(newest)) base[LOADOUT_SIZE - 1] = newest;
+  return base;
+}
+
+/** A valid loadout: LOADOUT_SIZE distinct moves the species knows. */
+export function validLoadout(species: SpeciesId, moves: MoveId[]): boolean {
+  return moves.length === LOADOUT_SIZE && new Set(moves).size === LOADOUT_SIZE && moves.every((m) => knowsMove(species, m));
+}
 export const sameFamily = (a: SpeciesId, b: SpeciesId) => SPECIES[a].family === SPECIES[b].family;
 
 const dmg = { kind: 'damage' } as const;

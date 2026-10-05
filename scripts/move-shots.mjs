@@ -14,7 +14,7 @@ const errors = [];
 try {
   const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
   page.on('pageerror', (e) => errors.push(e.message));
-  await page.goto(`${url}?seed=5&botTeam=vinram,brinkle&bot=passive`);
+  await page.goto(`${url}?seed=5&botTeam=vinram,brinkle&bot=passive&loadout=0`);
   await page.waitForTimeout(800);
   await page.getByRole('button', { name: /Practice/ }).click();
   await page.locator('.creature-card').nth(0).click();

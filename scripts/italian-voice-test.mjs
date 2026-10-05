@@ -46,7 +46,7 @@ async function speak(text) {
 }
 
 try {
-  await page.goto(`${url}?seed=9&botTeam=vinram,brinkle&bot=passive`);
+  await page.goto(`${url}?seed=9&botTeam=vinram,brinkle&bot=passive&loadout=0`);
   await page.waitForTimeout(700);
   await page.getByRole('button', { name: 'Italiano' }).click();
   await page.waitForTimeout(200);

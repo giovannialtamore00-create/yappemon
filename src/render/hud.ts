@@ -253,11 +253,11 @@ export class Hud {
     this.energy.classList.toggle('low', c.stamina < DODGE_COST);
     this.energy.classList.toggle('paused', c.regenPause > 0);
     this.energy.classList.toggle('slowed', c.staticTicks > 0);
-    const key = `${c.species}|${getLang()}`;
+    const key = `${c.species}|${getLang()}|${c.moves.join()}`;
     if (key === this.energyKey) return;
     this.energyKey = key;
     this.energyTicks.innerHTML = '';
-    const costs = [...new Set([DODGE_COST, ALERT_COST, ...SPECIES[c.species].moves.map((m) => MOVES[m].cost)])];
+    const costs = [...new Set([DODGE_COST, ALERT_COST, ...c.moves.map((m) => MOVES[m].cost)])];
     for (const cost of costs) {
       const tick = h('div', 'eg-tick');
       tick.style.bottom = `${(cost / STAMINA_MAX) * 100}%`;
@@ -305,14 +305,14 @@ export class Hud {
     const c = tr.team[tr.active]!;
     const def = SPECIES[c.species];
     const lang = getLang();
-    const affordable = def.moves.map((m) => c.stamina >= MOVES[m].cost);
+    const affordable = c.moves.map((m) => c.stamina >= MOVES[m].cost);
     const current = tr.action?.action.kind === 'move' ? tr.action.action.move : null;
     const queued = new Set(tr.queue.flatMap((a) => (a.kind === 'move' ? [a.move] : [])));
-    const key = `${c.species}|${lang}|${affordable.join()}|${c.stamina >= DODGE_COST}|${current}|${[...queued].join()}`;
+    const key = `${c.species}|${c.moves.join()}|${lang}|${affordable.join()}|${c.stamina >= DODGE_COST}|${current}|${[...queued].join()}`;
     if (key === this.movesKey) return;
     this.movesKey = key;
     this.moves.innerHTML = '';
-    def.moves.forEach((id, i) => {
+    c.moves.forEach((id, i) => {
       const m = MOVES[id];
       const cls = ['move-card', affordable[i] || id === current ? '' : 'poor', id === current ? 'current' : '', queued.has(id) ? 'queued' : ''].filter(Boolean).join(' ');
       const card = h('div', cls);

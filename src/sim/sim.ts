@@ -6,28 +6,28 @@ import {
   DODGE_COST, DODGE_INVULN_S, DODGE_WINDOW_S, DT, FORCED_SWITCH_S, HALF_FAR_M, HALF_NEAR_M, HOME_Z_M, INTERRUPT_THRESHOLD,
   MOVES, PREFERRED_GAP_M, QUEUE_MAX, QUICK_WINDUP_S, RECALL_S, SENDOUT_S, SPECIES, SPEED_MULT, STAB, STAMINA_MAX,
   STAMINA_PAUSE_S, STAMINA_REGEN_PER_S, STEP_JITTER_M, STEP_SPEED, STRAFE_MAX_S, STRAFE_MIN_S, STRAFE_SPEED, TICK_HZ, INTERMISSION_S,
-  MAX_ROUNDS, ROUNDS_TO_WIN, knowsMove, sameFamily, secToTicks, speciesAtStage, typeMultiplier,
+  LOADOUT_S, MAX_ROUNDS, ROUNDS_TO_WIN, defaultLoadout, sameFamily, secToTicks, speciesAtStage, typeMultiplier, validLoadout,
 } from './data';
 import { nextRandom } from './rng';
 import type {
-  ActionRun, BaseSpeciesId, CreatureState, Effectiveness, Element, FailReason, Intent, MoveDef, PlayerIdx, QAction,
+  ActionRun, BaseSpeciesId, CreatureState, Effectiveness, Element, FailReason, Intent, MoveDef, MoveId, PlayerIdx, QAction,
   SimEvent, SimState, SpeciesId, Strike, TrainerState,
 } from './types';
 
-export function createCreature(species: SpeciesId): CreatureState {
+export function createCreature(species: SpeciesId, moves = defaultLoadout(species)): CreatureState {
   const def = SPECIES[species];
   return {
     species, hp: def.maxHp, maxHp: def.maxHp, stamina: STAMINA_MAX, regenPause: 0, fainted: false,
-    shieldTicks: 0, staticTicks: 0, rootTicks: 0, healTicks: 0, healPerTick: 0, mirrorTicks: 0,
+    shieldTicks: 0, staticTicks: 0, rootTicks: 0, healTicks: 0, healPerTick: 0, mirrorTicks: 0, moves,
   };
 }
 
 /** Player 0 lives on the z > 0 half of the arena, player 1 on z < 0. */
 const side = (p: PlayerIdx) => (p === 0 ? 1 : -1);
 
-function createTrainer(p: PlayerIdx, team: SpeciesId[]): TrainerState {
+function createTrainer(p: PlayerIdx, team: SpeciesId[], loadouts: MoveId[][] = []): TrainerState {
   return {
-    team: team.map(createCreature), active: 0, field: 'sending', fieldTicks: secToTicks(SENDOUT_S),
+    team: team.map((sp, i) => createCreature(sp, defaultLoadout(sp, loadouts[i]))), active: 0, field: 'sending', fieldTicks: secToTicks(SENDOUT_S),
     action: null, queue: [], dodgeCooldown: 0, invulnTicks: 0,
     x: 0, z: side(p) * HOME_Z_M, driftDir: p === 0 ? 1 : -1, strafeTicks: secToTicks(1.2), stepZ: HOME_Z_M,
     dodgeReady: 0, dodgeDir: 0, dashTicks: 0, dashDir: 1, alertTicks: 0,
@@ -38,17 +38,25 @@ function createTrainer(p: PlayerIdx, team: SpeciesId[]): TrainerState {
 function setupRound(s: SimState) {
   const stage = Math.min(3, s.round);
   s.trainers = [
-    createTrainer(0, s.teams[0].map((b) => speciesAtStage(b, stage))),
-    createTrainer(1, s.teams[1].map((b) => speciesAtStage(b, stage))),
+    createTrainer(0, s.teams[0].map((b) => speciesAtStage(b, stage)), s.loadouts[0]),
+    createTrainer(1, s.teams[1].map((b) => speciesAtStage(b, stage)), s.loadouts[1]),
   ];
+  s.loadouts = [s.trainers[0].team.map((c) => [...c.moves]), s.trainers[1].team.map((c) => [...c.moves])];
   s.strikes = [];
+  s.loadout = s.loadoutLen;
+  s.ready = [false, false];
 }
 
-/** `teams` are stage-1 species; round 1 uses them, round 2 their first evolution, round 3 the last. */
-export function createMatch(teams: [BaseSpeciesId[], BaseSpeciesId[]], seed: number): SimState {
+/**
+ * `teams` are stage-1 species; round 1 uses them, round 2 their first evolution, round 3 the last.
+ * `loadoutS`: length of the move-choice phase before each round (0 = skip it and fight with default loadouts).
+ */
+export function createMatch(teams: [BaseSpeciesId[], BaseSpeciesId[]], seed: number, opts: { loadoutS?: number } = {}): SimState {
+  const loadoutLen = (opts.loadoutS ?? LOADOUT_S) > 0 ? secToTicks(opts.loadoutS ?? LOADOUT_S) : 0;
   const s: SimState = {
     tick: 0, rng: seed >>> 0, nextId: 1, trainers: [createTrainer(0, []), createTrainer(1, [])],
     strikes: [], teams: [[...teams[0]], [...teams[1]]], round: 1, score: [0, 0], intermission: 0, result: null,
+    loadout: 0, loadoutLen, ready: [false, false], loadouts: [[], []],
   };
   setupRound(s);
   return s;
@@ -98,13 +106,27 @@ export const distance = (a: TrainerState, b: TrainerState) => Math.hypot(a.x - b
 export function step(s: SimState, intents: [Intent[], Intent[]]): SimEvent[] {
   const ev: SimEvent[] = [];
   if (s.result) return ev;
-  if (s.tick === 0) for (const p of [0, 1] as const) ev.push({ t: 'sendout', p, slot: 0 });
+  if (s.tick === 0) {
+    if (s.loadout > 0) ev.push({ t: 'loadout_start', round: s.round, seconds: s.loadout / TICK_HZ });
+    else for (const p of [0, 1] as const) ev.push({ t: 'sendout', p, slot: 0 });
+  }
   if (s.intermission > 0) {
     // Between rounds: nothing moves; when the break ends, everyone comes back evolved.
     if (--s.intermission === 0) {
       setupRound(s);
-      ev.push({ t: 'round_start', round: s.round });
-      for (const p of [0, 1] as const) ev.push({ t: 'sendout', p, slot: 0 });
+      if (s.loadout > 0) ev.push({ t: 'loadout_start', round: s.round, seconds: s.loadout / TICK_HZ });
+      else beginRound(s, ev);
+    }
+    s.tick++;
+    return ev;
+  }
+  if (s.loadout > 0) {
+    // Choosing moves: only loadout / ready intents count; the round starts when time is up or both are ready.
+    for (const p of [0, 1] as const) for (const it of intents[p]) applyLoadoutIntent(s, p, it, ev);
+    if (--s.loadout === 0 || (s.ready[0] && s.ready[1])) {
+      s.loadout = 0;
+      ev.push({ t: 'loadout_end', round: s.round });
+      beginRound(s, ev);
     }
     s.tick++;
     return ev;
@@ -117,6 +139,25 @@ export function step(s: SimState, intents: [Intent[], Intent[]]): SimEvent[] {
   checkEnd(s, ev);
   s.tick++;
   return ev;
+}
+
+/** Creatures are thrown out (round 2+ also announces the round). */
+function beginRound(s: SimState, ev: SimEvent[]) {
+  if (s.round > 1) ev.push({ t: 'round_start', round: s.round });
+  for (const p of [0, 1] as const) ev.push({ t: 'sendout', p, slot: 0 });
+}
+
+function applyLoadoutIntent(s: SimState, p: PlayerIdx, it: Intent, ev: SimEvent[]) {
+  if (s.ready[p]) return;
+  if (it.type === 'ready') {
+    s.ready[p] = true;
+    ev.push({ t: 'ready', p });
+  } else if (it.type === 'loadout') {
+    const c = s.trainers[p].team[it.slot];
+    if (!c || !validLoadout(c.species, it.moves)) return void ev.push({ t: 'invalid', p, reason: 'not_now' });
+    c.moves = [...it.moves];
+    s.loadouts[p][it.slot] = [...it.moves];
+  }
 }
 
 // ---------------------------------------------------------------- intents
@@ -144,8 +185,8 @@ function applyIntent(s: SimState, p: PlayerIdx, it: Intent, ev: SimEvent[]) {
   switch (it.type) {
     case 'queue': {
       if (t.field === 'choosing' || t.field === 'out') return void ev.push({ t: 'invalid', p, reason: 'not_now' });
-      const species = activeCreature(t).species;
-      const valid = it.actions.filter((a) => a.kind !== 'move' || knowsMove(species, a.move));
+      const known = activeCreature(t).moves;
+      const valid = it.actions.filter((a) => a.kind !== 'move' || known.includes(a.move));
       if (valid.length < it.actions.length) ev.push({ t: 'invalid', p, reason: 'unknown_move' });
       if (valid.some((a) => a.kind === 'recall') && benchSlot(t) < 0) {
         ev.push({ t: 'invalid', p, reason: 'cannot_recall' });
@@ -161,6 +202,9 @@ function applyIntent(s: SimState, p: PlayerIdx, it: Intent, ev: SimEvent[]) {
       return;
     case 'choose':
       return choose(s, p, it.slot, ev);
+    case 'loadout':
+    case 'ready':
+      return; // only during the loadout phase
     case 'go': {
       const slot = t.team.findIndex((c, i) => sameFamily(c.species, it.species) && !c.fainted && (t.field === 'choosing' || i !== t.active));
       if (t.field === 'choosing') {
@@ -376,7 +420,7 @@ function startNext(s: SimState, p: PlayerIdx, ev: SimEvent[]) {
     } else {
       t.queue.shift();
       const m = MOVES[a.move];
-      if (!knowsMove(c.species, m.id)) continue; // stale entry after a switch
+      if (!c.moves.includes(m.id)) continue; // stale entry after a switch
       if (c.stamina < m.cost) return fail(s, p, 'stamina', ev);
       spend(c, m.cost);
       t.action = newRun(s, a, secToTicks(m.quick ? QUICK_WINDUP_S : m.windup * speedMult(t)));

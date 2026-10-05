@@ -29,8 +29,12 @@ export class SimRunner {
   private acc = 0;
   private pending: [Intent[], Intent[]] = [[], []];
 
-  constructor(teams: [BaseSpeciesId[], BaseSpeciesId[]], seed: number, private bot?: Bot) {
-    this.state = createMatch(teams, seed);
+  /**
+   * `autoReady`: a side with no player behind it (passive practice bot) that is ready at once in the move-choice phase.
+   * `loadoutS`: move-choice time before each round (undefined = default, 0 = skip).
+   */
+  constructor(teams: [BaseSpeciesId[], BaseSpeciesId[]], seed: number, private bot?: Bot, private autoReady?: PlayerIdx, loadoutS?: number) {
+    this.state = createMatch(teams, seed, { loadoutS });
     this.prev = structuredClone(this.state);
   }
 
@@ -45,6 +49,7 @@ export class SimRunner {
     while (this.acc >= DT) {
       this.acc -= DT;
       if (this.bot) this.pending[this.bot.p].push(...this.bot.think(this.state));
+      if (this.autoReady !== undefined && this.state.loadout > 0 && !this.state.ready[this.autoReady]) this.pending[this.autoReady].push({ type: 'ready' });
       this.prev = structuredClone(this.state);
       events.push(...step(this.state, this.pending));
       this.pending = [[], []];
@@ -61,8 +66,8 @@ export class LocalSession implements Session {
   readonly me: PlayerIdx = 0;
   private runner: SimRunner;
 
-  constructor(myTeam: BaseSpeciesId[], botTeam: BaseSpeciesId[], seed = (Math.random() * 2 ** 32) >>> 0, passiveBot = false) {
-    this.runner = new SimRunner([myTeam, botTeam], seed, passiveBot ? undefined : new Bot(1, seed ^ 0x9e3779b9));
+  constructor(myTeam: BaseSpeciesId[], botTeam: BaseSpeciesId[], seed = (Math.random() * 2 ** 32) >>> 0, passiveBot = false, loadoutS?: number) {
+    this.runner = new SimRunner([myTeam, botTeam], seed, passiveBot ? undefined : new Bot(1, seed ^ 0x9e3779b9), 1, loadoutS);
   }
 
   update(dt: number) {

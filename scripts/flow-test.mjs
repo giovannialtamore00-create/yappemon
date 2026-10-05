@@ -31,6 +31,8 @@ try {
   await page.locator('.creature-card').nth(2).click(); // vinram
   await page.screenshot({ path: 'screenshots/flow/02-team-it.png' });
   await page.getByRole('button', { name: /Pronto/ }).click();
+  // Move-choice panel before every round: keep the default moves and press Ready.
+  await page.evaluate(() => { window.setInterval(() => { const b = document.querySelector('.loadout .btn.primary'); if (b && !b.disabled) b.click(); }, 300); });
   await page.waitForTimeout(1500);
   // Make the lead creature fragile so the bot knocks it out quickly.
   await page.evaluate(() => { window.__yappemon.state().trainers[0].team[0].hp = 3; });

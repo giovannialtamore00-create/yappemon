@@ -2,7 +2,7 @@
 // and sometimes goes on alert when low on HP.
 // Pure: reads SimState, returns intents. Uses its own RNG so it never perturbs the sim's.
 
-import { ALERT_COST, DODGE_COST, DODGE_WINDOW_S, MOVES, SPECIES, TICK_HZ } from './data';
+import { ALERT_COST, DODGE_COST, DODGE_WINDOW_S, MOVES, TICK_HZ } from './data';
 import { Rng } from './rng';
 import { activeCreature, benchSlot } from './sim';
 import type { Intent, PlayerIdx, SimState } from './types';
@@ -28,6 +28,8 @@ export class Bot {
 
   think(s: SimState): Intent[] {
     if (s.result || s.intermission > 0) return [];
+    // Keeps the default moves and is ready at once.
+    if (s.loadout > 0) return s.ready[this.p] ? [] : [{ type: 'ready' }];
     const me = s.trainers[this.p];
     const foe = s.trainers[this.p === 0 ? 1 : 0];
 
@@ -63,7 +65,7 @@ export class Bot {
     if (c.hp < c.maxHp * 0.35 && me.alertTicks === 0 && c.stamina >= ALERT_COST + 20 && this.rng.next() < this.opts.alertChance) {
       return [{ type: 'queue', actions: [{ kind: 'alert' }] }];
     }
-    const affordable = SPECIES[c.species].moves.filter((m) => MOVES[m].cost <= c.stamina);
+    const affordable = c.moves.filter((m) => MOVES[m].cost <= c.stamina);
     if (!affordable.length) return [];
     return [{ type: 'queue', actions: [{ kind: 'move', move: this.rng.pick(affordable) }] }];
   }
