@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import {
-  ARENA_X_M, Bot, DODGE_COST, HALF_FAR_M, HALF_NEAR_M, MOVES, MOVE_IDS, SPECIES, STAMINA_MAX, TICK_HZ, activeCreature,
+  ARENA_X_M, Bot, PREFERRED_GAP_M, DODGE_COST, HALF_FAR_M, HALF_NEAR_M, MOVES, MOVE_IDS, SPECIES, STAMINA_MAX, TICK_HZ, activeCreature,
   computeDamage, createMatch, hitChance, step, travelTicks, typeMultiplier,
   type BaseSpeciesId, type Intent, type MoveId, type SimEvent, type SimState, type SpeciesId,
 } from '../src/sim';
@@ -379,13 +379,17 @@ describe('movement', () => {
     expect(s.trainers[0].x).toBe(x);
     expect(s.trainers[0].z).toBe(z);
   });
-  it('steps toward the preferred distance', () => {
-    const s = ready(['vinram'], ['brinkle']);
-    run(s, sec(8));
-    // Each moves its own z; both stay on their own half.
-    expect(s.trainers[0].z).toBeGreaterThanOrEqual(HALF_NEAR_M);
-    expect(s.trainers[1].z).toBeLessThanOrEqual(-HALF_NEAR_M);
-    expect(Math.abs(s.trainers[0].z - s.trainers[1].z)).toBeLessThan(6);
+  it('settles around the preferred distance (no drift to the bounds)', () => {
+    for (const [a, b] of [['vinram', 'brinkle'], ['cindrix', 'brinkle'], ['joltmoth', 'vinram']] as const) {
+      const s = ready([a], [b]);
+      const want = (PREFERRED_GAP_M[a] + PREFERRED_GAP_M[b]) / 2;
+      for (let i = 0; i < 6; i++) {
+        run(s, sec(5));
+        expect(s.trainers[0].z).toBeGreaterThanOrEqual(HALF_NEAR_M);
+        expect(s.trainers[1].z).toBeLessThanOrEqual(-HALF_NEAR_M);
+        expect(Math.abs(Math.abs(s.trainers[0].z - s.trainers[1].z) - want)).toBeLessThan(1.3);
+      }
+    }
   });
   it('stays in bounds for a whole bot match', () => {
     const s = createMatch([['joltmoth', 'cindrix'], ['brinkle', 'vinram']], 9);
@@ -551,8 +555,9 @@ describe('stage 2/3 move mechanics', () => {
     sureHits();
     const s = stage2(['vinram'], ['cindrix']);
     step(s, [[q('bramble_stampede')], []]);
+    s.trainers[0].action!.left = sec(3); // stretch the windup so the spit surely lands during it
     activeCreature(s.trainers[0]).hp = 999;
-    const ev = run(s, sec(0.95), [[], [q('cinder_spit')]]);
+    const ev = run(s, sec(2), [[], [q('cinder_spit')]]);
     const hit = ev.find((e) => e.t === 'hit' && e.p === 1);
     expect(hit && 'damage' in hit && hit.damage).toBeGreaterThanOrEqual(25);
     expect(ev.some((e) => e.t === 'fail' && e.p === 0)).toBe(false);

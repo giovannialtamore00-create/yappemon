@@ -5,7 +5,7 @@ import {
   ALERT_COST, ALERT_EVADE, ALERT_S, ALERT_STRAFE_MULT, ARENA_X_M, ATTACKING_EXPOSED, DASH_M, DASH_S, DODGE_COOLDOWN_S,
   DODGE_COST, DODGE_INVULN_S, DODGE_WINDOW_S, DT, FORCED_SWITCH_S, HALF_FAR_M, HALF_NEAR_M, HOME_Z_M, INTERRUPT_THRESHOLD,
   MOVES, PREFERRED_GAP_M, QUEUE_MAX, QUICK_WINDUP_S, RECALL_S, SENDOUT_S, SPECIES, SPEED_MULT, STAB, STAMINA_MAX,
-  STAMINA_PAUSE_S, STAMINA_REGEN_PER_S, STEP_SPEED, STRAFE_MAX_S, STRAFE_MIN_S, STRAFE_SPEED, TICK_HZ, INTERMISSION_S,
+  STAMINA_PAUSE_S, STAMINA_REGEN_PER_S, STEP_JITTER_M, STEP_SPEED, STRAFE_MAX_S, STRAFE_MIN_S, STRAFE_SPEED, TICK_HZ, INTERMISSION_S,
   MAX_ROUNDS, ROUNDS_TO_WIN, knowsMove, sameFamily, secToTicks, speciesAtStage, typeMultiplier,
 } from './data';
 import { nextRandom } from './rng';
@@ -29,7 +29,7 @@ function createTrainer(p: PlayerIdx, team: SpeciesId[]): TrainerState {
   return {
     team: team.map(createCreature), active: 0, field: 'sending', fieldTicks: secToTicks(SENDOUT_S),
     action: null, queue: [], dodgeCooldown: 0, invulnTicks: 0,
-    x: 0, z: side(p) * HOME_Z_M, driftDir: p === 0 ? 1 : -1, strafeTicks: secToTicks(1.2),
+    x: 0, z: side(p) * HOME_Z_M, driftDir: p === 0 ? 1 : -1, strafeTicks: secToTicks(1.2), stepZ: HOME_Z_M,
     dodgeReady: 0, dodgeDir: 0, dashTicks: 0, dashDir: 1, alertTicks: 0,
   };
 }
@@ -194,6 +194,7 @@ function sendOut(s: SimState, p: PlayerIdx, slot: number, ev: SimEvent[]) {
   resetStance(s, p, ev);
   t.x = 0;
   t.z = side(p) * HOME_Z_M;
+  t.stepZ = HOME_Z_M;
   ev.push({ t: 'sendout', p, slot });
 }
 
@@ -332,13 +333,15 @@ function move(s: SimState, p: PlayerIdx) {
   if (--t.strafeTicks <= 0) {
     t.driftDir = t.driftDir === 1 ? -1 : 1;
     t.strafeTicks = secToTicks(STRAFE_MIN_S + (STRAFE_MAX_S - STRAFE_MIN_S) * rand(s));
+    // Each creature keeps half its preferred gap from the centre line (stable whatever the opponent does),
+    // stepping a little in or out each leg.
+    t.stepZ = PREFERRED_GAP_M[def.family] / 2 + (rand(s) * 2 - 1) * STEP_JITTER_M;
   }
   t.x += t.driftDir * STRAFE_SPEED[def.speed] * (t.alertTicks > 0 ? ALERT_STRAFE_MULT : 1) * DT;
   if (t.x >= ARENA_X_M) { t.x = ARENA_X_M; t.driftDir = -1; }
   if (t.x <= -ARENA_X_M) { t.x = -ARENA_X_M; t.driftDir = 1; }
-  // Step in/out (along z) toward the preferred distance from the opponent.
-  const foe = s.trainers[other(p)];
-  const wantAbsZ = Math.max(HALF_NEAR_M, Math.min(HALF_FAR_M, PREFERRED_GAP_M[def.family] - Math.abs(foe.z)));
+  // Step in/out (along z) toward the chosen distance from the centre line.
+  const wantAbsZ = Math.max(HALF_NEAR_M, Math.min(HALF_FAR_M, t.stepZ));
   const dz = side(p) * wantAbsZ - t.z;
   const maxStep = STEP_SPEED * DT;
   t.z += Math.max(-maxStep, Math.min(maxStep, dz));

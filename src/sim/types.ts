@@ -159,6 +159,8 @@ export interface TrainerState {
   /** Current strafe direction (world x) and ticks until the creature reconsiders it. */
   driftDir: 1 | -1;
   strafeTicks: number;
+  /** Distance from the centre line (|z|) the creature is stepping toward; re-rolled with each strafe leg. */
+  stepZ: number;
   /** Ticks left in the armed dodge window, and the requested side (0 = auto). */
   dodgeReady: number;
   dodgeDir: 0 | 1 | -1;

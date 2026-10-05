@@ -52,10 +52,12 @@ export const ALERT_STRAFE_MULT = 1.4;
 /** Strafe legs last 0.8–2.2 s before the creature turns around. */
 export const STRAFE_MIN_S = 0.8;
 export const STRAFE_MAX_S = 2.2;
+/** Random step in/out (±) around the preferred spot, re-rolled with each strafe leg. */
+export const STEP_JITTER_M = 0.6;
 
 export const SPEED_MULT: Record<SpeedClass, number> = { slow: 1.15, medium: 1, fast: 0.85 };
 export const STRAFE_SPEED: Record<SpeedClass, number> = { slow: 1.2, medium: 1.6, fast: 2.2 };
-/** Distance (m) each evolution line likes to keep from the opponent. */
+/** Distance (m) each evolution line likes to keep from the opponent: it stands about half of it from the centre line. */
 export const PREFERRED_GAP_M: Record<BaseSpeciesId, number> = { cindrix: 4.5, brinkle: 5.5, vinram: 4, joltmoth: 5 };
 
 /** Rounds needed to win the match (best of 3). Set to 3 to always play all three rounds. */

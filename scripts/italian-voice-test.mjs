@@ -31,11 +31,11 @@ const ORDER = ['cindrix', 'brinkle', 'vinram', 'joltmoth'];
 
 const state = () => page.evaluate(() => {
   const s = window.__yappemon.state(); const t = s.trainers[0];
-  return { sp: t.team[t.active].species, active: t.active, field: t.field, run: t.action && t.action.action, queue: t.queue };
+  return { sp: t.team[t.active].species, active: t.active, field: t.field, run: t.action && t.action.action, queue: t.queue, dodgeReady: t.dodgeReady, dodgeDir: t.dodgeDir, alert: t.alertTicks };
 });
 /** Speak, then return the moves the creature accepted (current action + queue). */
 async function speak(text) {
-  await page.evaluate(() => { const r = window.__yappemon.app.battle.session.runner; const t = r.state.trainers[0]; t.action = null; t.queue = []; for (const c of t.team) c.stamina = 100; });
+  await page.evaluate(() => { const r = window.__yappemon.app.battle.session.runner; const t = r.state.trainers[0]; t.action = null; t.queue = []; t.dodgeReady = 0; t.dodgeDir = 0; for (const c of t.team) c.stamina = 100; });
   await page.evaluate((t) => window.__speak(t), text);
   // Wait for the sim to pick the command up (the first frames of a new match can be slow).
   await page.waitForFunction(() => { const t = window.__yappemon.state().trainers[0]; return !!t.action || t.queue.length > 0; }, null, { timeout: 1000 }).catch(() => {});
@@ -87,8 +87,13 @@ try {
     }
     if (fi === 0) {
       // Universal commands, said in Italian.
+      // A lone dodge doesn't queue: it arms the 2 s dodge window right away.
       const d = await speak('schiva');
-      check(d.acts[0]?.kind === 'dodge', `"schiva" → ${d.acts[0]?.kind}`);
+      check(d.s.dodgeReady > 0 && d.s.dodgeDir === 0, `"schiva" arms the dodge window (${d.s.dodgeReady} ticks)`);
+      const dr = await speak('schiva a destra');
+      check(dr.s.dodgeReady > 0 && dr.s.dodgeDir === 1, `"schiva a destra" → side ${dr.s.dodgeDir}`);
+      const al = await speak('attento');
+      check(al.acts[0]?.kind === 'alert' && al.s.alert > 0, `"attento" → ${al.acts[0]?.kind}`);
       await page.evaluate(() => window.__speak('esplosione di magma poi sputo di brace'));
       await page.evaluate(() => window.__speak('fermati'));
       await page.waitForTimeout(120);
@@ -111,8 +116,8 @@ try {
       } else check(false, 'forced switch did not happen (test setup)');
       void vai;
     }
-    const ui = await page.locator('.moves-title').textContent();
-    check(/Mosse/.test(ui), `HUD in Italian ("${ui.trim()}")`);
+    const ui = await page.locator('.cmds').textContent();
+    check(/schiva/.test(ui) && /attento/.test(ui), `HUD in Italian ("${ui.trim()}")`);
     await page.getByRole('button', { name: /Esci/ }).click();
     await page.waitForTimeout(400);
   }
