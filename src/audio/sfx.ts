@@ -309,6 +309,9 @@ export class Sfx {
       case 'hit': if (e.damage > 0) this.hit(e.damage, e.target === me, e.eff); break;
       case 'dodged': this.tone(1500, 0.08, { type: 'sine', to: 2400, vol: 0.1 }); break;
       case 'dodge': this.whoosh(0.3, 0.22); break;
+      case 'miss': this.whoosh(0.18, 0.18); break;
+      case 'dodge_ready': if (e.on) this.tone(2200, 0.04, { type: 'square', vol: 0.06 }); break;
+      case 'alert': if (e.on) this.tone(660, 0.12, { type: 'triangle', to: 990, vol: 0.1 }); break;
       case 'faint': this.faint(); break;
       case 'recall': this.recall(); break;
       case 'sendout': this.sendout(); break;

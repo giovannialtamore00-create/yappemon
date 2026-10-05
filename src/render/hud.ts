@@ -1,7 +1,7 @@
 // DOM HUD overlay: creature panels, queue chips, move reference, transcript, mic status, toasts, floating numbers.
 
 import { ELEMENT_COLOR, ELEMENT_LABEL, getLang, t } from '../i18n';
-import { DODGE_COST, MOVES, SPECIES, STAMINA_MAX } from '../sim/data';
+import { ALERT_COST, DODGE_COST, MOVES, SPECIES, STAMINA_MAX } from '../sim/data';
 import { MOVE_DESC } from '../movedesc';
 import type { CreatureState, PlayerIdx, QAction, SimState, TrainerState } from '../sim/types';
 
@@ -224,8 +224,9 @@ export class Hud {
   private chipLabel(a: QAction): string {
     const lang = getLang();
     if (a.kind === 'move') return MOVES[a.move].name[lang];
-    if (a.kind === 'dodge') return lang === 'it' ? 'Schiva' : 'Dodge';
-    return lang === 'it' ? 'Rientra' : 'Come back';
+    if (a.kind === 'dodge') return t(a.dir === -1 ? 'chipDodgeLeft' : a.dir === 1 ? 'chipDodgeRight' : 'chipDodge');
+    if (a.kind === 'alert') return t('chipAlert');
+    return t('chipBack');
   }
 
   private updateQueue(tr: TrainerState) {
@@ -256,7 +257,7 @@ export class Hud {
     if (key === this.energyKey) return;
     this.energyKey = key;
     this.energyTicks.innerHTML = '';
-    const costs = [...new Set([DODGE_COST, ...SPECIES[c.species].moves.map((m) => MOVES[m].cost)])];
+    const costs = [...new Set([DODGE_COST, ALERT_COST, ...SPECIES[c.species].moves.map((m) => MOVES[m].cost)])];
     for (const cost of costs) {
       const tick = h('div', 'eg-tick');
       tick.style.bottom = `${(cost / STAMINA_MAX) * 100}%`;
@@ -271,20 +272,23 @@ export class Hud {
     const bench = tr.team.findIndex((x, i) => i !== tr.active && !x.fainted);
     const benchName = bench >= 0 ? SPECIES[tr.team[bench]!.species].name : '';
     const busy = !!tr.action || tr.queue.length > 0;
-    const items: { label: string; ok: boolean; why?: string; cost?: number; info?: boolean }[] = [
-      { label: t('cmdDodge'), cost: DODGE_COST, ok: c.rootTicks === 0 && c.stamina >= DODGE_COST, why: c.rootTicks > 0 ? t('whyRooted') : t('whyStamina') },
+    const armed = tr.dodgeReady > 0;
+    const items: { label: string; ok: boolean; why?: string; cost?: number; info?: boolean; armed?: boolean }[] = [
+      { label: t('cmdDodge'), cost: DODGE_COST, ok: c.rootTicks === 0 && c.stamina >= DODGE_COST, why: c.rootTicks > 0 ? t('whyRooted') : t('whyStamina'), armed },
+      { label: t('cmdAlert'), cost: ALERT_COST, ok: c.stamina >= ALERT_COST || tr.alertTicks > 0, why: t('whyStamina'), armed: tr.alertTicks > 0 },
       { label: bench >= 0 ? `${t('cmdBack')} / ${t('cmdGo', { name: benchName })}` : t('cmdBack'), ok: bench >= 0, why: t('whyNoBench') },
       { label: t('cmdStop'), ok: busy, why: t('whyEmpty') },
       { label: t('cmdChain'), ok: true, info: true },
     ];
-    const key = items.map((i) => `${i.label}:${i.ok}`).join('|');
+    const key = items.map((i) => `${i.label}:${i.ok}:${i.armed}`).join('|');
     if (key === this.cmdKey) return;
     this.cmdKey = key;
     this.cmds.innerHTML = '';
     for (const i of items) {
-      const chip = h('span', `cmd${i.ok ? '' : ' off'}${i.info ? ' info' : ''}`, i.label);
+      const chip = h('span', `cmd${i.ok ? '' : ' off'}${i.info ? ' info' : ''}${i.armed ? ' armed' : ''}`, i.label);
       if (i.cost) chip.append(h('span', 'cmd-cost', `${i.cost}`));
       if (!i.ok && i.why) chip.title = i.why;
+      else if (i.armed && i.label === t('cmdDodge')) chip.title = t('whyArmed');
       this.cmds.append(chip);
     }
   }
@@ -314,7 +318,14 @@ export class Hud {
       const card = h('div', cls);
       card.style.setProperty('--el', ELEMENT_COLOR[m.element]);
       const meta = h('div', 'mc-meta');
-      meta.append(h('span', 'mc-type', ELEMENT_LABEL[lang][m.element]), h('span', 'mc-cost', String(m.cost)));
+      meta.append(h('span', 'mc-type', ELEMENT_LABEL[lang][m.element]));
+      if (m.quick) meta.append(h('span', 'mc-quick', t('quickTag')));
+      if (m.delivery !== 'self') {
+        const acc = h('span', 'mc-acc', `${m.accuracy}%`);
+        acc.title = t('accuracyTip', { n: m.accuracy });
+        meta.append(acc);
+      }
+      meta.append(h('span', 'mc-cost', String(m.cost)));
       const dmg = Math.round(m.power * def.dmgMult);
       const desc = h('div', 'mc-desc', MOVE_DESC[id][lang].replace('{d}', String(dmg)));
       card.append(h('div', 'mc-name', m.name[lang]), meta, desc);

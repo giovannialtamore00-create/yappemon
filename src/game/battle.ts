@@ -158,6 +158,9 @@ export class Battle {
       case 'reflect':
         if (!this.spectator && e.target === this.me) this.hud.toast(t('reflectedYou'), 'bad');
         break;
+      case 'combo_broken':
+        if (mine) this.hud.toast(t('comboBroken'), 'bad', 2400);
+        break;
       case 'hit':
         if (e.eff === 'super') this.hud.toast(t('super'), 'super');
         else if (e.eff === 'weak') this.hud.toast(t('weak'), 'weak');
