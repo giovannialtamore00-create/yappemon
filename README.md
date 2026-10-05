@@ -171,10 +171,12 @@ Saying **"dodge"** at the start of a command arms the dodge window **immediately
 
 | Creature (stage 1 → 2 → 3) | Type | HP by stage | Speed |
 |---|---|---|---|
-| Cindrix → Pyroxen → Calderox: a magma beetle that grows a spiked shell, then a volcano on its back | Fire | 110 / 138 / 165 | Medium |
-| Brinkle → Tsunafin → Abyssmaw: a bubble-riding pufferfish that becomes a deep-sea angler | Water | 120 / 150 / 180 | Medium |
-| Vinram → Thornhorn → Elderoot: a mossy ram that grows thorny horns, then tree-branch antlers | Grass | 125 / 156 / 188 | Slow |
-| Joltmoth → Stormoth → Tempestra: an electric moth that gains a lightning tail, then a storm-cloud crown | Electric | 95 / 119 / 143 | Fast |
+| Cindrix → Pyroxen → Calderox: a round magma beetle → a long armored rhino beetle with a great horn → a hulking walking volcano with a lava crater and huge pincers | Fire | 110 / 138 / 165 | Medium |
+| Brinkle → Tsunafin → Abyssmaw: a pufferfish in a water bubble → a streamlined shark-finned fish surfing a water ring → a deep-sea angler with a giant toothed jaw, glowing spots and a lure, in a swirling vortex | Water | 120 / 150 / 180 | Medium |
+| Vinram → Thornhorn → Elderoot: a woolly mossy ram → a lean long-legged goat with forward thorn horns and a bramble mane → a bark-bodied tree ram on root legs with branching antlers and a leafy canopy | Grass | 125 / 156 / 188 | Slow |
+| Joltmoth → Stormoth → Tempestra: a fluffy electric moth → a sleek moth with swept pointed wings and lightning antennae → a six-winged storm moth with jagged wings, a spiked crown and orbiting sparks | Electric | 95 / 119 / 143 | Fast |
+
+**Choosing your moves:** before every round a panel shows each of your creatures' moves with what they do. Each creature brings **4 moves** into the round, picked from everything it has learned: in round 1 that's simply its 4 moves (time to read them), round 2 adds the move learned by evolving, round 3 another one. To swap, click a move from "Other learned moves", then the move it replaces. By default a newly learned move takes the last slot. Press **Ready** (or say "ready" / "pronto"); the round starts when both players are ready or after 30 s. Only the chosen moves can be used (and are understood by the voice parser) during the round, and your choice is kept for the next round.
 
 **Rounds and evolution:** a match is **best of 3 rounds**. A round ends when one trainer has no creatures left. Between rounds everyone's creatures **evolve** (with an evolution animation): round 1 uses stage-1 forms, round 2 stage 2, round 3 the final stage. Each stage has more HP, deals more damage (×1.15, then ×1.3) and learns one new move. HP and stamina are fully restored at the start of each round. To always play all 3 rounds, set `ROUNDS_TO_WIN = 3` in `src/sim/data.ts`.
 

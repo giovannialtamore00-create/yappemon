@@ -35,7 +35,8 @@ const state = () => page.evaluate(() => {
 });
 /** Speak, then return the moves the creature accepted (current action + queue). */
 async function speak(text) {
-  await page.evaluate(() => { const r = window.__yappemon.app.battle.session.runner; const t = r.state.trainers[0]; t.action = null; t.queue = []; t.dodgeReady = 0; t.dodgeDir = 0; for (const c of t.team) c.stamina = 100; });
+  // Every learned move is tested, so give each creature its whole pool (normally only the 4 chosen moves are understood).
+  await page.evaluate(async () => { const { SPECIES } = await import('/src/sim/data.ts'); const r = window.__yappemon.app.battle.session.runner; const t = r.state.trainers[0]; t.action = null; t.queue = []; t.dodgeReady = 0; t.dodgeDir = 0; for (const c of t.team) { c.stamina = 100; c.moves = [...SPECIES[c.species].moves]; } });
   await page.evaluate((t) => window.__speak(t), text);
   // Wait for the sim to pick the command up (the first frames of a new match can be slow).
   await page.waitForFunction(() => { const t = window.__yappemon.state().trainers[0]; return !!t.action || t.queue.length > 0; }, null, { timeout: 1000 }).catch(() => {});

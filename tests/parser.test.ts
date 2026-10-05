@@ -253,3 +253,12 @@ describe('dodge direction and alert', () => {
     expect(cmds('magma burst', 'cindrix').commands).toEqual([{ kind: 'move', move: 'magma_burst' }]);
   });
 });
+
+describe('loadout: only chosen moves are understood', () => {
+  it('a learned move left out of the loadout is not matched', () => {
+    const moves: MoveId[] = ['shell_ram', 'cinder_spit', 'heat_shell', 'molten_leap'];
+    expect(parse('molten leap', { activeSpecies: 'pyroxen', moves }).commands).toEqual([{ kind: 'move', move: 'molten_leap' }]);
+    expect(parse('magma burst', { activeSpecies: 'pyroxen', moves }).commands).toEqual([]);
+    expect(parse('magma burst', { activeSpecies: 'pyroxen' }).commands).toEqual([{ kind: 'move', move: 'magma_burst' }]);
+  });
+});

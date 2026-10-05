@@ -1,7 +1,7 @@
 # PROGRESS
 
-**Current work:** Movement / dynamic fighting update on branch **`movement`** (NOT merged). `main` = last released version (playable, all tests green).
-**Status:** all 8 steps done on `movement` (not merged). Waiting for the user to try it (`npm run dev`) and approve merging into `main`.
+**Current work:** branch **`loadout-evolutions`** (from `main`, which now includes the movement update — merged locally, not pushed). Adds the move-choice panel before every round and distinct shapes per evolution stage (DECISIONS #71–72). NOT merged into `main` yet: ask the user first.
+**Status:** both features done and verified (unit tests, smoke, flow, net, spectator, Italian voice, new `scripts/loadout-shots.mjs` and `scripts/creature-sheet.mjs`). Waiting for the user to try it and approve merging.
 
 The user approved the plan (DECISIONS #61–66). Don't merge into `main` or change anything on `main` without the user's permission. The live link is no longer needed (the user said so), so `dist/` can be rebuilt freely.
 
