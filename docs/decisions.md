@@ -1,4 +1,4 @@
-# DECISIONS
+# Decisions
 
 Judgment calls made where the spec was silent. Newest at the bottom.
 

@@ -1,9 +1,6 @@
-# PROGRESS
+# Movement update: original plan (done, merged into main)
 
-**Current work:** branch **`loadout-evolutions`** (from `main`, which now includes the movement update — merged locally, not pushed). Adds the move-choice panel before every round and distinct shapes per evolution stage (DECISIONS #71–72). NOT merged into `main` yet: ask the user first.
-**Status:** both features done and verified (unit tests, smoke, flow, net, spectator, Italian voice, new `scripts/loadout-shots.mjs` and `scripts/creature-sheet.mjs`). Waiting for the user to try it and approve merging.
-
-The user approved the plan (DECISIONS #61–66). Don't merge into `main` or change anything on `main` without the user's permission. The live link is no longer needed (the user said so), so `dist/` can be rebuilt freely.
+Historical record of the agreed design and steps for the movement / dynamic-fighting update (DECISIONS #61–70). All steps are complete. Read only when changing hit resolution, dodge/alert, movement or the camera.
 
 ## Agreed design (implement exactly this)
 
@@ -45,13 +42,6 @@ The user approved the plan (DECISIONS #61–66). Don't merge into `main` or chan
 6. ✅ Dynamic camera (`ctx.setFocus(mine, foe)` from BattleView.update; home spots during the evolution sequence; `setFocus(null)` on dispose).
 7. ✅ HUD / i18n / audio (accuracy % + QUICK/RAPIDA on cards, alert command chip, armed dodge chip glows, queue chips for alert and dodge sides, "Combo broken!" toast, miss whoosh / dodge_ready click / alert chime). Commands row now wraps to 2 lines at 1280 px.
 8. ✅ Full verification (all scripts + 208 unit tests green, build OK; italian-voice-test updated for the dodge window/alert and the removed `.moves-title`). Original plan: `npx vitest run`, `node scripts/smoke.mjs --full`, `node scripts/flow-test.mjs`, `node scripts/italian-voice-test.mjs`, `node scripts/net-test.mjs`, `node scripts/spectator-test.mjs`, `node scripts/vfx-shots.mjs` + `node scripts/evo-shots.mjs` (review screenshots with `node scripts/contact-sheet.mjs <dir> <out.png>`). Some scripts assume the old dodge/queue rules and may need small updates. Update README (rules, commands, costs) and DECISIONS. Then tell the user it's ready to try (`npm run dev` → http://localhost:5173) and **ask before merging into `main`**.
-
-## Context for a fresh session
-- Windows; use the Bash tool (Git Bash). For multi-line code edits, write a small `.cjs` script to the scratchpad and run it with node, or use the Edit tool — never put backticks inside `node -e "..."` in bash.
-- Headless WebGL needs chromium args `--use-angle=swiftshader --enable-unsafe-swiftshader` (already in the scripts). Three headless pages render slowly (~5 fps): use generous timeouts.
-- Page test hook: `window.__yappemon.say(text)`, `.state()`, `.app` (e.g. `app.battle.session.runner` in practice mode). URL options: `?seed=7&botTeam=vinram,brinkle&bot=passive`.
-- Already released on `main` (don't regress): best-of-3 rounds with 3 evolution stages, per-move animations (`src/render/motion.ts`), spectator rooms, 8-bit music (`src/audio/music.ts`), bottom move bar, energy gauge, commands row, EN/IT voice, balance (super effective ×1.25, costs ×1.35), no ambient loop.
-
 ## Implementation notes (step 2)
 - `dodge` event `dir` is the **world-x** direction of the dash (already converted from the requested side); the view can use it directly.
 - The 1 s dash cooldown only blocks the *window* from triggering another dash (re-arming is allowed; an attack landing during the cooldown rolls accuracy normally).

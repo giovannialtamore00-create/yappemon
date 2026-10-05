@@ -1,0 +1,42 @@
+# Testing
+
+## Commands
+
+```bash
+npm run dev              # dev server → http://localhost:5173
+npm test                 # unit tests (tests/sim, parser, net) – Vitest
+npx tsc --noEmit         # type-check only
+npm run build            # type-check + production build to dist/
+npm run preview          # serve dist/
+```
+
+Playwright needs Chromium once: `npx playwright install chromium`.
+
+## Headless scripts (`node scripts/<name>.mjs`)
+
+| Script | What it checks |
+|---|---|
+| `smoke.mjs [--full]` | Practice vs Bot end-to-end, screenshots in `./screenshots` |
+| `flow-test.mjs` | Italian UI, voice forced switch, leave, phone layout |
+| `italian-voice-test.mjs` | Italian voice commands incl. dodge window / alert |
+| `net-test.mjs` | Two headless players over the real PeerJS broker (needs internet) |
+| `spectator-test.mjs` | Spectator room with two players |
+| `preview-test.mjs` | Production build served under `/yappemon/` |
+| `loadout-shots.mjs` | Move-choice panel screenshots |
+| `creature-sheet.mjs` | Lineup of all 12 creature forms |
+| `vfx-shots.mjs [species]` | Screenshot every move's VFX |
+| `move-shots.mjs` | Move animations → `screenshots/move` |
+| `evo-shots.mjs` | Evolution sequence |
+| `music-test.mjs` | Battle music |
+| `contact-sheet.mjs <dir> <out.png>` | Combine screenshots into one image for review |
+
+**Full verification before a merge:** `npx vitest run`, `smoke.mjs --full`, `flow-test.mjs`, `italian-voice-test.mjs`, `net-test.mjs`, `spectator-test.mjs`, plus the screenshot scripts relevant to the change.
+
+## Tips
+
+- Windows; use the Bash tool (Git Bash). For multi-line code edits, write a small `.cjs` script to the scratchpad and run it with node, or use the Edit tool. Never put backticks inside `node -e "..."` in bash.
+- Headless WebGL needs chromium args `--use-angle=swiftshader --enable-unsafe-swiftshader` (already in the scripts). Headless pages render slowly (~5 fps): use generous timeouts.
+- Page test hook: `window.__yappemon.say(text)`, `.state()`, `.app` (e.g. `app.battle.session.runner` in practice mode).
+- URL options: `?seed=7&botTeam=vinram,brinkle&bot=passive&loadout=0` (`loadout=0` skips the move-choice panel).
+- In battle, the backtick key (`` ` ``) opens a hidden text box that goes through the same voice parser.
+- Sim tests use `sureHits()` (all accuracies 100, restored after each test) when testing other mechanics.

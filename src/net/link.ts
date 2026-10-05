@@ -6,7 +6,7 @@ import { PROTOCOL_VERSION, isMsg, makeRoomCode, peerIdFor, type Msg } from './pr
 
 const PEER_OPTIONS: PeerOptions = {
   // Public PeerJS broker (default host). STUN only: most home networks connect fine;
-  // strict/symmetric NATs may need TURN (see README "Known limitations").
+  // strict/symmetric NATs may need TURN (see docs/playing.md "Known limitations").
   config: {
     iceServers: [
       { urls: 'stun:stun.l.google.com:19302' },

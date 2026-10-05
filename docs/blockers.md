@@ -1,4 +1,4 @@
-# BLOCKERS
+# Blockers
 
 Parked problems. Format: what's wrong / repro / tried / hypotheses / help needed.
 
