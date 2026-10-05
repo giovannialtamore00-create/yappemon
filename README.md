@@ -2,7 +2,7 @@
 
 A 1v1 browser-based 3D creature-battle game you play **with your voice**. You are a trainer at one end of a stone arena; your creature fights your opponent's in real time, and you command it by shouting move names in **English or Italian**. The mouse is only used for menus.
 
-- 4 original creatures that evolve twice (12 forms), 24 moves, best-of-3 rounds, a type chart, stamina, dodging, switching, and a command queue
+- 4 original creatures that evolve twice (12 forms), 24 moves, best-of-3 rounds, a type chart, stamina, creatures that move around the arena, accuracy, a dodge window, an alert stance, switching, and a command queue
 - Online 1v1 with a friend (room codes, peer-to-peer, no game server) or **Practice vs Bot**
 - Everything is procedural: 3D models built from primitives, all sound synthesized, no asset files
 
@@ -92,49 +92,51 @@ Both players open the same game URL in **Chrome or Edge** on their own computers
 
 After a match, **Rematch** needs both players to click it; **Quit** goes back to the lobby. If someone closes the tab or loses connection, the other sees "Opponent disconnected".
 
-**Practice vs Bot** lets you play alone. The bot issues random moves every 1–3 seconds and sometimes dodges heavy attacks.
+**Practice vs Bot** lets you play alone. The bot issues random moves every 1–3 seconds, sometimes arms a dodge against heavy attacks and sometimes goes on alert when it is low on HP.
 
 ---
 
 ## 4. Voice command reference
 
-The big **energy gauge** on the left shows your stamina with a mark at each move's cost, and the **Commands** row in the voice box lists dodge / come back / stop (greyed out when unavailable). The **move bar** at the bottom of the screen always lists your active creature's moves with their stamina cost and what they do (in your language).
+The big **energy gauge** on the left shows your stamina with a mark at each move's cost, and the **Commands** row in the voice box lists dodge / alert / come back / stop (greyed out when unavailable; dodge glows while it is armed). The **move bar** at the bottom of the screen always lists your active creature's moves with their stamina cost, accuracy, a **QUICK** tag for quick moves, and what they do (in your language).
 
 Speak naturally and **pause briefly** after a command: the game acts when the recognizer finalizes your sentence. The live transcript appears at the bottom of the screen (green = understood, struck through = not understood). You can chain up to **4 actions**.
 
 ### Moves
 
-| Creature | English | Italiano | Stamina | Effect |
-|---|---|---|---|---|
-| **Cindrix** (Fire) | Shell Ram | Carica Corazzata | 14 | Normal melee dash, 12 dmg |
-| | Cinder Spit | Sputo di Brace | 20 | Fire projectile, 16 dmg |
-| | Heat Shell | Guscio Rovente | 27 | Take 50% damage for 4 s |
-| | Magma Burst | Esplosione di Magma | 47 | Eruption under target, 30 dmg, long windup |
-| **Brinkle** (Water) | Bubble Bump | Spinta di Bolla | 14 | Normal melee, 12 dmg |
-| | Water Jet | Getto d'Acqua | 20 | Water beam, 16 dmg |
-| | Healing Rain | Pioggia Curativa | 34 | Heal 18 HP over 3 s |
-| | Tidal Crash | Schianto di Marea | 47 | Water wave, 30 dmg |
-| **Vinram** (Grass) | Horn Charge | Carica di Corna | 14 | Normal melee dash, 13 dmg |
-| | Leaf Volley | Raffica di Foglie | 20 | Grass projectile spread, 15 dmg |
-| | Vine Snare | Laccio di Liane | 27 | Root target 2 s (can't dodge or move) |
-| | Thorn Quake | Terremoto di Spine | 47 | Ground spikes, 30 dmg |
-| **Joltmoth** (Electric) | Wing Flick | Colpo d'Ala | 14 | Normal melee, 11 dmg |
-| | Spark Dart | Dardo Scintilla | 20 | Fast electric projectile, 15 dmg |
-| | Static Field | Campo Statico | 27 | Halve target's stamina regen for 5 s |
-| | Thunder Lance | Lancia di Tuono | 47 | Electric bolt, 29 dmg, very fast |
+| Creature | English | Italiano | Stamina | Accuracy | Effect |
+|---|---|---|---|---|---|
+| **Cindrix** (Fire) | Shell Ram | Carica Corazzata | 20 | 100% | **Quick** melee roll, 8 dmg |
+| | Cinder Spit | Sputo di Brace | 20 | 90% | Fire projectile, 16 dmg |
+| | Heat Shell | Guscio Rovente | 27 | – | Take 50% damage for 4 s |
+| | Magma Burst | Esplosione di Magma | 47 | 80% | Eruption under target, 30 dmg, long windup |
+| **Brinkle** (Water) | Bubble Bump | Spinta di Bolla | 20 | 100% | **Quick** melee bounce, 8 dmg |
+| | Water Jet | Getto d'Acqua | 20 | 90% | Water beam, 16 dmg |
+| | Healing Rain | Pioggia Curativa | 34 | – | Heal 18 HP over 3 s |
+| | Tidal Crash | Schianto di Marea | 47 | 80% | Water wave, 30 dmg |
+| **Vinram** (Grass) | Horn Charge | Carica di Corna | 20 | 100% | **Quick** melee headbutt, 9 dmg |
+| | Leaf Volley | Raffica di Foglie | 20 | 90% | Grass projectile spread, 15 dmg |
+| | Vine Snare | Laccio di Liane | 27 | 85% | Root target 2 s (can't dodge or move) |
+| | Thorn Quake | Terremoto di Spine | 47 | 80% | Ground spikes, 30 dmg |
+| **Joltmoth** (Electric) | Wing Flick | Colpo d'Ala | 20 | 100% | **Quick** melee wing strike, 8 dmg |
+| | Spark Dart | Dardo Scintilla | 20 | 90% | Fast electric projectile, 15 dmg |
+| | Static Field | Campo Statico | 27 | 85% | Halve target's stamina regen for 5 s |
+| | Thunder Lance | Lancia di Tuono | 47 | 75% | Electric bolt, 29 dmg, very fast |
 
 **Moves learned by evolving** (evolved forms keep all earlier moves):
 
-| Evolution | English | Italiano | Stamina | Effect |
-|---|---|---|---|---|
-| **Pyroxen** (stage 2 of Cindrix) | Molten Leap | Balzo Fuso | 41 | Leaps high and slams onto the target, 24 dmg |
-| **Calderox** (stage 3) | Volcanic Ruin | Rovina Vulcanica | 61 | Triple eruption under the target, 40 dmg, very long windup |
-| **Tsunafin** (stage 2 of Brinkle) | Tide Mirror | Specchio di Marea | 34 | For 1.5 s, the next hit is reflected back at the attacker |
-| **Abyssmaw** (stage 3) | Maelstrom | Gorgo Abissale | 54 | Whirlpool, 26 dmg + roots 1.5 s |
-| **Thornhorn** (stage 2 of Vinram) | Bramble Stampede | Carica di Rovi | 41 | Charge whose windup can't be interrupted, 24 dmg |
-| **Elderoot** (stage 3) | Ancient Bloom | Fioritura Antica | 47 | Heal 35 HP over 3 s |
-| **Stormoth** (stage 2 of Joltmoth) | Chain Storm | Tempesta a Catena | 41 | 3 bolts of 10 dmg, each dodgeable separately |
-| **Tempestra** (stage 3) | Sky Judgement | Giudizio Celeste | 61 | Lightning from the sky, 38 dmg, very long windup |
+| Evolution | English | Italiano | Stamina | Accuracy | Effect |
+|---|---|---|---|---|---|
+| **Pyroxen** (stage 2 of Cindrix) | Molten Leap | Balzo Fuso | 41 | 85% | Leaps high and slams onto the target, 24 dmg |
+| **Calderox** (stage 3) | Volcanic Ruin | Rovina Vulcanica | 61 | 75% | Triple eruption under the target, 40 dmg, very long windup |
+| **Tsunafin** (stage 2 of Brinkle) | Tide Mirror | Specchio di Marea | 34 | – | For 1.5 s, the next hit is reflected back at the attacker |
+| **Abyssmaw** (stage 3) | Maelstrom | Gorgo Abissale | 54 | 80% | Whirlpool, 26 dmg + roots 1.5 s |
+| **Thornhorn** (stage 2 of Vinram) | Bramble Stampede | Carica di Rovi | 41 | 90% | Charge whose windup can't be interrupted, 24 dmg |
+| **Elderoot** (stage 3) | Ancient Bloom | Fioritura Antica | 47 | – | Heal 35 HP over 3 s |
+| **Stormoth** (stage 2 of Joltmoth) | Chain Storm | Tempesta a Catena | 41 | 85% | 3 bolts of 10 dmg, each dodgeable separately |
+| **Tempestra** (stage 3) | Sky Judgement | Giudizio Celeste | 61 | 75% | Lightning from the sky, 38 dmg, very long windup |
+
+**Quick moves** (the four Normal melee moves) wind up in 0.15 s, always hit an unguarded foe and **can't be caught by the dodge window**; every other attack winds up at least 0.6 s.
 
 Short keywords work too, for example *magma*, *jet*, *lance*, *spit*, *quake*, *tuono*, *spine*, *brace*, *marea*, *foglie*, *mirror*, *specchio*, *gorgo*, *rovi*. The parser is fuzzy, so common mishearings ("sinner spit", "water get", "thunder dance") still work.
 
@@ -142,7 +144,9 @@ Short keywords work too, for example *magma*, *jet*, *lance*, *spit*, *quake*, *
 
 | Action | English | Italiano |
 |---|---|---|
-| Dodge (20 stamina, 0.4 s invulnerable, 1 s cooldown) | "dodge" | "schiva" |
+| Arm a dodge (5 stamina): for 2 s, the first normal or heavy attack that reaches you is dodged automatically with a dash | "dodge" | "schiva" |
+| Dodge to a side | "dodge left" / "dodge right" | "schiva a sinistra" / "schiva a destra" (also "sx" / "dx") |
+| Alert stance (15 stamina, 3 s): attacks are 30% less accurate against you, you strafe faster, but you don't attack meanwhile | "alert", "on guard", "watch out", "careful" | "attento", "guardia", "in guardia", "occhio" |
 | Recall your creature and send out the other one | "come back" | "rientra" |
 | Clear your command queue | "stop" | "fermati" |
 | Switch to a specific creature | "go Joltmoth" | "vai Joltmoth" |
@@ -157,7 +161,7 @@ Short keywords work too, for example *magma*, *jet*, *lance*, *spit*, *quake*, *
 | "Water Jet, **after that** Tidal Crash" | "Getto d'Acqua **dopo** Schianto di Marea" |
 | "Leaf Volley **next** Horn Charge" | "**Usa** Raffica di Foglie **quindi** Carica di Corna" |
 
-Saying **"dodge"** at the start of a command jumps the queue, so you can react to an incoming attack. Both languages are always understood, whatever language you picked.
+Saying **"dodge"** at the start of a command arms the dodge window **immediately**, even in the middle of a move (the rest of the command is queued as usual). A dodge later in a chain ("spit then dodge") arms when it is reached. An unused window simply expires. Both languages are always understood, whatever language you picked.
 
 **Testing without a microphone:** press the **backtick key** (`` ` ``) during a battle to open a hidden text box. Typed commands go through exactly the same parser.
 
@@ -185,9 +189,12 @@ Saying **"dodge"** at the start of a command jumps the queue, so you can react t
 
 - **Damage** = power × type multiplier × 1.25 if the move matches the creature's type × random 0.9–1.1.
 - **Stamina:** max 100, regenerates 10/s, and regen pauses for 0.8 s after spending.
-- **Moves** have windup → active → recovery phases. Heavy (35-stamina) moves have long windups, and the opponent's panel shows "Charging: …!" so you can dodge.
+- **Movement:** creatures move on their own, strafing sideways and stepping in and out on their own half of the arena (fast creatures move faster). A creature busy with a move stands still. The camera turns to keep both creatures in view.
+- **Accuracy:** every attack has an accuracy % (shown on the move cards). It is ×1.2 against a creature that is busy with a move (it stands still), ×0.7 against an alert creature, and always misses a creature in the middle of a dodge dash. A miss shows "Miss!" and the target sidesteps.
+- **Moves** have windup → active → recovery phases. Heavy moves have long windups, and the opponent's panel shows "Charging: …!" so you can arm a dodge.
+- **Getting hit breaks your combo:** when an attack hits you, the commands still in your queue are lost ("Combo broken!"); the move you are doing continues. Missing, or having your attack dodged, does **not** cost you your queue.
 - **Interrupts:** a single hit of **25+ damage** interrupts the target's windup.
-- **Failure clears the whole queue.** If a move is dodged, interrupted, short on stamina, or its target leaves the field, your queue is cleared, you hear a buzz and see "Move failed: give a new command". Your creature waits for new orders.
+- **Failure clears the whole queue:** if a move is interrupted, short on stamina, or its target leaves the field, your queue is cleared, you hear a buzz and see "Move failed: give a new command".
 - **Fainting:** if you have another creature, pick it (click or voice). After 10 s it's sent out automatically. Lose both creatures and you lose the round; win 2 rounds to win the match.
 
 ---
@@ -204,7 +211,7 @@ Saying **"dodge"** at the start of a command jumps the queue, so you can react t
 
 ## 7. Known limitations
 
-- **Voice latency:** browsers deliver a final transcript about 0.5–1.5 s after you finish speaking. Short, clear commands and a brief pause work best. Dodging needs anticipation: watch for "Charging: …!" in the opponent panel.
+- **Voice latency:** browsers deliver a final transcript about 0.5–1.5 s after you finish speaking. Short, clear commands and a brief pause work best. Arm the dodge early: the 2 s window gives you time once you see "Charging: …!" in the opponent panel.
 - **Speech accuracy** drops in noisy rooms or with speakers near the mic. Headphones help, and they stop game sounds from reaching the mic.
 - **Some networks block peer-to-peer.** The game uses public STUN servers and no TURN relay, so some strict corporate, school or mobile networks can't connect. Try another network (for example a phone hotspot) if joining hangs.
 - **The public PeerJS broker** (`0.peerjs.com`) is only used to introduce the two browsers. If it's down, online play can't start (Practice still works).
