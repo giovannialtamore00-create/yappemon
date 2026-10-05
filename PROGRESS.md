@@ -1,7 +1,7 @@
 # PROGRESS
 
 **Current work:** Movement / dynamic fighting update on branch **`movement`** (NOT merged). `main` = last released version (playable, all tests green).
-**Status:** steps 1–5 of 8 done (types; sim + data + tests; voice parser + tests; bot; view + motion). `npx tsc --noEmit && npx vitest run` green. Next: step 6 (dynamic camera).
+**Status:** steps 1–6 of 8 done (types; sim + data + tests; voice parser + tests; bot; view + motion; dynamic camera). `npx tsc --noEmit && npx vitest run` green. Next: step 7 (HUD / i18n / audio).
 
 The user approved the plan (DECISIONS #61–66). Don't merge into `main` or change anything on `main` without the user's permission. The live link is no longer needed (the user said so), so `dist/` can be rebuilt freely.
 
@@ -42,7 +42,7 @@ The user approved the plan (DECISIONS #61–66). Don't merge into `main` or chan
 3. ✅ Voice parser (dodge direction, alert) + tests. ("to"/"verso" are now fillers; a side word without a dodge in its segment is reported as unmatched.)
 4. ✅ Bot (arms the window when ≤1.2 s of a heavy windup is left, 50%; alert 25% per decision under 35% HP). Bot-vs-bot over 20 seeds: ~134 s per match, ~6% of attacks miss.
 5. ✅ View + motion (positions, facing, reach, dash, miss sidestep, dodge ring + alert hexagon). Visual check: `node scripts/move-shots.mjs` → screenshots/move. Projectiles fly at the target's current spot. The "Combo broken!" toast is left for step 7 (needs i18n). Known for step 7: HUD queue chip labels `alert` as "Come back" (hud.ts ~227).
-6. Dynamic camera.
+6. ✅ Dynamic camera (`ctx.setFocus(mine, foe)` from BattleView.update; home spots during the evolution sequence; `setFocus(null)` on dispose).
 7. HUD / i18n / audio.
 8. Full verification: `npx vitest run`, `node scripts/smoke.mjs --full`, `node scripts/flow-test.mjs`, `node scripts/italian-voice-test.mjs`, `node scripts/net-test.mjs`, `node scripts/spectator-test.mjs`, `node scripts/vfx-shots.mjs` + `node scripts/evo-shots.mjs` (review screenshots with `node scripts/contact-sheet.mjs <dir> <out.png>`). Some scripts assume the old dodge/queue rules and may need small updates. Update README (rules, commands, costs) and DECISIONS. Then tell the user it's ready to try (`npm run dev` → http://localhost:5173) and **ask before merging into `main`**.
 

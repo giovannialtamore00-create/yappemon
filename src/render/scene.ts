@@ -18,6 +18,8 @@ export interface SceneCtx {
   cameraMode: 'battle' | 'orbit' | 'spectate';
   /** Whose eyes the battle camera uses; null = spectator (both trainers visible). */
   setPov(p: 0 | 1 | null): void;
+  /** Ground positions of the point-of-view creature and its opponent, each frame (null = no battle: fixed framing). */
+  setFocus(mine: { x: number; z: number } | null, foe?: { x: number; z: number }): void;
   update(dt: number, time: number): void;
   render(): void;
 }
@@ -251,6 +253,9 @@ export function createScene(canvas: HTMLCanvasElement): SceneCtx {
   const camera = new THREE.PerspectiveCamera(56, 1, 0.1, 400);
   let pov: 0 | 1 = 0;
   const shake = { amount: 0 };
+  // Dynamic battle framing: target values from setFocus, smoothed every frame.
+  let focus: { mine: { x: number; z: number }; foe: { x: number; z: number } } | null = null;
+  const frame = { camX: 0, back: 0, up: 0, lookX: 0, lookZ: 0, ready: false };
   const flames: THREE.Object3D[] = [];
   const orbs: THREE.Object3D[] = [];
   scene.traverse((o) => {
@@ -274,6 +279,10 @@ export function createScene(canvas: HTMLCanvasElement): SceneCtx {
       trainers[0]!.visible = p !== 0;
       trainers[1]!.visible = p !== 1;
     },
+    setFocus(mine, foe) {
+      focus = mine && foe ? { mine: { ...mine }, foe: { ...foe } } : null;
+      if (!focus) frame.ready = false;
+    },
     update(dt, time) {
       for (const f of flames) {
         const i = f.userData.flame as number;
@@ -291,8 +300,15 @@ export function createScene(canvas: HTMLCanvasElement): SceneCtx {
         const a = Math.sin(time * 0.15) * 0.18;
         shake.amount = Math.max(0, shake.amount - dt * 2.5);
         const k = shake.amount * shake.amount * 0.4;
+        // Looks at the midpoint between the two creatures.
+        const mx = focus ? (focus.mine.x + focus.foe.x) / 2 : 0;
+        const mz = focus ? (focus.mine.z + focus.foe.z) / 2 : 0;
+        const ease = frame.ready ? Math.min(1, dt * 3) : 1;
+        frame.lookX += (mx - frame.lookX) * ease;
+        frame.lookZ += (mz - frame.lookZ) * ease;
+        frame.ready = true;
         camera.position.set(Math.cos(a) * 8.8 + (Math.random() - 0.5) * k, 3.6 + (Math.random() - 0.5) * k, Math.sin(a) * 8.8);
-        camera.lookAt(0, 0.8, 0);
+        camera.lookAt(frame.lookX, 0.8, frame.lookZ);
         return;
       }
       const s = pov === 0 ? 1 : -1;
@@ -300,8 +316,31 @@ export function createScene(canvas: HTMLCanvasElement): SceneCtx {
       const bob = Math.sin(time * 1.3) * 0.015;
       shake.amount = Math.max(0, shake.amount - dt * 2.5);
       const k = shake.amount * shake.amount;
-      camera.position.set(sway + (Math.random() - 0.5) * k * 0.5, EYE_HEIGHT + bob + (Math.random() - 0.5) * k * 0.4, s * TRAINER_Z);
-      camera.lookAt(sway * 0.5, 0.45, -s * 2.5);
+      // Behind the trainer, sliding toward the own creature's side and turning to keep both creatures framed;
+      // backs off and rises when they are far apart or the own creature comes close to the camera.
+      let want = { camX: 0, back: 0, up: 0, lookX: 0, lookZ: -s * 2.5 };
+      if (focus) {
+        const { mine, foe } = focus;
+        const gap = Math.hypot(mine.x - foe.x, mine.z - foe.z);
+        const far = Math.min(1, Math.max(0, (gap - 6) / 4));
+        const near = Math.min(1, Math.max(0, (Math.abs(mine.z) - 3) / 2.2));
+        want = {
+          camX: mine.x * 0.4,
+          back: far * 1.2 + near * 0.7,
+          up: far * 0.5 + near * 0.5,
+          lookX: mine.x + (foe.x - mine.x) * 0.6,
+          lookZ: mine.z + (foe.z - mine.z) * 0.6,
+        };
+      }
+      const ease = frame.ready ? Math.min(1, dt * 2.5) : 1;
+      for (const key of ['camX', 'back', 'up', 'lookX', 'lookZ'] as const) frame[key] += (want[key] - frame[key]) * ease;
+      frame.ready = true;
+      camera.position.set(
+        frame.camX + sway + (Math.random() - 0.5) * k * 0.5,
+        EYE_HEIGHT + frame.up + bob + (Math.random() - 0.5) * k * 0.4,
+        s * (TRAINER_Z + frame.back),
+      );
+      camera.lookAt(frame.lookX + sway * 0.5, 0.5, frame.lookZ);
     },
     render() {
       renderer.render(scene, camera);

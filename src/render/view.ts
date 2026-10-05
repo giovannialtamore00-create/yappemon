@@ -96,6 +96,7 @@ export class BattleView {
   }
 
   dispose() {
+    this.ctx.setFocus(null);
     this.vfx.clear();
     this.ctx.scene.remove(this.group);
     this.ctx.scene.remove(this.vfx.particles.points);
@@ -349,6 +350,11 @@ export class BattleView {
     this.time += dt;
     if (this.evo) this.updateEvolution(dt);
     if (!this.evo || this.evo.t < EVO_START) for (const p of [0, 1] as const) this.updateSide(p, dt, prev, curr, alpha);
+    // Dynamic camera: keep both creatures framed (home spots during the evolution sequence).
+    const mine = this.sides[this.me]!;
+    const foe = this.sides[this.me === 0 ? 1 : 0]!;
+    if (this.evo && this.evo.t >= EVO_START) this.ctx.setFocus({ x: 0, z: creatureZ(this.me) }, { x: 0, z: creatureZ(this.me === 0 ? 1 : 0) });
+    else this.ctx.setFocus({ x: mine.dispX, z: mine.dispZ }, { x: foe.dispX, z: foe.dispZ });
     // Strikes in flight.
     for (const k of curr.strikes) {
       const m = MOVES[k.move];
