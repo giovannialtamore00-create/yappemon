@@ -13,6 +13,8 @@ Stack: TypeScript, Vite, Three.js, PeerJS, Web Speech API, Vitest, Playwright. N
 - Online play is host-authoritative: new player actions are sim intents, and must be allowed by the sanitizer in `src/net/sessions.ts`.
 - Don't merge into `main` or change `main` without the user's OK. Never force-push.
 - Before calling work done: `npx tsc --noEmit && npm test`, plus the relevant headless scripts (see testing doc).
+- End of every task: once the user has tested and approved it, commit, save all progress (Status above + the relevant docs) so a
+  fresh session can continue from the files alone, then ask the user to /clear before starting the next patch or task.
 
 ## Commands
 `npm run dev` · `npm test` · `npm run build` · `node scripts/smoke.mjs --full` (more in docs/testing.md)
