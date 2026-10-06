@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import {
-  ARENA_X_M, Bot, LOADOUT_S, PREFERRED_GAP_M, defaultLoadout, DODGE_COST, HALF_FAR_M, HALF_NEAR_M, MOVES, MOVE_IDS, SPECIES, STAMINA_MAX, TICK_HZ, activeCreature,
+  ARENA_X_M, Bot, FULL_POWER_COOLDOWN_S, FULL_POWER_MULT, HYPE_STAMINA, LOADOUT_S, SNAP_SPEED, PREFERRED_GAP_M, defaultLoadout, DODGE_COST, HALF_FAR_M, HALF_NEAR_M, MOVES, MOVE_IDS, SPECIES, STAMINA_MAX, TICK_HZ, activeCreature,
   computeDamage, createMatch, hitChance, step, travelTicks, typeMultiplier,
   type BaseSpeciesId, type Intent, type MoveId, type SimEvent, type SimState, type SpeciesId,
 } from '../src/sim';
@@ -687,5 +687,80 @@ describe('loadout phase', () => {
     run(s, 1, [[{ type: 'ready' }], []]);
     run(s, 1, [[{ type: 'loadout', slot: 0, moves: ['water_jet', 'bubble_bump', 'healing_rain', 'tidal_crash'] }], []]);
     expect(activeCreature(s.trainers[0]).moves).toEqual(defaultLoadout('brinkle'));
+  });
+});
+
+describe('verbal boosts', () => {
+  const qb = (move: MoveId, boost: 'snap' | 'hype' | 'full'): Intent => ({ type: 'queue', actions: [{ kind: 'move', move, boost }] });
+  const windupOf = (intent: Intent) => {
+    const s = ready(['cindrix'], ['vinram']);
+    step(s, [[intent], []]);
+    return s.trainers[0].action!.total;
+  };
+
+  it('SNAP: windup 1.5× faster', () => {
+    const normal = windupOf(q('magma_burst'));
+    expect(windupOf(qb('magma_burst', 'snap'))).toBe(Math.round(normal / SNAP_SPEED));
+  });
+
+  it('HYPE: regains 10% of max stamina when the move starts', () => {
+    const s = ready(['cindrix'], ['vinram']);
+    const c = activeCreature(s.trainers[0]);
+    c.stamina = 50;
+    const ev = step(s, [[qb('cinder_spit', 'hype')], []]);
+    // (plus one tick of normal regen, which runs earlier in the same tick)
+    expect(c.stamina).toBeCloseTo(50 - MOVES.cinder_spit.cost + HYPE_STAMINA * STAMINA_MAX, 0);
+    expect(ev).toContainEqual({ t: 'boost', p: 0, boost: 'hype' });
+  });
+
+  it('FULL POWER: accuracy ×1.3 (capped at 100%)', () => {
+    const s = ready(['joltmoth'], ['vinram']);
+    expect(hitChance(MOVES.thunder_lance, s.trainers[1], true)).toBeCloseTo(0.75 * FULL_POWER_MULT);
+    expect(hitChance(MOVES.cinder_spit, s.trainers[1], true)).toBe(1);
+  });
+
+  it('FULL POWER: damage ×1.3', () => {
+    sureHits();
+    const dmg = (intent: Intent) => {
+      const s = ready(['cindrix'], ['vinram'], 5);
+      const hit = run(s, sec(3), [[intent], []]).find((e) => e.t === 'hit' && e.p === 0);
+      return (hit as Extract<SimEvent, { t: 'hit' }>).damage;
+    };
+    const normal = dmg(q('cinder_spit'));
+    expect(Math.abs(dmg(qb('cinder_spit', 'full')) - normal * FULL_POWER_MULT)).toBeLessThanOrEqual(1);
+  });
+
+  it('FULL POWER: 60 s cooldown, then usable again', () => {
+    const s = ready(['cindrix'], ['vinram']);
+    const ev1 = run(s, sec(2), [[qb('cinder_spit', 'full')], []]);
+    expect(ev1).toContainEqual({ t: 'boost', p: 0, boost: 'full' });
+    expect(s.fullPowerCd[0]).toBeGreaterThan(0);
+    // during the cooldown the move still runs, without the boost
+    const ev2 = run(s, 1, [[qb('cinder_spit', 'full')], []]);
+    expect(ev2.some((e) => e.t === 'boost')).toBe(false);
+    expect(ev2).toContainEqual({ t: 'action_start', p: 0, action: { kind: 'move', move: 'cinder_spit' } });
+    s.fullPowerCd[0] = 1; // skip ahead to the end of the cooldown
+    run(s, sec(2));
+    expect(s.fullPowerCd[0]).toBe(0);
+    activeCreature(s.trainers[0]).stamina = STAMINA_MAX;
+    expect(run(s, 1, [[qb('cinder_spit', 'full')], []])).toContainEqual({ t: 'boost', p: 0, boost: 'full' });
+    expect(s.fullPowerCd[0]).toBe(sec(FULL_POWER_COOLDOWN_S));
+  });
+
+  it('FULL POWER on a self move does nothing and spends no cooldown', () => {
+    const s = ready(['cindrix'], ['vinram']);
+    const ev = step(s, [[qb('heat_shell', 'full')], []]);
+    expect(ev.some((e) => e.t === 'boost')).toBe(false);
+    expect(s.fullPowerCd[0]).toBe(0);
+  });
+
+  it('the cooldown keeps running between rounds', () => {
+    const s = ready(['cindrix'], ['vinram']);
+    run(s, 1, [[qb('cinder_spit', 'full')], []]);
+    activeCreature(s.trainers[1]).hp = 0.1;
+    sureHits();
+    const ev = run(s, sec(3));
+    expect(ev.some((e) => e.t === 'round_end' || e.t === 'faint')).toBe(true);
+    expect(s.fullPowerCd[0]).toBe(sec(FULL_POWER_COOLDOWN_S) - sec(3));
   });
 });

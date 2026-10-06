@@ -20,3 +20,10 @@ How a match plays out. Numbers live in `src/sim/data.ts`; logic in `src/sim/sim.
 - **Failure clears the whole queue:** if a move is interrupted, short on stamina, or its target leaves the field, your queue is cleared, you hear a buzz and see "Move failed: give a new command".
 - **Fainting:** if you have another creature, pick it (click or voice). After 10 s it's sent out automatically. Lose both creatures and you lose the round; win 2 rounds to win the match.
 
+
+## Verbal boosts (how a command is said)
+Measured from the player's own mic against their normal voice (decision #73). At most one per move, the strongest:
+- **SNAP!** / **SCATTO!** (sudden, loud start): the move winds up 1.5× faster (`SNAP_SPEED`).
+- **HYPE!** / **GRINTA!** (clearly higher pitch): +10% of max stamina when the move starts (`HYPE_STAMINA`).
+- **FULL POWER!** / **MASSIMA POTENZA!** (held, stretched vowel): accuracy and damage ×1.3 (`FULL_POWER_MULT`, accuracy capped at 100%), then unusable for 60 s (`FULL_POWER_COOLDOWN_S`); the cooldown keeps counting between rounds. During the cooldown, or on a self move (shield, heal, mirror), the move runs normally and no cooldown is spent.
+- The boost travels with the move command; the host's sim applies it and announces it (`boost` event). The practice bot doesn't use boosts.

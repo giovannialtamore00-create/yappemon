@@ -29,7 +29,11 @@ function sanitizeAction(a: unknown): QAction | null {
     return dir === 1 || dir === -1 ? { kind: 'dodge', dir } : { kind: 'dodge' };
   }
   const m = (a as { move?: unknown }).move;
-  if (k === 'move' && typeof m === 'string' && m in MOVES) return { kind: 'move', move: m as MoveId };
+  if (k === 'move' && typeof m === 'string' && m in MOVES) {
+    // The voice boost is the sender's own measurement; the sim enforces the FULL POWER cooldown.
+    const b = (a as { boost?: unknown }).boost;
+    return b === 'snap' || b === 'hype' || b === 'full' ? { kind: 'move', move: m as MoveId, boost: b } : { kind: 'move', move: m as MoveId };
+  }
   return null;
 }
 

@@ -18,6 +18,12 @@ describe('remote input sanitizing', () => {
     ];
     expect(sanitizeIntents(ok)).toEqual(ok);
   });
+  it('keeps a valid voice boost on moves, drops an invalid one', () => {
+    const boosted = [{ type: 'queue', actions: [{ kind: 'move', move: 'cinder_spit', boost: 'full' }, { kind: 'move', move: 'shell_ram', boost: 'snap' }] }];
+    expect(sanitizeIntents(boosted)).toEqual(boosted);
+    expect(sanitizeIntents([{ type: 'queue', actions: [{ kind: 'move', move: 'cinder_spit', boost: 'mega' }] }]))
+      .toEqual([{ type: 'queue', actions: [{ kind: 'move', move: 'cinder_spit' }] }]);
+  });
   it('drops garbage', () => {
     expect(sanitizeIntents('nope')).toEqual([]);
     expect(sanitizeIntents([{ type: 'queue', actions: [{ kind: 'move', move: 'hack' }] }, { type: 'choose', slot: 5 }, null, 3])).toEqual([]);

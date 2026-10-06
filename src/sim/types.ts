@@ -89,8 +89,11 @@ export interface SpeciesDef {
 }
 
 /** A queued action. */
+/** Verbal boost: how the command was said (at most one per move). */
+export type Boost = 'snap' | 'hype' | 'full';
+
 export type QAction =
-  | { kind: 'move'; move: MoveId }
+  | { kind: 'move'; move: MoveId; boost?: Boost }
   /** Arms a 2 s dodge window; `dir` = −1 left / +1 right (from the creature's point of view), absent = auto. */
   | { kind: 'dodge'; dir?: 1 | -1 }
   /** 3 s defensive stance: harder to hit, no attacking. */
@@ -194,6 +197,8 @@ export interface Strike {
   toZ: number;
   /** Set when an earlier strike of the same action already failed it (target recalled): no second failure. */
   quiet?: boolean;
+  /** Launched by a FULL POWER move: accuracy and damage ×FULL_POWER_MULT. */
+  full?: boolean;
 }
 
 export interface SimState {
@@ -214,6 +219,8 @@ export interface SimState {
   loadout: number;
   loadoutLen: number;
   ready: [boolean, boolean];
+  /** Ticks until each player's FULL POWER boost is usable again (survives rounds). */
+  fullPowerCd: [number, number];
   /** Chosen moves per player and team slot; carried into the next round (evolved forms keep earlier moves). */
   loadouts: [MoveId[][], MoveId[][]];
   /** null while running. */
@@ -226,6 +233,8 @@ export type FailReason = 'interrupted' | 'stamina' | 'target_recalled' | 'rooted
 
 export type SimEvent =
   | { t: 'action_start'; p: PlayerIdx; action: QAction }
+  /** A verbal boost took effect on the move that just started (FULL POWER also starts its cooldown). */
+  | { t: 'boost'; p: PlayerIdx; boost: Boost }
   | { t: 'launch'; p: PlayerIdx; move: MoveId; strike?: number }
   | { t: 'hit'; p: PlayerIdx; target: PlayerIdx; move: MoveId; damage: number; eff: Effectiveness; interrupted: boolean; heavy: boolean; strike: number }
   | { t: 'dodged'; p: PlayerIdx; target: PlayerIdx; move: MoveId; strike: number }

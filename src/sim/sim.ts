@@ -4,7 +4,7 @@
 import {
   ALERT_COST, ALERT_EVADE, ALERT_S, ALERT_STRAFE_MULT, ARENA_X_M, ATTACKING_EXPOSED, DASH_M, DASH_S, DODGE_COOLDOWN_S,
   DODGE_COST, DODGE_INVULN_S, DODGE_WINDOW_S, DT, FORCED_SWITCH_S, HALF_FAR_M, HALF_NEAR_M, HOME_Z_M, INTERRUPT_THRESHOLD,
-  MOVES, PREFERRED_GAP_M, QUEUE_MAX, QUICK_WINDUP_S, RECALL_S, SENDOUT_S, SPECIES, SPEED_MULT, STAB, STAMINA_MAX,
+  MOVES, PREFERRED_GAP_M, SNAP_SPEED, HYPE_STAMINA, FULL_POWER_MULT, FULL_POWER_COOLDOWN_S, QUEUE_MAX, QUICK_WINDUP_S, RECALL_S, SENDOUT_S, SPECIES, SPEED_MULT, STAB, STAMINA_MAX,
   STAMINA_PAUSE_S, STAMINA_REGEN_PER_S, STEP_JITTER_M, STEP_SPEED, STRAFE_MAX_S, STRAFE_MIN_S, STRAFE_SPEED, TICK_HZ, INTERMISSION_S,
   LOADOUT_S, MAX_ROUNDS, ROUNDS_TO_WIN, defaultLoadout, sameFamily, secToTicks, speciesAtStage, typeMultiplier, validLoadout,
 } from './data';
@@ -56,7 +56,7 @@ export function createMatch(teams: [BaseSpeciesId[], BaseSpeciesId[]], seed: num
   const s: SimState = {
     tick: 0, rng: seed >>> 0, nextId: 1, trainers: [createTrainer(0, []), createTrainer(1, [])],
     strikes: [], teams: [[...teams[0]], [...teams[1]]], round: 1, score: [0, 0], intermission: 0, result: null,
-    loadout: 0, loadoutLen, ready: [false, false], loadouts: [[], []],
+    loadout: 0, loadoutLen, ready: [false, false], loadouts: [[], []], fullPowerCd: [0, 0],
   };
   setupRound(s);
   return s;
@@ -94,9 +94,9 @@ function speedMult(t: TrainerState) {
  * Chance (0–1) that `move` hits a creature in state `target`: accuracy × state modifier
  * (busy with a move ×1.2, alert ×0.7, otherwise ×1). Dodges are handled separately.
  */
-export function hitChance(move: MoveDef, target: TrainerState): number {
+export function hitChance(move: MoveDef, target: TrainerState, full = false): number {
   const mod = target.action?.action.kind === 'move' ? ATTACKING_EXPOSED : target.alertTicks > 0 ? ALERT_EVADE : 1;
-  return Math.min(1, (move.accuracy / 100) * mod);
+  return Math.min(1, (move.accuracy / 100) * mod * (full ? FULL_POWER_MULT : 1));
 }
 
 export const distance = (a: TrainerState, b: TrainerState) => Math.hypot(a.x - b.x, a.z - b.z);
@@ -106,6 +106,7 @@ export const distance = (a: TrainerState, b: TrainerState) => Math.hypot(a.x - b
 export function step(s: SimState, intents: [Intent[], Intent[]]): SimEvent[] {
   const ev: SimEvent[] = [];
   if (s.result) return ev;
+  for (const p of [0, 1] as const) if (s.fullPowerCd[p] > 0) s.fullPowerCd[p]--;
   if (s.tick === 0) {
     if (s.loadout > 0) ev.push({ t: 'loadout_start', round: s.round, seconds: s.loadout / TICK_HZ });
     else for (const p of [0, 1] as const) ev.push({ t: 'sendout', p, slot: 0 });
@@ -423,10 +424,23 @@ function startNext(s: SimState, p: PlayerIdx, ev: SimEvent[]) {
       if (!c.moves.includes(m.id)) continue; // stale entry after a switch
       if (c.stamina < m.cost) return fail(s, p, 'stamina', ev);
       spend(c, m.cost);
-      t.action = newRun(s, a, secToTicks(m.quick ? QUICK_WINDUP_S : m.windup * speedMult(t)));
+      const run = boostedAction(s, p, a);
+      const windup = (m.quick ? QUICK_WINDUP_S : m.windup * speedMult(t)) / (run.boost === 'snap' ? SNAP_SPEED : 1);
+      t.action = newRun(s, run, secToTicks(windup));
+      ev.push({ t: 'action_start', p, action: run });
+      if (run.boost === 'hype') c.stamina = Math.min(STAMINA_MAX, c.stamina + HYPE_STAMINA * STAMINA_MAX);
+      if (run.boost === 'full') s.fullPowerCd[p] = secToTicks(FULL_POWER_COOLDOWN_S);
+      if (run.boost) ev.push({ t: 'boost', p, boost: run.boost });
+      continue;
     }
     ev.push({ t: 'action_start', p, action: a });
   }
+}
+
+/** Drops a boost that can't apply: FULL POWER while cooling down or on a self move (no cooldown spent). */
+function boostedAction(s: SimState, p: PlayerIdx, a: Extract<QAction, { kind: 'move' }>): Extract<QAction, { kind: 'move' }> {
+  if (a.boost !== 'full' || (s.fullPowerCd[p] === 0 && MOVES[a.move].delivery !== 'self')) return a;
+  return { kind: 'move', move: a.move };
 }
 
 function advanceAction(s: SimState, p: PlayerIdx, ev: SimEvent[]) {
@@ -502,6 +516,7 @@ function onActiveStart(s: SimState, p: PlayerIdx, ev: SimEvent[]) {
       id: s.nextId++, owner: p, ownerSlot: t.active, ownerActionUid: t.action!.uid, target: o, targetSlot: ot.active,
       move: m.id, left: travel + delay, total: travel, fromX: t.x, fromZ: t.z, toX: ot.x, toZ: ot.z,
     };
+    if (a.boost === 'full') strike.full = true;
     ev.push({ t: 'launch', p, move: m.id, strike: strike.id });
     if (m.delivery === 'melee') resolveStrike(s, strike, ev);
     else s.strikes.push(strike);
@@ -554,7 +569,7 @@ function resolveStrike(s: SimState, k: Strike, ev: SimEvent[]) {
     dash(s, k.target, ev);
     return void ev.push({ t: 'dodged', p: k.owner, target: k.target, move: k.move, strike: k.id });
   }
-  if (rand(s) >= hitChance(m, tt)) return void ev.push({ t: 'miss', p: k.owner, target: k.target, move: k.move, strike: k.id });
+  if (rand(s) >= hitChance(m, tt, k.full)) return void ev.push({ t: 'miss', p: k.owner, target: k.target, move: k.move, strike: k.id });
 
   const eff = m.effect;
   if (eff.kind === 'root' || eff.kind === 'static') {
@@ -567,11 +582,12 @@ function resolveStrike(s: SimState, k: Strike, ev: SimEvent[]) {
   if (eff.kind !== 'damage') return;
   const attacker = s.trainers[k.owner].team[k.ownerSlot]!;
   const attackerDef = SPECIES[attacker.species];
+  const power = m.power * (k.full ? FULL_POWER_MULT : 1);
   if (target.mirrorTicks > 0) {
     // Tide Mirror: the hit bounces back at the attacker (computed against the attacker's own type).
     target.mirrorTicks = 0;
     ev.push({ t: 'status', p: k.target, status: 'mirror', on: false });
-    const back = computeDamage(m.power, m.element, attackerDef.element, attackerDef.element, rand(s), attacker.shieldTicks > 0, attackerDef.dmgMult);
+    const back = computeDamage(power, m.element, attackerDef.element, attackerDef.element, rand(s), attacker.shieldTicks > 0, attackerDef.dmgMult);
     ev.push({ t: 'reflect', p: k.target, target: k.owner, move: k.move, damage: back.damage });
     // The reflected hit counts as the attacker getting hit: its queued commands are lost.
     if (ownerOnField(s, k) && !attacker.fainted) {
@@ -581,7 +597,7 @@ function resolveStrike(s: SimState, k: Strike, ev: SimEvent[]) {
     }
     return;
   }
-  const { damage, eff: e } = computeDamage(m.power, m.element, attackerDef.element, SPECIES[target.species].element, rand(s), target.shieldTicks > 0, attackerDef.dmgMult);
+  const { damage, eff: e } = computeDamage(power, m.element, attackerDef.element, SPECIES[target.species].element, rand(s), target.shieldTicks > 0, attackerDef.dmgMult);
   target.hp = Math.max(0, target.hp - damage);
   const interrupted = damage >= INTERRUPT_THRESHOLD && !!run && run.phase === 'windup' && run.action.kind === 'move' && !MOVES[run.action.move].armored;
   ev.push({ t: 'hit', p: k.owner, target: k.target, move: k.move, damage, eff: e, interrupted, heavy: m.heavy, strike: k.id });

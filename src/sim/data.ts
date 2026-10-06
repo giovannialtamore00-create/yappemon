@@ -31,6 +31,13 @@ export const ALERT_S = 3;
 export const ALERT_EVADE = 0.7;
 /** A creature busy with a move stands still: accuracy against it ×1.2. */
 export const ATTACKING_EXPOSED = 1.2;
+/** Verbal boosts (how the command was said; decision #73). SNAP: windup this many times faster. */
+export const SNAP_SPEED = 1.5;
+/** HYPE: stamina regained when the move starts, as a fraction of max stamina. */
+export const HYPE_STAMINA = 0.1;
+/** FULL POWER: accuracy and damage ×1.3, then unusable for this long (keeps counting between rounds). */
+export const FULL_POWER_MULT = 1.3;
+export const FULL_POWER_COOLDOWN_S = 60;
 /** Quick moves wind up this long regardless of speed class; other attacks wind up at least MIN_WINDUP_S. */
 export const QUICK_WINDUP_S = 0.15;
 export const MIN_WINDUP_S = 0.6;

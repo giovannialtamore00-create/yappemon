@@ -21,10 +21,11 @@ Stack: TypeScript, Vite, Three.js, PeerJS, Web Speech API, Vitest, Playwright. N
 - **Branch:** `verbal-enhancements`, from `loadout-evolutions` (move-choice panel + evolution shapes, #71–72), which still
   awaits the user's OK to merge into `main` (`main` has the movement update, merged locally, not pushed). Ask before merging.
 - **Feature:** verbal boosts = how a command is said: SNAP (sharp attack), HYPE (pitch rise), FULL POWER (stretched vowel). See decision #73.
-  Milestones: M1 voice measurement · M2 sim effects (+ sanitizer, docs) · M3 voice→intents, flash words + sounds, FULL POWER cooldown icon (ZZZ…).
-- **Done:** M1 (`src/voice/prosody.ts`, `mic.ts`, `?prosody=1` debug panel; `tests/prosody.test.ts`, `scripts/prosody-test.mjs`).
-- **Next:** PAUSE. User tests their own voice at `npm run dev` → `/?prosody=1`; tune the `PROSODY` thresholds (PLACEHOLDERs). Then M2.
-- **Known issues:** none open. The live deploy link isn't needed for now, so `dist/` can be rebuilt freely.
+  Milestones: M1 voice measurement · M2 sim effects (+ sanitizer, docs) · M3 voice→intents, mic calibration at match start, flash words + sounds, FULL POWER cooldown icon (ZZZ…).
+- **Done:** M1 (`src/voice/prosody.ts`, `mic.ts`, `?prosody=1` debug panel; user approved detection by voice).
+  M2 (boosts in the sim: `boost` on move `QAction`, `SimState.fullPowerCd`, `boost` event; sanitizer; tests; combat-rules.md).
+- **Next:** M3 (wire voice → move boost on the first move of the command, calibration step at match start, flashes, cooldown icon). Ask before starting.
+- **Known issues:** `smoke.mjs --full` crashes headless Chrome on an audio-device error, also before this feature (docs/blockers.md). The live deploy link isn't needed for now, so `dist/` can be rebuilt freely.
 
 ## Docs (read only what the task needs)
 - [docs/architecture.md](docs/architecture.md): every `src/` file, how modules connect, where data lives. Read before touching code you haven't seen this session.
