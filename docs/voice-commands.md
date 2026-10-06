@@ -30,3 +30,6 @@ Speak naturally and **pause briefly** after a command: the game acts when the re
 Saying **"dodge"** at the start of a command arms the dodge window **immediately**, even in the middle of a move (the rest of the command is queued as usual). A dodge later in a chain ("spit then dodge") arms when it is reached. An unused window simply expires. Both languages are always understood, whatever language you picked.
 
 **Testing without a microphone:** press the **backtick key** (`` ` ``) during a battle to open a hidden text box. Typed commands go through exactly the same parser.
+
+## Verbal boosts (how you say it)
+No extra words: the way a command is said can boost its first move (one boost at most). SNAP!/SCATTO! = bark it (sudden, loud start): faster windup. HYPE!/GRINTA! = say it clearly higher: +10% stamina. FULL POWER!/MASSIMA POTENZA! = stretch the vowel ("fiiiire"): +30% accuracy and damage, then 60 s cooldown (💤 chip in the commands box). Before each match a short voice check (read 3 move names normally, skippable) learns the player's normal voice. Rules: combat-rules.md; detection: decision #73.

@@ -33,7 +33,9 @@ try {
   await page.getByRole('button', { name: /Pronto/ }).click();
   // Move-choice panel before every round: keep the default moves and press Ready.
   await page.evaluate(() => { window.setInterval(() => { const b = document.querySelector('.loadout .btn.primary'); if (b && !b.disabled) b.click(); }, 300); });
-  await page.waitForTimeout(1500);
+  // The pre-match voice check gives up on its own here (no microphone in headless Chrome).
+  await page.waitForFunction(() => !!window.__yappemon.state(), null, { timeout: 8000 });
+  await page.waitForTimeout(800);
   // Make the lead creature fragile so the bot knocks it out quickly.
   await page.evaluate(() => { window.__yappemon.state().trainers[0].team[0].hp = 3; });
   await page.locator('.switch').waitFor({ timeout: 20000 });

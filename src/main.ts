@@ -6,7 +6,7 @@ import { getLang, setLang, t } from './i18n';
 import { Hud } from './render/hud';
 import { createScene } from './render/scene';
 import { Showcase } from './render/showcase';
-import { SPECIES_IDS } from './sim/data';
+import { MOVES, SPECIES_IDS, defaultLoadout } from './sim/data';
 import type { BaseSpeciesId, Lang } from './sim/types';
 import { Screens, setUiClickHandler } from './ui/screens';
 import { Speech, isSupportedBrowser } from './voice/speech';
@@ -34,6 +34,8 @@ class App {
   private speech = new Speech();
   /** How commands are said (verbal boosts); learns the normal voice only from recognized commands. */
   private mic = new MicProsody(false);
+  /** While the pre-match voice check is up, recognized speech goes here instead of to a battle. */
+  private voiceCheckFinal: ((alts: string[]) => void) | null = null;
   private sfx = new Sfx();
   private audio: BattleAudio = {
     event: (e, me, s) => this.sfx.event(e, me, s),
@@ -74,7 +76,7 @@ class App {
       }
     };
     this.speech.onInterim = (text) => this.battle?.command(text, false);
-    this.speech.onFinal = (alts) => this.battle?.commandAlternatives(alts);
+    this.speech.onFinal = (alts) => (this.voiceCheckFinal ? this.voiceCheckFinal(alts) : this.battle?.commandAlternatives(alts));
     this.lobby();
     requestAnimationFrame(this.loop);
     this.startBackgroundTicker();
@@ -145,6 +147,7 @@ class App {
   };
 
   private endBattle() {
+    this.voiceCheckFinal = null;
     this.speech.stop(); this.mic.stop();
     this.battle?.dispose();
     this.battle = null;
@@ -288,8 +291,11 @@ class App {
       onReady: (team) => {
         mine = team;
         ui.setWaiting();
-        if (role === 'client') link.send({ k: 'ready', team });
-        else tryStart();
+        this.voiceCheck(team, () => {
+          this.screens.message(t('waitingOpponent'));
+          if (role === 'client') link.send({ k: 'ready', team });
+          else tryStart();
+        });
       },
     });
     const tryStart = () => {
@@ -373,7 +379,43 @@ class App {
     this.screens.teamSelect({
       subtitle: isSupportedBrowser() ? t('micAsk') : undefined,
       onHover: (sp) => this.showcase.show(sp),
-      onReady: (team) => this.startPractice(team),
+      onReady: (team) => this.voiceCheck(team, () => this.startPractice(team)),
+    });
+  }
+
+  /**
+   * Before the match (and its move-choice timer): learn the player's normal voice from a few recognized
+   * phrases, so verbal boosts work from the first command. Skippable; skipped without voice support or mic.
+   * The mic keeps running into the match (same baseline); speech restarts with the battle.
+   */
+  private voiceCheck(team: BaseSpeciesId[], then: () => void) {
+    if (!isSupportedBrowser()) return then();
+    let finished = false;
+    const finish = () => {
+      if (finished) return;
+      finished = true;
+      this.voiceCheckFinal = null;
+      this.speech.stop();
+      then();
+    };
+    const total = this.mic.calibration()?.total ?? 3;
+    const words = defaultLoadout(team[0]!).map((m) => MOVES[m].name[getLang()]);
+    const ui = this.screens.voiceCheck({ words, total, onSkip: finish });
+    const progress = () => {
+      const c = this.mic.calibration();
+      if (!c || finished) return;
+      ui.setProgress(c.count);
+      if (c.count >= c.total) window.setTimeout(finish, 1200);
+    };
+    this.voiceCheckFinal = (alts) => {
+      ui.setHeard(alts[0] ?? '');
+      // The utterance closes ~0.25 s after the voice stops; give it a moment before claiming it.
+      window.setTimeout(() => { if (!finished) { this.mic.take(); progress(); } }, 400);
+    };
+    this.speech.start(getLang());
+    this.mic.start().then(progress).catch(() => {
+      ui.setStatus(t('voiceCheckNoMic'));
+      window.setTimeout(finish, 1800);
     });
   }
 

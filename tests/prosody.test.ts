@@ -134,4 +134,20 @@ describe('ProsodyAnalyzer', () => {
     expect(u[3]!.boosts).toEqual({ ...none, snap: true });
     expect(u[4]!.boosts).toEqual({ ...none, full: true });
   });
+
+  it('with autoLearn off, only learned utterances calibrate (game: confirmed by speech recognition)', () => {
+    const noise = rng(7);
+    const a = new ProsodyAnalyzer(SR, false);
+    const got: Utterance[] = [];
+    a.onUtterance = (u) => got.push(u);
+    const feed = (x: Float32Array) => { for (let i = 0; i < x.length; i += 1024) a.push(x.subarray(i, i + 1024)); };
+    feed(silence(0.5, noise));
+    for (let i = 0; i < 4; i++) { feed(word({}, noise)); feed(silence(0.6, noise)); }
+    expect(got).toHaveLength(4);
+    expect(a.calibrated).toBe(false); // heard, but never confirmed
+    for (const u of got.slice(0, 3)) a.learn(u);
+    expect(a.calibrated).toBe(true);
+    a.resetBaseline();
+    expect(a.calibrationCount).toBe(0);
+  });
 });

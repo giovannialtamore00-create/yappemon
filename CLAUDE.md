@@ -24,13 +24,10 @@ Stack: TypeScript, Vite, Three.js, PeerJS, Web Speech API, Vitest, Playwright. N
   Milestones: M1 voice measurement · M2 sim effects (+ sanitizer, docs) · M3 voice→intents, mic calibration at match start, flash words + sounds, FULL POWER cooldown icon (ZZZ…).
 - **Done:** M1 (`src/voice/prosody.ts`, `mic.ts`, `?prosody=1` debug panel; user approved detection by voice).
   M2 (boosts in the sim: `boost` on move `QAction`, `SimState.fullPowerCd`, `boost` event; sanitizer; tests; combat-rules.md).
-- **In progress:** M3 (WIP commit). Built: voice → boost on the first move of a command (`Battle.voice`, `MicProsody.take()`;
-  baseline learns only from recognized commands), flash words + sounds, calibration pill (`.voice-cal`), FULL POWER chip (`.fp-chip`).
-  User confirmed the mic works in Chrome (VS Code's built-in viewer has no mic: open links in Chrome); boosts not yet tried by voice.
-- **Next (M3 left):** 1) calibration screen BEFORE the move-choice timer (user request): practice = after team select, read 3 move
-  names, dots, Skip button; online = after locking the team while waiting. 2) `scripts/boost-test.mjs`: clear `app.mic.recent` before
-  each `say()` (the fake mic's beep is measured as SNAP); check why calibration dots showed 0 after one `learn()`.
-  3) docs (architecture, testing, decisions #74, voice-commands). 4) user tries boosts by voice, then commit "M3".
+- **M3 (code done, decisions #74):** voice check before the match, boost on the first move of a command, flash words + sounds,
+  in-match calibration pill (fallback after Skip), FULL POWER chip. Verified: unit tests, boost-test, prosody-test, smoke, flow, net,
+  spectator, Italian voice, loadout-shots. Open links in Chrome (VS Code's built-in viewer has no mic).
+- **Next:** user tries boosts by voice in a practice match (`npm run dev`, Chrome), then commit "M3" and ask about merging.
 - **Known issues:** `smoke.mjs --full` crashes headless Chrome on an audio-device error, also before this feature (docs/blockers.md). The live deploy link isn't needed for now, so `dist/` can be rebuilt freely.
 
 ## Docs (read only what the task needs)

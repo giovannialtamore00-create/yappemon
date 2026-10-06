@@ -88,6 +88,31 @@ export class Screens {
     return { setStatus: (text: string) => { st.textContent = text; } };
   }
 
+  /** Before a match: read a few words in a normal voice so verbal boosts know the player's usual voice. */
+  voiceCheck(o: { words: string[]; total: number; onSkip(): void }) {
+    const s = this.overlay();
+    const card = h('div', 'card voice-check');
+    card.append(h('h2', '', `🎤 ${t('voiceCheckTitle')}`), h('p', 'muted', t('voiceCheckText', { n: o.total })));
+    const words = h('div', 'vcheck-words');
+    for (const w of o.words) words.append(h('span', 'vcheck-word', w));
+    const dots = h('div', 'vc-dots vcheck-dots');
+    const dotEls = Array.from({ length: o.total }, () => dots.appendChild(h('span')));
+    const heard = h('p', 'vcheck-heard muted', ' ');
+    const status = h('p', 'vcheck-status', t('voiceCheckStarting'));
+    const skip = button(t('voiceCheckSkip'), o.onSkip, 'btn ghost');
+    card.append(words, dots, heard, status, skip);
+    s.append(card);
+    return {
+      setProgress: (n: number) => {
+        dotEls.forEach((d, i) => d.classList.toggle('on', i < n));
+        status.textContent = n >= o.total ? `✓ ${t('voiceCalibrated')}` : t('voiceCheckListening');
+        status.classList.toggle('done', n >= o.total);
+      },
+      setHeard: (text: string) => { heard.textContent = text ? `“${text}”` : ' '; },
+      setStatus: (text: string) => { status.textContent = text; },
+    };
+  }
+
   message(text: string, onBack?: () => void, cls = '') {
     const s = this.overlay();
     const card = h('div', `card ${cls}`);

@@ -22,6 +22,7 @@ src/game/    session (local/host/client) and battle controller
 - **Sessions** (picked by mode): Practice = `LocalSession` (sim + `Bot`); online host = `HostSession`; joiner = `ClientSession`; spectator room = `SpectatorHostSession`.
 - **Frame:** `Battle.frame(dt)` → `session.update(dt)` returns `SimEvent[]` → `view.update(dt, prev, curr, alpha)` (3D) + `hud.update(curr, me)` (DOM); events become toasts and sounds.
 - **Voice path:** `Speech` (final results, up to 4 alternatives) → `parser.parse` / `toIntents` → `session.send(intents)` → sim.
+- **Verbal boosts:** `MicProsody` (main, one per match, started by the pre-match voice check `App.voiceCheck` → `Screens.voiceCheck`) measures each utterance. On every recognizer final, `Battle.commandAlternatives` calls `voice.take()` (claims the last 3 s of utterances, teaches the baseline, returns the strongest boost) and puts it on the first move of the command (`attachBoost`). The sim applies it and emits `boost` → `Hud.boostFlash` + `Sfx.boost`. `Hud.setVoice` shows the in-match calibration pill (if the check was skipped) and the FULL POWER chip (`SimState.fullPowerCd`).
 - **Loadout (move choice):** sim emits `loadout_start` / `loadout_end` → `Battle.openLoadout` → `screens.loadout(...)`. Changes send `{type:'loadout', slot, moves}` intents; "ready" sends a `ready` intent (voice ready words are `READY_WORDS` in `src/game/battle.ts`, not in aliases.ts). The sim validates with `validLoadout` / `defaultLoadout`.
 - **Online:** host = player 0, runs the sim and broadcasts snapshots + events (~20 Hz). Client = player 1, sends only intents and renders snapshots ~110 ms behind. `link.ts` wraps PeerJS (peer id `cbattle-<CODE>`) with a 1 s heartbeat.
 - **Rounds:** best of 3 (`ROUNDS_TO_WIN=2`, `MAX_ROUNDS=3`); between rounds creatures evolve (`speciesAtStage`) during a `INTERMISSION_S=7` break.
@@ -60,7 +61,7 @@ src/game/    session (local/host/client) and battle controller
 | `voice/parser.ts` | Transcript → commands → intents (normalize, phonetic fold, Levenshtein) | `parse`, `toIntents`, `normalize`, `fold`, `levenshtein`, `Command`, `ParseContext`, `ParseResult` |
 | `voice/aliases.ts` | EN+IT phrases, mishearings, fillers, connectors | `MOVE_ALIASES`, `SPECIES_ALIASES`, `DODGE_ALIASES`, `ALERT_ALIASES`, `RECALL_ALIASES`, `STOP_ALIASES`, `PICK_ALIASES` |
 | `voice/prosody.ts` | Pure: mic samples → utterances → scores vs the speaker's baseline → boosts (snap/hype/full); thresholds in `PROSODY` | `ProsodyAnalyzer`, `detectPitch`, `PROSODY`, `Utterance`, `Boosts` |
-| `voice/mic.ts` | getUserMedia + AudioWorklet tap feeding a `ProsodyAnalyzer` (runs beside Web Speech) | `MicProsody` |
+| `voice/mic.ts` | getUserMedia + AudioWorklet tap feeding a `ProsodyAnalyzer` (runs beside Web Speech); `take()` claims the voice of a recognized command, `calibration()` | `MicProsody` |
 
 ## Where data lives
 

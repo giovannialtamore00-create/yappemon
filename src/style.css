@@ -299,7 +299,7 @@ html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
 @media (max-width: 700px) { #toasts { bottom: 330px; } }
 
 /* verbal boosts: Just-Dance-style word burst, calibration prompt, FULL POWER chip */
-.boost-flash { position: absolute; transform: translate(-50%, -110%); pointer-events: none; display: grid; place-items: center; z-index: 3; }
+.boost-flash { position: absolute; transform: translate(-50%, -62%); pointer-events: none; display: grid; place-items: center; z-index: 3; }
 .boost-flash > * { grid-area: 1 / 1; }
 .bf-word { font-weight: 900; font-style: italic; font-size: 3rem; letter-spacing: 0.03em; white-space: nowrap; -webkit-text-stroke: 2px rgba(0, 0, 0, 0.55);
   background: var(--bf-grad); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 3px 0 rgba(0, 0, 0, 0.6)) drop-shadow(0 0 14px var(--bf-glow));
@@ -333,3 +333,11 @@ html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
   color: #fff4c2; background: linear-gradient(90deg, #6b3bd6, #b46bff); box-shadow: 0 0 10px rgba(180, 107, 255, 0.6); }
 .fp-chip.sleeping { color: #aab4d0; background: #2a3150; box-shadow: none; }
 .fp-chip.hidden { display: none; }
+.voice-check { max-width: min(560px, calc(100vw - 32px)); text-align: center; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.voice-check h2 { margin: 0; }
+.vcheck-words { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.vcheck-word { padding: 6px 14px; border-radius: 999px; border: 1px solid #b46bff; background: rgba(180, 107, 255, 0.12); font-weight: 800; }
+.vcheck-dots span { width: 16px; height: 16px; }
+.vcheck-heard { min-height: 1.3em; margin: 0; font-style: italic; }
+.vcheck-status { margin: 0; font-weight: 700; }
+.vcheck-status.done { color: #7ddc7d; }
