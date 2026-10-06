@@ -10,6 +10,8 @@ import { SPECIES_IDS } from './sim/data';
 import type { BaseSpeciesId, Lang } from './sim/types';
 import { Screens, setUiClickHandler } from './ui/screens';
 import { Speech, isSupportedBrowser } from './voice/speech';
+import { MicProsody } from './voice/mic';
+import type { Boost } from './sim/types';
 import { hostRoom, joinRoom, type Link, type Pending } from './net/link';
 import { normalizeCode } from './net/protocol';
 import { ClientSession, HostSession, SpectatorHostSession, sanitizeTeam } from './net/sessions';
@@ -30,6 +32,8 @@ class App {
   private screens = new Screens(document.getElementById('screens')!);
   private showcase = new Showcase(this.ctx.scene);
   private speech = new Speech();
+  /** How commands are said (verbal boosts); learns the normal voice only from recognized commands. */
+  private mic = new MicProsody(false);
   private sfx = new Sfx();
   private audio: BattleAudio = {
     event: (e, me, s) => this.sfx.event(e, me, s),
@@ -77,7 +81,7 @@ class App {
     // Test hook (used by the headless smoke test); harmless in production.
     (window as unknown as { __yappemon: unknown }).__yappemon = {
       state: () => this.battle?.state() ?? null,
-      say: (text: string) => this.battle?.command(text, true),
+      say: (text: string, boost?: Boost) => this.battle?.command(text, true, boost),
       app: this,
     };
   }
@@ -141,7 +145,7 @@ class App {
   };
 
   private endBattle() {
-    this.speech.stop();
+    this.speech.stop(); this.mic.stop();
     this.battle?.dispose();
     this.battle = null;
   }
@@ -155,8 +159,12 @@ class App {
     });
     this.hud.setMic(this.speech.status);
     if (this.battle.spectator) return;
-    if (isSupportedBrowser()) this.speech.start(getLang());
-    else this.hud.toast(t('browserWarn'), 'bad', 6000);
+    if (isSupportedBrowser()) {
+      this.speech.start(getLang());
+      // A fresh mic tap per match: calibration starts over. No mic → no boosts, the game plays as before.
+      this.battle.voice = this.mic;
+      this.mic.start().catch(() => {});
+    } else this.hud.toast(t('browserWarn'), 'bad', 6000);
   }
 
   // ------------------------------------------------------------ online play
@@ -316,7 +324,7 @@ class App {
   private rematch: { remote: (p?: number) => void } = { remote: () => {} };
 
   private netEnd(result: 'victory' | 'defeat' | 'draw', link: Link, role: 'host' | 'client') {
-    this.speech.stop();
+    this.speech.stop(); this.mic.stop();
     let localWants = false;
     let remoteWants = false;
     const go = () => {
@@ -379,7 +387,7 @@ class App {
     const loadout = q.has('loadout') ? Math.max(0, Number(q.get('loadout')) || 0) : undefined;
     const session = new LocalSession(team, botTeam, seed, q.get('bot') === 'passive', loadout);
     this.beginBattle(session, [team, botTeam], (result) => {
-      this.speech.stop();
+      this.speech.stop(); this.mic.stop();
       this.screens.end({
         result,
         onRematch: () => this.practiceTeamSelect(),

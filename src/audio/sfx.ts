@@ -2,7 +2,7 @@
 
 import { MOVES } from '../sim/data';
 import { ChipMusic } from './music';
-import type { MoveId, PlayerIdx, SimEvent, SimState } from '../sim/types';
+import type { Boost, MoveId, PlayerIdx, SimEvent, SimState } from '../sim/types';
 
 const VOL_KEY = 'yappemon.volume';
 const MUSIC_KEY = 'yappemon.music';
@@ -239,6 +239,23 @@ export class Sfx {
     }
   }
 
+  /** Verbal boost landed: SNAP crack, HYPE rising sweep, FULL POWER big chord. */
+  boost(kind: Boost) {
+    if (kind === 'snap') {
+      this.noise(0.08, { filter: 'highpass', freq: 3000, vol: 0.35 });
+      this.tone(900, 0.07, { type: 'square', to: 1800, vol: 0.12 });
+      this.tone(1800, 0.06, { type: 'square', vol: 0.08, delay: 0.07 });
+    } else if (kind === 'hype') {
+      this.tone(330, 0.35, { type: 'sawtooth', to: 990, vol: 0.12 });
+      this.tone(440, 0.35, { type: 'triangle', to: 1320, vol: 0.1, delay: 0.05 });
+      this.noise(0.4, { filter: 'bandpass', freq: 800, to: 3000, vol: 0.12 });
+    } else {
+      for (const [i, f] of [220, 277, 330, 440].entries()) this.tone(f, 0.9, { type: 'triangle', vol: 0.11, delay: i * 0.04 });
+      this.tone(880, 0.6, { type: 'sine', to: 1760, vol: 0.06, delay: 0.15 });
+      this.noise(0.8, { filter: 'highpass', freq: 5000, vol: 0.08, delay: 0.1 });
+    }
+  }
+
   hit(damage: number, mine: boolean, eff: string) {
     const v = Math.min(0.7, 0.25 + damage / 60) * (mine ? 1.1 : 0.85);
     this.tone(150, 0.18, { type: 'sine', to: 45, vol: v });
@@ -306,6 +323,7 @@ export class Sfx {
         if (e.action.kind === 'move' && MOVES[e.action.move].heavy) this.charge(MOVES[e.action.move].element);
         break;
       case 'launch': this.move(e.move); break;
+      case 'boost': this.boost(e.boost); break;
       case 'hit': if (e.damage > 0) this.hit(e.damage, e.target === me, e.eff); break;
       case 'dodged': this.tone(1500, 0.08, { type: 'sine', to: 2400, vol: 0.1 }); break;
       case 'dodge': this.whoosh(0.3, 0.22); break;

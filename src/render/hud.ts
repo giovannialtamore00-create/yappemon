@@ -1,9 +1,9 @@
 // DOM HUD overlay: creature panels, queue chips, move reference, transcript, mic status, toasts, floating numbers.
 
 import { ELEMENT_COLOR, ELEMENT_LABEL, getLang, t } from '../i18n';
-import { ALERT_COST, DODGE_COST, MOVES, SPECIES, STAMINA_MAX } from '../sim/data';
+import { ALERT_COST, DODGE_COST, MOVES, SPECIES, STAMINA_MAX, TICK_HZ } from '../sim/data';
 import { MOVE_DESC } from '../movedesc';
-import type { CreatureState, PlayerIdx, QAction, SimState, TrainerState } from '../sim/types';
+import type { Boost, CreatureState, PlayerIdx, QAction, SimState, TrainerState } from '../sim/types';
 
 export type MicStatus = 'on' | 'off' | 'denied' | 'unsupported' | 'starting';
 export type ToastKind = 'info' | 'good' | 'bad' | 'super' | 'weak';
@@ -78,6 +78,12 @@ export class Hud {
   onLeave: () => void = () => {};
   private leaveBtn = h('button', 'btn leave-btn');
   private queueLabel = h('div', 'queue-label');
+  /** Verbal boosts: calibration prompt (above the move-choice panel too) and the FULL POWER cooldown chip. */
+  private calEl = h('div', 'voice-cal hidden');
+  private calKey = '';
+  private calTimer = 0;
+  private fpChip = h('div', 'fp-chip hidden');
+  private fpKey = '';
 
   /** Spectator: no voice box / move list; panels labelled Player 1 (bottom) and Player 2 (top). */
   setSpectator(on: boolean) {
@@ -106,7 +112,8 @@ export class Hud {
     const bottom = h('div', 'hud-bottom');
     const voice = h('div', 'voice-box');
     const qlabel = this.queueLabel;
-    voice.append(this.mic, this.transcript, qlabel, this.queue, this.cmdLabel, this.cmds);
+    voice.append(this.mic, this.transcript, qlabel, this.queue, this.cmdLabel, this.cmds, this.fpChip);
+    document.body.append(this.calEl);
     const track = h('div', 'eg-track');
     track.append(this.energyFill, this.energyTicks);
     this.energy.append(this.energyLabel, track, this.energyVal);
@@ -356,6 +363,48 @@ export class Hud {
       this.transcript.textContent = text;
       this.transcript.className = 'transcript hint';
     }
+  }
+
+  // ------------------------------------------------------------ verbal boosts
+
+  /** `cal` null = mic not running (no boosts): both hidden. `fpTicks` = FULL POWER cooldown left. */
+  setVoice(cal: { count: number; total: number } | null, fpTicks: number) {
+    const done = !!cal && cal.count >= cal.total;
+    const calKey = cal ? `${cal.count}/${cal.total}|${getLang()}` : '';
+    if (calKey !== this.calKey) {
+      const was = this.calKey;
+      this.calKey = calKey;
+      window.clearTimeout(this.calTimer);
+      this.calEl.innerHTML = '';
+      if (!cal) this.calEl.classList.add('hidden');
+      else if (!done) {
+        this.calEl.className = 'voice-cal';
+        const dots = h('span', 'vc-dots');
+        for (let i = 0; i < cal.total; i++) dots.append(h('span', i < cal.count ? 'on' : ''));
+        this.calEl.append(h('span', '', `🎤 ${t('voiceCalibrating', { n: cal.total })}`), dots);
+      } else if (was && !was.startsWith(`${cal.total}/`)) {
+        // just finished: confirm for a moment
+        this.calEl.className = 'voice-cal done';
+        this.calEl.append(h('span', '', `✓ ${t('voiceCalibrated')}`));
+        this.calTimer = window.setTimeout(() => this.calEl.classList.add('hidden'), 3000);
+      } else this.calEl.classList.add('hidden');
+    }
+    const secs = Math.ceil(fpTicks / TICK_HZ);
+    const fpKey = cal && done ? `${secs}|${getLang()}` : '';
+    if (fpKey === this.fpKey) return;
+    this.fpKey = fpKey;
+    this.fpChip.className = `fp-chip${!fpKey ? ' hidden' : secs > 0 ? ' sleeping' : ''}`;
+    this.fpChip.textContent = secs > 0 ? `💤 ${t('fullPowerName')} ZZZ… ${secs}s` : `⚡ ${t('fullPowerName')}`;
+  }
+
+  /** Just-Dance-style word burst over a creature when a verbal boost lands. */
+  boostFlash(kind: Boost, x: number, y: number) {
+    const el = h('div', `boost-flash bf-${kind}`);
+    el.style.left = `${x}px`;
+    el.style.top = `${y}px`;
+    el.append(h('div', 'bf-fx'), h('div', 'bf-word', t(kind === 'snap' ? 'boostSnap' : kind === 'hype' ? 'boostHype' : 'boostFull')));
+    this.floats.append(el);
+    window.setTimeout(() => el.remove(), kind === 'full' ? 1300 : 1000);
   }
 
   // ------------------------------------------------------------ toasts / floats

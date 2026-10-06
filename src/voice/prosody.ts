@@ -67,6 +67,8 @@ export interface Utterance {
   /** Raw stats used for the baseline. */
   peakDb: number;
   medianHz: number;
+  highHz: number;
+  longestS: number;
 }
 
 const NO_BOOSTS: Boosts = { snap: false, hype: false, full: false };
@@ -147,7 +149,8 @@ export class ProsodyAnalyzer {
   private quietHops = 0;
   private history: { peakDb: number; highHz: number; longestS: number }[] = [];
 
-  constructor(readonly sampleRate: number) {
+  /** `autoLearn` false: only utterances passed to `learn()` teach the baseline (the game confirms them with speech recognition). */
+  constructor(readonly sampleRate: number, readonly autoLearn = true) {
     this.hop = Math.round((sampleRate * PROSODY.hopMs) / 1000);
     this.down = sampleRate >= 32000 ? 2 : 1;
     this.win = 1024 * this.down;
@@ -269,11 +272,21 @@ export class ProsodyAnalyzer {
       if (best) boosts[best] = true;
     }
 
-    // Only normal-sounding utterances teach the baseline.
-    if (!calibrated || !(strength.snap >= 1 || strength.hype >= 1 || strength.full >= 1)) {
-      this.history.push({ peakDb, highHz, longestS: longestVoicedS });
-      if (this.history.length > PROSODY.baselineWindow) this.history.shift();
-    }
-    this.onUtterance({ startS, endS: startS + hops.length * hopS, scores, strength, boosts, calibrated, peakDb, medianHz });
+    const u: Utterance = { startS, endS: startS + hops.length * hopS, scores, strength, boosts, calibrated, peakDb, medianHz, highHz, longestS: longestVoicedS };
+    if (this.autoLearn) this.learn(u);
+    this.onUtterance(u);
+  }
+
+  /** Adds a normal-sounding utterance to the baseline (boosted ones are ignored). */
+  learn(u: Utterance) {
+    const s = u.strength;
+    if (u.calibrated && (s.snap >= 1 || s.hype >= 1 || s.full >= 1)) return;
+    this.history.push({ peakDb: u.peakDb, highHz: u.highHz, longestS: u.longestS });
+    if (this.history.length > PROSODY.baselineWindow) this.history.shift();
+  }
+
+  /** Forget the speaker's normal voice (a new match recalibrates). */
+  resetBaseline() {
+    this.history = [];
   }
 }

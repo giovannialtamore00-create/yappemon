@@ -5,7 +5,7 @@ import * as THREE from 'three';
 import { FAIL_REASON, getLang, t } from '../i18n';
 import { MOVES, SPECIES } from '../sim/data';
 import { activeCreature } from '../sim/sim';
-import type { PlayerIdx, SimEvent, SimState, SpeciesId, BaseSpeciesId } from '../sim/types';
+import type { Boost, Intent, PlayerIdx, SimEvent, SimState, SpeciesId, BaseSpeciesId } from '../sim/types';
 import { normalize, parse, toIntents } from '../voice/parser';
 
 /** Said while the move-choice panel is open: start the round. */
@@ -30,7 +30,28 @@ export interface BattleAudio {
   musicDuck(on: boolean): void;
 }
 
+/** Verbal boosts measured from the player's mic (src/voice/mic.ts). */
+export interface VoiceBoosts {
+  /** Claims the voice behind a just-recognized command: its boost, if any. */
+  take(): Boost | undefined;
+  /** Calibration progress, or null when the mic isn't running. */
+  calibration(): { count: number; total: number } | null;
+}
+
+/** The boost goes on the first move of the command. */
+function attachBoost(intents: Intent[], boost: Boost): Intent[] {
+  let done = false;
+  return intents.map((it) => {
+    if (done || it.type !== 'queue') return it;
+    const i = it.actions.findIndex((a) => a.kind === 'move');
+    if (i < 0) return it;
+    done = true;
+    return { ...it, actions: it.actions.map((a, j) => (j === i && a.kind === 'move' ? { ...a, boost } : a)) };
+  });
+}
+
 export class Battle {
+  voice: VoiceBoosts | null = null;
   view: BattleView;
   private switchUi: { close(): void } | null = null;
   private loadoutUi: { close(): void; ready(): void } | null = null;
@@ -77,16 +98,18 @@ export class Battle {
   }
 
   /** Feed recognized (or typed) text through the parser. Only final text produces intents. */
-  command(text: string, final: boolean) {
+  command(text: string, final: boolean, boost?: Boost) {
     if (typeof text !== 'string' || this.spectator) return;
     if (!final) { this.hud.setTranscript(text); return; }
-    this.commandAlternatives([text]);
+    this.commandAlternatives([text], boost);
   }
 
   /** Final recognizer result: use the first alternative that parses into something actionable. */
-  commandAlternatives(alts: string[]) {
+  commandAlternatives(alts: string[], forcedBoost?: Boost) {
     const s = this.state();
     if (!s || s.result || !alts.length) return;
+    // Every recognized phrase claims its voice measurement (this is also how calibration learns).
+    const boost = forcedBoost ?? this.voice?.take();
     const tr = s.trainers[this.me];
     if (s.loadout > 0) {
       // Move-choice panel open: only "ready" is understood.
@@ -101,7 +124,7 @@ export class Battle {
       const intents = toIntents(parse(text, { activeSpecies, moves }).commands, { forcedSwitch, activeSpecies });
       if (intents.length) {
         this.hud.setTranscript(text, true, true);
-        this.session.send(intents);
+        this.session.send(boost ? attachBoost(intents, boost) : intents);
         return;
       }
     }
@@ -125,6 +148,7 @@ export class Battle {
     }
     this.view.update(dt, v.prev, v.curr, v.alpha);
     this.hud.update(v.curr, this.me);
+    if (!this.spectator) this.hud.setVoice(this.voice?.calibration() ?? null, v.curr.fullPowerCd[this.me]);
     // Music follows the round (key change) and the player's danger (low HP → faster).
     const mine = v.curr.trainers[this.me];
     const c = mine.team[mine.active]!;
@@ -176,6 +200,11 @@ export class Battle {
       case 'reflect':
         if (!this.spectator && e.target === this.me) this.hud.toast(t('reflectedYou'), 'bad');
         break;
+      case 'boost': {
+        const p = this.view.headPos(e.p).project(this.ctx.camera);
+        if (p.z <= 1) this.hud.boostFlash(e.boost, (p.x * 0.5 + 0.5) * window.innerWidth, (-p.y * 0.5 + 0.5) * window.innerHeight);
+        break;
+      }
       case 'combo_broken':
         if (mine) this.hud.toast(t('comboBroken'), 'bad', 2400);
         break;
@@ -258,6 +287,7 @@ export class Battle {
   }
 
   dispose() {
+    this.hud.setVoice(null, 0);
     this.closeSwitch();
     this.closeLoadout();
     this.view.dispose();

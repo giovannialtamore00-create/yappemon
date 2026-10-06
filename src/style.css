@@ -297,3 +297,39 @@ html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
   .hud-bottom { bottom: 164px; }
 }
 @media (max-width: 700px) { #toasts { bottom: 330px; } }
+
+/* verbal boosts: Just-Dance-style word burst, calibration prompt, FULL POWER chip */
+.boost-flash { position: absolute; transform: translate(-50%, -110%); pointer-events: none; display: grid; place-items: center; z-index: 3; }
+.boost-flash > * { grid-area: 1 / 1; }
+.bf-word { font-weight: 900; font-style: italic; font-size: 3rem; letter-spacing: 0.03em; white-space: nowrap; -webkit-text-stroke: 2px rgba(0, 0, 0, 0.55);
+  background: var(--bf-grad); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 3px 0 rgba(0, 0, 0, 0.6)) drop-shadow(0 0 14px var(--bf-glow));
+  animation: bfPop 1s cubic-bezier(.2, 1.6, .4, 1) forwards; }
+.bf-fx { width: 260px; height: 260px; border-radius: 50%; animation: bfFx 1s ease-out forwards; }
+.bf-snap { --bf-grad: linear-gradient(180deg, #fffbe0, #ffd23f 55%, #ff9f1c); --bf-glow: rgba(255, 210, 63, 0.9); }
+.bf-snap .bf-fx { background: repeating-linear-gradient(115deg, rgba(255, 230, 90, 0.95) 0 5px, transparent 5px 24px);
+  -webkit-mask: radial-gradient(circle, #000 25%, transparent 68%); mask: radial-gradient(circle, #000 25%, transparent 68%); animation: bfFx 0.7s ease-out forwards, bfShake 0.25s steps(2) 3; }
+.bf-snap .bf-word { animation: bfPop 1s cubic-bezier(.2, 1.6, .4, 1) forwards, bfShake 0.25s steps(2) 2; }
+.bf-hype { --bf-grad: linear-gradient(0deg, #ff3b1f, #ff8a2b 50%, #ffe08a); --bf-glow: rgba(255, 106, 43, 0.9); }
+.bf-hype .bf-fx { border-radius: 40% 40% 50% 50%; background: radial-gradient(ellipse 18% 45% at 30% 75%, rgba(255, 80, 30, 0.9), transparent),
+  radial-gradient(ellipse 20% 55% at 50% 70%, rgba(255, 170, 40, 0.95), transparent), radial-gradient(ellipse 18% 45% at 70% 75%, rgba(255, 60, 30, 0.9), transparent),
+  radial-gradient(ellipse 30% 30% at 50% 85%, rgba(255, 230, 120, 0.8), transparent); animation: bfFlame 1s ease-out forwards; }
+.bf-full { --bf-grad: linear-gradient(180deg, #fff4c2, #ffd76a 40%, #b46bff); --bf-glow: rgba(180, 107, 255, 0.95); }
+.bf-full .bf-word { font-size: 3.6rem; animation: bfPop 1.3s cubic-bezier(.2, 1.4, .4, 1) forwards; }
+.bf-full .bf-fx { width: 360px; height: 360px; background: repeating-conic-gradient(rgba(255, 215, 106, 0.9) 0 7deg, rgba(180, 107, 255, 0.85) 7deg 14deg, transparent 14deg 30deg);
+  -webkit-mask: radial-gradient(circle, transparent 12%, #000 22%, transparent 70%); mask: radial-gradient(circle, transparent 12%, #000 22%, transparent 70%); animation: bfRays 1.3s ease-out forwards; }
+@keyframes bfPop { 0% { transform: scale(0.2) rotate(-8deg); opacity: 0; } 18% { transform: scale(1.3) rotate(3deg); opacity: 1; } 32% { transform: scale(1) rotate(0); } 75% { transform: scale(1.04); opacity: 1; } 100% { transform: scale(1.1) translateY(-14px); opacity: 0; } }
+@keyframes bfFx { 0% { transform: scale(0.3); opacity: 0; } 20% { opacity: 1; } 100% { transform: scale(1.25); opacity: 0; } }
+@keyframes bfShake { 0% { translate: -4px 0; } 50% { translate: 4px 1px; } 100% { translate: 0 0; } }
+@keyframes bfFlame { 0% { transform: scale(0.5, 0.2) translateY(40px); opacity: 0; } 25% { opacity: 1; } 100% { transform: scale(1, 1.4) translateY(-50px); opacity: 0; } }
+@keyframes bfRays { 0% { transform: scale(0.2) rotate(0); opacity: 0; } 20% { opacity: 1; } 100% { transform: scale(1.2) rotate(70deg); opacity: 0; } }
+.voice-cal { position: fixed; left: 50%; bottom: 14px; transform: translateX(-50%); z-index: 20; display: flex; align-items: center; gap: 10px; pointer-events: none;
+  background: rgba(20, 16, 40, 0.92); border: 1px solid #b46bff; border-radius: 999px; padding: 8px 16px; font-weight: 700; font-size: 0.9rem; box-shadow: 0 0 18px rgba(180, 107, 255, 0.35); max-width: calc(100vw - 32px); }
+.voice-cal.done { border-color: #6c6; box-shadow: 0 0 18px rgba(100, 220, 100, 0.35); }
+.voice-cal.hidden { display: none; }
+.vc-dots { display: flex; gap: 5px; }
+.vc-dots span { width: 10px; height: 10px; border-radius: 50%; background: #3a3456; border: 1px solid #b46bff; }
+.vc-dots span.on { background: #ffd76a; box-shadow: 0 0 8px #ffd76a; }
+.fp-chip { grid-column: 1 / -1; justify-self: start; font-size: 0.78rem; font-weight: 800; letter-spacing: 0.04em; padding: 3px 10px; border-radius: 999px;
+  color: #fff4c2; background: linear-gradient(90deg, #6b3bd6, #b46bff); box-shadow: 0 0 10px rgba(180, 107, 255, 0.6); }
+.fp-chip.sleeping { color: #aab4d0; background: #2a3150; box-shadow: none; }
+.fp-chip.hidden { display: none; }
