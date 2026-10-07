@@ -1,5 +1,7 @@
 # Deploy
 
+Live: https://giovannialtamore00-create.github.io/yappemon/ (repo `giovannialtamore00-create/yappemon`, already set up; just push `main`).
+
 CI: `.github/workflows/deploy.yml` (tests + build on every push to `main`, publishes to GitHub Pages). Vite `base: './'`. See [decisions.md](decisions.md) #43.
 
 The microphone only works on **HTTPS** pages (or localhost), so put the game on a free HTTPS host. Pick **one** of these.

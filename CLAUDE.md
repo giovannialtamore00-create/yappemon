@@ -20,8 +20,9 @@ Stack: TypeScript, Vite, Three.js, PeerJS, Web Speech API, Vitest, Playwright. N
 `npm run dev` · `npm test` · `npm run build` · `node scripts/smoke.mjs --full` (more in docs/testing.md)
 
 ## Status
-- **Branch:** `verbal-enhancements`, from `loadout-evolutions` (move-choice panel + evolution shapes, #71–72), which still
-  awaits the user's OK to merge into `main` (`main` has the movement update, merged locally, not pushed). Ask before merging.
+- **Branch:** `main` (user approved merging `loadout-evolutions` + `verbal-enhancements` in, 2026-10-07).
+- **Live:** https://giovannialtamore00-create.github.io/yappemon/ (repo `giovannialtamore00-create/yappemon`, every push to
+  `main` redeploys via CI). Linked from a card on Platypus (`C:\Users\giova\platypus-site`).
 - **Feature:** verbal boosts = how a command is said: SNAP (sharp attack), HYPE (pitch rise), FULL POWER (stretched vowel). See decision #73.
   Milestones: M1 voice measurement · M2 sim effects (+ sanitizer, docs) · M3 voice→intents, mic calibration at match start, flash words + sounds, FULL POWER cooldown icon (ZZZ…).
 - **Done:** M1 (`src/voice/prosody.ts`, `mic.ts`, `?prosody=1` debug panel; user approved detection by voice).
@@ -29,9 +30,8 @@ Stack: TypeScript, Vite, Three.js, PeerJS, Web Speech API, Vitest, Playwright. N
 - **M3 (code done, decisions #74):** voice check before the match, boost on the first move of a command, flash words + sounds,
   in-match calibration pill (fallback after Skip), FULL POWER chip. Verified: unit tests, boost-test, prosody-test, smoke, flow, net,
   spectator, Italian voice, loadout-shots. Open links in Chrome (VS Code's built-in viewer has no mic).
-- **Next:** user tries boosts by voice in a practice match (`npm run dev`, Chrome), then commit "M3" and ask about merging.
-- **Known issues:** `smoke.mjs --full` crashes headless Chrome on an audio-device error, also before this feature (docs/blockers.md). The live deploy link isn't needed for now, so `dist/` can be rebuilt freely.
-
+- **Next:** user tries boosts by voice in a practice match (live link or `npm run dev`, Chrome).
+- **Known issues:** `smoke.mjs --full` crashes headless Chrome on an audio-device error, also before this feature (docs/blockers.md).
 ## Docs (read only what the task needs)
 - [docs/architecture.md](docs/architecture.md): every `src/` file, how modules connect, where data lives. Read before touching code you haven't seen this session.
 - [docs/combat-rules.md](docs/combat-rules.md): rounds, evolution, move choice, damage, accuracy, stamina, interrupts. Read for gameplay/balance changes.
