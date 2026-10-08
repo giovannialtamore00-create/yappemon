@@ -20,17 +20,19 @@ Stack: TypeScript, Vite, Three.js, PeerJS, Web Speech API, Vitest, Playwright. N
 `npm run dev` · `npm test` · `npm run build` · `node scripts/smoke.mjs --full` (more in docs/testing.md)
 
 ## Status
-- **Branch:** `main` (user approved merging `loadout-evolutions` + `verbal-enhancements` in, 2026-10-07).
+- **Branch:** `encouragements` (off `main`; merging to `main` publishes live, so ask first). `main` = live verbal-boosts version.
 - **Live:** https://giovannialtamore00-create.github.io/yappemon/ (repo `giovannialtamore00-create/yappemon`, every push to
   `main` redeploys via CI). Linked from a card on Platypus (`C:\Users\giova\platypus-site`).
-- **Feature:** verbal boosts = how a command is said: SNAP (sharp attack), HYPE (pitch rise), FULL POWER (stretched vowel). See decision #73.
-  Milestones: M1 voice measurement · M2 sim effects (+ sanitizer, docs) · M3 voice→intents, mic calibration at match start, flash words + sounds, FULL POWER cooldown icon (ZZZ…).
-- **Done:** M1 (`src/voice/prosody.ts`, `mic.ts`, `?prosody=1` debug panel; user approved detection by voice).
-  M2 (boosts in the sim: `boost` on move `QAction`, `SimState.fullPowerCd`, `boost` event; sanitizer; tests; combat-rules.md).
-- **M3 (code done, decisions #74):** voice check before the match, boost on the first move of a command, flash words + sounds,
-  in-match calibration pill (fallback after Skip), FULL POWER chip. Verified: unit tests, boost-test, prosody-test, smoke, flow, net,
-  spectator, Italian voice, loadout-shots. Open links in Chrome (VS Code's built-in viewer has no mic).
-- **Next:** user tries boosts by voice in a practice match (live link or `npm run dev`, Chrome).
+- **Feature (user request 2026-10-09):** M1 move uses per round (5/10/15/20 by cost tier) · M2 creature name before a command = +10 accuracy
+  (capped 100, every move of that command, any stage name of the active creature) · M3 encouragement words, instant, free, don't interrupt:
+  Forza/"come on" +5% stamina, Resisti/"stay strong" +2% temp HP, Coraggio/"courage" +1% temp HP, Perfetto/"perfect" +5% stamina,
+  Non arrenderti/"don't give up" heal 5% (% of max). Temp HP soaks damage first, lasts 10 s, max 10% of max HP. Same word again within
+  10 s = 50% chance of no effect (seeded sim RNG). 5 s gap between any two encouragements (user set). "forza" is currently a filler word
+  (aliases.ts) and "hold on" means stop: handle both. Flash word + sound each. PAUSE after M3 for user playtest, then ask before merging.
+- **Done:** M1 (decision #75: `MoveDef.uses`, `CreatureState.used`, `usesLeft`, fail `no_uses`, bot skips used-up moves, "x/y" on move cards;
+  tests, `scripts/uses-shots.mjs`, net + flow OK).
+- **Next:** M2 (creature name bonus).
+- **Earlier feature (verbal boosts, decisions #73–74):** on `main`; user still to try boosts by voice in Chrome.
 - **Known issues:** `smoke.mjs --full` crashes headless Chrome on an audio-device error, also before this feature (docs/blockers.md).
 ## Docs (read only what the task needs)
 - [docs/architecture.md](docs/architecture.md): every `src/` file, how modules connect, where data lives. Read before touching code you haven't seen this session.
@@ -38,7 +40,7 @@ Stack: TypeScript, Vite, Three.js, PeerJS, Web Speech API, Vitest, Playwright. N
 - [docs/creatures-and-moves.md](docs/creatures-and-moves.md): creature stats, all moves (costs, accuracy, effects), type chart. Read for move/creature work.
 - [docs/voice-commands.md](docs/voice-commands.md): all EN/IT commands, chaining, dodge/alert. Read for parser or command changes.
 - [docs/testing.md](docs/testing.md): headless scripts, test URL options, page hooks, Windows/headless tips. Read before verifying.
-- [docs/decisions.md](docs/decisions.md): numbered design decisions (#1–72, newest last). Grep for a topic; don't read it all.
+- [docs/decisions.md](docs/decisions.md): numbered design decisions (#1–75, newest last). Grep for a topic; don't read it all.
 - [docs/playing.md](docs/playing.md): player setup, online play, browser requirements, known limitations.
 - [docs/deploy.md](docs/deploy.md): GitHub Pages / Netlify deploy and CI. Read only for deploy work.
 - [docs/blockers.md](docs/blockers.md): parked problems.

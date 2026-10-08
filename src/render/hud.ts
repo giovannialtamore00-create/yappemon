@@ -3,6 +3,7 @@
 import { ELEMENT_COLOR, ELEMENT_LABEL, getLang, t } from '../i18n';
 import { ALERT_COST, DODGE_COST, MOVES, SPECIES, STAMINA_MAX, TICK_HZ } from '../sim/data';
 import { MOVE_DESC } from '../movedesc';
+import { usesLeft } from '../sim/sim';
 import type { Boost, CreatureState, PlayerIdx, QAction, SimState, TrainerState } from '../sim/types';
 
 export type MicStatus = 'on' | 'off' | 'denied' | 'unsupported' | 'starting';
@@ -312,10 +313,11 @@ export class Hud {
     const c = tr.team[tr.active]!;
     const def = SPECIES[c.species];
     const lang = getLang();
-    const affordable = c.moves.map((m) => c.stamina >= MOVES[m].cost);
+    const left = c.moves.map((m) => usesLeft(c, m));
+    const affordable = c.moves.map((m, i) => c.stamina >= MOVES[m].cost && left[i]! > 0);
     const current = tr.action?.action.kind === 'move' ? tr.action.action.move : null;
     const queued = new Set(tr.queue.flatMap((a) => (a.kind === 'move' ? [a.move] : [])));
-    const key = `${c.species}|${c.moves.join()}|${lang}|${affordable.join()}|${c.stamina >= DODGE_COST}|${current}|${[...queued].join()}`;
+    const key = `${c.species}|${c.moves.join()}|${lang}|${affordable.join()}|${left.join()}|${c.stamina >= DODGE_COST}|${current}|${[...queued].join()}`;
     if (key === this.movesKey) return;
     this.movesKey = key;
     this.moves.innerHTML = '';
@@ -332,7 +334,9 @@ export class Hud {
         acc.title = t('accuracyTip', { n: m.accuracy });
         meta.append(acc);
       }
-      meta.append(h('span', 'mc-cost', String(m.cost)));
+      const uses = h('span', `mc-uses${left[i]! <= 0 ? ' out' : ''}`, `${left[i]}/${m.uses}`);
+      uses.title = t('usesTip', { n: left[i]!, max: m.uses! });
+      meta.append(uses, h('span', 'mc-cost', String(m.cost)));
       const dmg = Math.round(m.power * def.dmgMult);
       const desc = h('div', 'mc-desc', MOVE_DESC[id][lang].replace('{d}', String(dmg)));
       card.append(h('div', 'mc-name', m.name[lang]), meta, desc);

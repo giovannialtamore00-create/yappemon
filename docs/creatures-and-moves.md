@@ -22,6 +22,8 @@ Super effective = **+25%** (`SUPER_EFFECTIVE`), not very effective = 0.5× (`NOT
 
 ## Moves (base stage)
 
+Uses per round (see combat-rules.md): Stamina 47+ → 5 uses, 41 → 10, 27–34 → 15, 20 → 20.
+
 | Creature | English | Italiano | Stamina | Accuracy | Effect |
 |---|---|---|---|---|---|
 | **Cindrix** (Fire) | Shell Ram | Carica Corazzata | 20 | 100% | **Quick** melee roll, 8 dmg |

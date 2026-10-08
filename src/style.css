@@ -287,6 +287,8 @@ html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
 .cmd.armed { background: rgba(127, 232, 255, 0.4); border-color: #bff4ff; box-shadow: 0 0 10px rgba(127, 232, 255, 0.8); animation: pulse 0.6s infinite; }
 .mc-quick { font-size: 0.6rem; font-weight: 900; letter-spacing: 0.06em; padding: 1px 5px; border-radius: 999px; background: #fff27a; color: #111; }
 .mc-acc { font-size: 0.7rem; font-weight: 700; color: #bcd0f0; font-variant-numeric: tabular-nums; }
+.mc-uses { font-size: 0.7rem; font-weight: 700; color: #d8d0f0; font-variant-numeric: tabular-nums; }
+.mc-uses.out { color: #ff6a6a; }
 .cmd-cost::after { content: '⚡'; font-size: 0.7em; }
 @media (max-width: 700px) {
   .energy-gauge { left: 8px; top: 200px; bottom: 360px; width: 40px; }

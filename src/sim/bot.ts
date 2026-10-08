@@ -4,7 +4,7 @@
 
 import { ALERT_COST, DODGE_COST, DODGE_WINDOW_S, MOVES, TICK_HZ } from './data';
 import { Rng } from './rng';
-import { activeCreature, benchSlot } from './sim';
+import { activeCreature, benchSlot, usesLeft } from './sim';
 import type { Intent, PlayerIdx, SimState } from './types';
 
 export interface BotOptions {
@@ -65,7 +65,7 @@ export class Bot {
     if (c.hp < c.maxHp * 0.35 && me.alertTicks === 0 && c.stamina >= ALERT_COST + 20 && this.rng.next() < this.opts.alertChance) {
       return [{ type: 'queue', actions: [{ kind: 'alert' }] }];
     }
-    const affordable = c.moves.filter((m) => MOVES[m].cost <= c.stamina);
+    const affordable = c.moves.filter((m) => MOVES[m].cost <= c.stamina && usesLeft(c, m) > 0);
     if (!affordable.length) return [];
     return [{ type: 'queue', actions: [{ kind: 'move', move: this.rng.pick(affordable) }] }];
   }

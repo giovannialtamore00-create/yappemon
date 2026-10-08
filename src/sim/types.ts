@@ -67,6 +67,8 @@ export interface MoveDef {
   accuracy: number;
   /** Near-instant attack: tiny windup, can't be caught by the dodge window. */
   quick?: boolean;
+  /** Times each creature can start it per round (set from the base cost in data.ts). */
+  uses?: number;
   name: Record<Lang, string>;
 }
 
@@ -141,6 +143,8 @@ export interface CreatureState {
   mirrorTicks: number;
   /** The moves chosen for this round (LOADOUT_SIZE of the species' learned moves). */
   moves: MoveId[];
+  /** Times each move was started this round (limit: MoveDef.uses). */
+  used: Partial<Record<MoveId, number>>;
 }
 
 /**
@@ -229,7 +233,7 @@ export interface SimState {
 
 export type Effectiveness = 'super' | 'weak' | 'neutral';
 
-export type FailReason = 'interrupted' | 'stamina' | 'target_recalled' | 'rooted' | 'no_bench';
+export type FailReason = 'interrupted' | 'stamina' | 'no_uses' | 'target_recalled' | 'rooted' | 'no_bench';
 
 export type SimEvent =
   | { t: 'action_start'; p: PlayerIdx; action: QAction }

@@ -18,7 +18,7 @@ export function createCreature(species: SpeciesId, moves = defaultLoadout(specie
   const def = SPECIES[species];
   return {
     species, hp: def.maxHp, maxHp: def.maxHp, stamina: STAMINA_MAX, regenPause: 0, fainted: false,
-    shieldTicks: 0, staticTicks: 0, rootTicks: 0, healTicks: 0, healPerTick: 0, mirrorTicks: 0, moves,
+    shieldTicks: 0, staticTicks: 0, rootTicks: 0, healTicks: 0, healPerTick: 0, mirrorTicks: 0, moves, used: {},
   };
 }
 
@@ -63,6 +63,8 @@ export function createMatch(teams: [BaseSpeciesId[], BaseSpeciesId[]], seed: num
 }
 
 export const activeCreature = (t: TrainerState): CreatureState => t.team[t.active]!;
+/** Starts of `move` this creature has left this round. */
+export const usesLeft = (c: CreatureState, move: MoveId): number => (MOVES[move].uses ?? Infinity) - (c.used[move] ?? 0);
 const other = (p: PlayerIdx): PlayerIdx => (p === 0 ? 1 : 0);
 
 function rand(s: SimState): number {
@@ -422,8 +424,10 @@ function startNext(s: SimState, p: PlayerIdx, ev: SimEvent[]) {
       t.queue.shift();
       const m = MOVES[a.move];
       if (!c.moves.includes(m.id)) continue; // stale entry after a switch
+      if (usesLeft(c, m.id) <= 0) return fail(s, p, 'no_uses', ev);
       if (c.stamina < m.cost) return fail(s, p, 'stamina', ev);
       spend(c, m.cost);
+      c.used[m.id] = (c.used[m.id] ?? 0) + 1;
       const run = boostedAction(s, p, a);
       const windup = (m.quick ? QUICK_WINDUP_S : m.windup * speedMult(t)) / (run.boost === 'snap' ? SNAP_SPEED : 1);
       t.action = newRun(s, run, secToTicks(windup));

@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import {
   ARENA_X_M, Bot, FULL_POWER_COOLDOWN_S, FULL_POWER_MULT, HYPE_STAMINA, LOADOUT_S, SNAP_SPEED, PREFERRED_GAP_M, defaultLoadout, DODGE_COST, HALF_FAR_M, HALF_NEAR_M, MOVES, MOVE_IDS, SPECIES, STAMINA_MAX, TICK_HZ, activeCreature,
-  computeDamage, createMatch, hitChance, step, travelTicks, typeMultiplier,
+  computeDamage, createMatch, hitChance, step, travelTicks, typeMultiplier, usesLeft,
   type BaseSpeciesId, type Intent, type MoveId, type SimEvent, type SimState, type SpeciesId,
 } from '../src/sim';
 
@@ -77,6 +77,52 @@ describe('damage formula', () => {
     expect(dmg).toBeGreaterThanOrEqual(22); // 16*1.25*1.25*0.9
     expect(dmg).toBeLessThanOrEqual(28);
     expect(activeCreature(s.trainers[1]).hp).toBe(125 - dmg);
+  });
+});
+
+describe('move uses', () => {
+  it('limits uses per round by base cost tier', () => {
+    expect(MOVES.magma_burst.uses).toBe(5); // 35
+    expect(MOVES.volcanic_ruin.uses).toBe(5); // 45
+    expect(MOVES.molten_leap.uses).toBe(10); // 30
+    expect(MOVES.heat_shell.uses).toBe(15); // 20
+    expect(MOVES.healing_rain.uses).toBe(15); // 25
+    expect(MOVES.cinder_spit.uses).toBe(20); // 15
+    expect(MOVE_IDS.every((m) => [5, 10, 15, 20].includes(MOVES[m].uses!))).toBe(true);
+  });
+  it('counts each start and refuses a move with no uses left', () => {
+    const s = ready(['cindrix'], ['vinram']);
+    const c = activeCreature(s.trainers[0]);
+    step(s, [[q('magma_burst')], []]);
+    expect(usesLeft(c, 'magma_burst')).toBe(4);
+    s.trainers[0].action = null;
+    c.used.magma_burst = 5;
+    c.stamina = STAMINA_MAX;
+    const ev = step(s, [[q('magma_burst')], []]);
+    expect(ev).toContainEqual({ t: 'fail', p: 0, reason: 'no_uses' });
+    expect(c.stamina).toBe(STAMINA_MAX); // nothing spent
+    expect(s.trainers[0].action).toBeNull();
+  });
+  it('resets uses in the next round', () => {
+    const s = ready(['cindrix'], ['vinram']);
+    activeCreature(s.trainers[0]).used.magma_burst = 5;
+    activeCreature(s.trainers[1]).hp = 0.1;
+    activeCreature(s.trainers[1]).fainted = false;
+    step(s, [[q('cinder_spit')], []]);
+    run(s, sec(30));
+    expect(s.round).toBe(2);
+    expect(activeCreature(s.trainers[0]).used).toEqual({});
+  });
+  it('the bot never picks a move with no uses left', () => {
+    const s = ready(['cindrix'], ['vinram']);
+    const me = activeCreature(s.trainers[1]);
+    for (const m of me.moves) if (m !== 'leaf_volley') me.used[m] = MOVES[m].uses;
+    const bot = new Bot(1, 7);
+    for (let i = 0; i < sec(20); i++) {
+      for (const it of bot.think(s)) if (it.type === 'queue') for (const a of it.actions) if (a.kind === 'move') expect(a.move).toBe('leaf_volley');
+      me.stamina = STAMINA_MAX;
+      step(s, none);
+    }
   });
 });
 

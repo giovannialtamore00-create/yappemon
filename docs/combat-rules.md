@@ -12,6 +12,7 @@ How a match plays out. Numbers live in `src/sim/data.ts`; logic in `src/sim/sim.
 
 - **Damage** = power × type multiplier × 1.25 if the move matches the creature's type × random 0.9–1.1.
 - **Stamina:** max 100, regenerates 10/s, and regen pauses for 0.8 s after spending.
+- **Move uses:** each creature can start each move a limited number of times per round (shown as "x/y" on the move cards; resets every round). By base stamina cost: 35+ (strongest) **5**, 30 (strong) **10**, 20–25 (normal) **15**, 15 (common) **20**. A move with no uses left fails ("no uses left this round"), clearing the queue like any failure. The bot only picks moves it can still use.
 - **Movement:** creatures move on their own, strafing sideways and stepping in and out on their own half of the arena (fast creatures move faster). A creature busy with a move stands still. The camera turns to keep both creatures in view.
 - **Accuracy:** every attack has an accuracy % (shown on the move cards). It is ×1.2 against a creature that is busy with a move (it stands still), ×0.7 against an alert creature, and always misses a creature in the middle of a dodge dash. A miss shows "Miss!" and the target sidesteps.
 - **Moves** have windup → active → recovery phases. Heavy moves have long windups, and the opponent's panel shows "Charging: …!" so you can arm a dodge.

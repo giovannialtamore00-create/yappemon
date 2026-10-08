@@ -130,6 +130,7 @@ const STR = {
     comboBroken: 'Combo broken! Your queued commands were lost',
     quickTag: 'QUICK',
     accuracyTip: 'Accuracy {n}% (×1.2 if the foe is attacking, ×0.7 if it is alert)',
+    usesTip: 'Uses left this round: {n} of {max}',
     foeSentOutP: '{who} sent out {name}!',
     failedP: "{who}'s move failed",
   },
@@ -262,6 +263,7 @@ const STR = {
     comboBroken: 'Combo interrotta! I comandi in coda sono persi',
     quickTag: 'RAPIDA',
     accuracyTip: 'Precisione {n}% (×1,2 se il nemico attacca, ×0,7 se è in guardia)',
+    usesTip: 'Utilizzi rimasti in questo round: {n} su {max}',
     foeSentOutP: '{who} manda in campo {name}!',
     failedP: 'Mossa fallita: {who}',
   },
@@ -285,8 +287,8 @@ export const ELEMENT_LABEL: Record<Lang, Record<Element, string>> = {
 };
 
 export const FAIL_REASON: Record<Lang, Record<FailReason, string>> = {
-  en: { interrupted: 'interrupted', stamina: 'not enough stamina', target_recalled: 'target left the field', rooted: 'rooted, cannot dodge', no_bench: 'no creature to switch to' },
-  it: { interrupted: 'interrotta', stamina: 'energia insufficiente', target_recalled: 'il bersaglio è rientrato', rooted: 'bloccato, non può schivare', no_bench: 'nessuna creatura disponibile' },
+  en: { interrupted: 'interrupted', stamina: 'not enough stamina', no_uses: 'no uses left this round', target_recalled: 'target left the field', rooted: 'rooted, cannot dodge', no_bench: 'no creature to switch to' },
+  it: { interrupted: 'interrotta', stamina: 'energia insufficiente', no_uses: 'utilizzi esauriti per questo round', target_recalled: 'il bersaglio è rientrato', rooted: 'bloccato, non può schivare', no_bench: 'nessuna creatura disponibile' },
 };
 
 export const ELEMENT_COLOR: Record<Element, string> = {

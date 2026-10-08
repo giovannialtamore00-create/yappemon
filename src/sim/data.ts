@@ -175,8 +175,16 @@ export const MOVES: Record<MoveId, MoveDef> = {
   sky_judgement: { id: 'sky_judgement', species: 'tempestra', element: 'electric', cost: 45, power: 38, delivery: 'beam', effect: dmg, windup: 1.8, active: 0.4, recovery: 0.9, hitDelay: 0.1, heavy: true, accuracy: 75, name: { en: 'Sky Judgement', it: 'Giudizio Celeste' } },
 };
 
+/** Uses per round by base stamina cost: strongest (≥35) 5, strong (30) 10, normal (20–25) 15, common (15) 20. */
+export function usesForBaseCost(base: number): number {
+  return base >= 35 ? 5 : base >= 30 ? 10 : base >= 20 ? 15 : 20;
+}
+
 // Costs above are base values; apply the global stamina-cost multiplier once.
-for (const m of Object.values(MOVES)) m.cost = scaledCost(m.cost);
+for (const m of Object.values(MOVES)) {
+  m.uses = usesForBaseCost(m.cost);
+  m.cost = scaledCost(m.cost);
+}
 
 export const MOVE_IDS = Object.keys(MOVES) as MoveId[];
 
