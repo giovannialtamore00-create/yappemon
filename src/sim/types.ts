@@ -11,6 +11,17 @@ export type Stage = 1 | 2 | 3;
 export type PlayerIdx = 0 | 1;
 export type Lang = 'en' | 'it';
 
+export type CheerId = 'come_on' | 'stay_strong' | 'courage' | 'perfect' | 'dont_give_up';
+
+/** An encouragement word; amounts are fractions of max stamina / max HP. */
+export interface CheerDef {
+  id: CheerId;
+  stamina?: number;
+  tempHp?: number;
+  heal?: number;
+  name: { en: string; it: string };
+}
+
 export type MoveId =
   | 'shell_ram' | 'cinder_spit' | 'heat_shell' | 'magma_burst'
   | 'bubble_bump' | 'water_jet' | 'healing_rain' | 'tidal_crash'
@@ -107,6 +118,8 @@ export type QAction =
 export type Intent =
   | { type: 'queue'; actions: QAction[] }
   | { type: 'stop' }
+  /** Encouragement word: instant, free, doesn't touch the queue or the running action. */
+  | { type: 'cheer'; word: CheerId }
   | { type: 'choose'; slot: 0 | 1 }
   | { type: 'go'; species: SpeciesId }
   /** During the loadout phase: the moves team slot `slot` brings into the round. */
@@ -146,6 +159,9 @@ export interface CreatureState {
   moves: MoveId[];
   /** Times each move was started this round (limit: MoveDef.uses). */
   used: Partial<Record<MoveId, number>>;
+  /** Temporary HP from encouragements (soaks damage first) and ticks until it expires. */
+  tempHp: number;
+  tempTicks: number;
 }
 
 /**
@@ -183,6 +199,9 @@ export interface TrainerState {
   dashDir: 1 | -1;
   /** Ticks left of the alert stance. */
   alertTicks: number;
+  /** Tick of the last accepted encouragement, and per word (for the repeat rule). */
+  cheerTick: number;
+  cheerAt: Partial<Record<CheerId, number>>;
 }
 
 export interface Strike {
@@ -242,6 +261,8 @@ export type SimEvent =
   | { t: 'action_start'; p: PlayerIdx; action: QAction }
   /** A verbal boost took effect on the move that just started (FULL POWER also starts its cooldown). */
   | { t: 'boost'; p: PlayerIdx; boost: Boost }
+  /** An encouragement took effect on the active creature. */
+  | { t: 'cheer'; p: PlayerIdx; word: CheerId }
   | { t: 'launch'; p: PlayerIdx; move: MoveId; strike?: number }
   | { t: 'hit'; p: PlayerIdx; target: PlayerIdx; move: MoveId; damage: number; eff: Effectiveness; interrupted: boolean; heavy: boolean; strike: number }
   | { t: 'dodged'; p: PlayerIdx; target: PlayerIdx; move: MoveId; strike: number }

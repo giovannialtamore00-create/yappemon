@@ -1,10 +1,10 @@
 // DOM HUD overlay: creature panels, queue chips, move reference, transcript, mic status, toasts, floating numbers.
 
 import { ELEMENT_COLOR, ELEMENT_LABEL, getLang, t } from '../i18n';
-import { ALERT_COST, DODGE_COST, MOVES, SPECIES, STAMINA_MAX, TICK_HZ } from '../sim/data';
+import { ALERT_COST, CHEERS, CHEER_IDS, DODGE_COST, MOVES, SPECIES, STAMINA_MAX, TICK_HZ } from '../sim/data';
 import { MOVE_DESC } from '../movedesc';
 import { usesLeft } from '../sim/sim';
-import type { Boost, CreatureState, PlayerIdx, QAction, SimState, TrainerState } from '../sim/types';
+import type { Boost, CheerId, CreatureState, PlayerIdx, QAction, SimState, TrainerState } from '../sim/types';
 
 export type MicStatus = 'on' | 'off' | 'denied' | 'unsupported' | 'starting';
 export type ToastKind = 'info' | 'good' | 'bad' | 'super' | 'weak';
@@ -90,6 +90,9 @@ export class Hud {
   private wordsLabel = h('div', 'words-label');
   private nameWord = h('div', 'word');
   private nameTimer = 0;
+  private cheerWords = new Map(CHEER_IDS.map((w) => [w, h('div', 'word')] as const));
+  private cheerTimers = new Map<CheerId, number>();
+  private cheerLang = '';
 
   /** Spectator: no voice box / move list; panels labelled Player 1 (bottom) and Player 2 (top). */
   setSpectator(on: boolean) {
@@ -126,7 +129,7 @@ export class Hud {
     this.energy.append(this.energyLabel, track, this.energyVal);
     root.append(this.energy);
     this.wordsLabel.textContent = t('words');
-    this.wordsBox.append(this.wordsLabel, this.nameWord);
+    this.wordsBox.append(this.wordsLabel, ...this.cheerWords.values(), h('div', 'words-sep'), this.nameWord);
     root.append(this.wordsBox);
     bottom.append(voice);
     this.debug.placeholder = t('debugHint');
@@ -198,6 +201,10 @@ export class Hud {
     this.updateEnergy(mine);
     const name = SPECIES[mine.team[mine.active]!.species].name;
     if (this.nameWord.textContent !== name) this.nameWord.textContent = name;
+    if (this.cheerLang !== getLang()) {
+      this.cheerLang = getLang();
+      for (const [w, el] of this.cheerWords) el.textContent = CHEERS[w].name[this.cheerLang as 'en' | 'it'];
+    }
   }
 
   private updatePanel(p: Panel, tr: TrainerState) {
@@ -417,6 +424,21 @@ export class Hud {
     this.nameWord.classList.add('said');
     window.clearTimeout(this.nameTimer);
     this.nameTimer = window.setTimeout(() => this.nameWord.classList.remove('said'), 1500);
+  }
+
+  /** An encouragement took effect: light its word green and burst it over the creature (at x, y if on screen). */
+  cheerSaid(word: CheerId, at: { x: number; y: number } | null) {
+    const el = this.cheerWords.get(word)!;
+    el.classList.add('said');
+    window.clearTimeout(this.cheerTimers.get(word));
+    this.cheerTimers.set(word, window.setTimeout(() => el.classList.remove('said'), 1500));
+    if (!at) return;
+    const f = h('div', 'boost-flash bf-cheer');
+    f.style.left = `${at.x}px`;
+    f.style.top = `${at.y}px`;
+    f.append(h('div', 'bf-fx'), h('div', 'bf-word', `${CHEERS[word].name[getLang()]}!`));
+    this.floats.append(f);
+    window.setTimeout(() => f.remove(), 1000);
   }
 
   /** Just-Dance-style word burst over a creature when a verbal boost lands. */

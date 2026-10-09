@@ -13,8 +13,9 @@ Stack: TypeScript, Vite, Three.js, PeerJS, Web Speech API, Vitest, Playwright. N
 - Online play is host-authoritative: new player actions are sim intents, and must be allowed by the sanitizer in `src/net/sessions.ts`.
 - Don't merge into `main` or change `main` without the user's OK. Never force-push.
 - Before calling work done: `npx tsc --noEmit && npm test`, plus the relevant headless scripts (see testing doc).
-- End of every task: once the user has tested and approved it, commit, save all progress (Status above + the relevant docs) so a
-  fresh session can continue from the files alone, then ask the user to /clear before starting the next patch or task.
+- End of every milestone: once checks pass, commit on the branch right away (no waiting for a playtest) and tell the user; save all progress
+  (Status above + the relevant docs) so a fresh session can continue from the files alone. The user playtests a whole feature at once,
+  at the end, before any merge into `main`. Then ask the user to /clear before starting the next patch or task.
 
 ## Commands
 `npm run dev` · `npm test` · `npm run build` · `node scripts/smoke.mjs --full` (more in docs/testing.md)
@@ -28,11 +29,12 @@ Stack: TypeScript, Vite, Three.js, PeerJS, Web Speech API, Vitest, Playwright. N
   Forza/"come on" +5% stamina, Resisti/"stay strong" +2% temp HP, Coraggio/"courage" +1% temp HP, Perfetto/"perfect" +5% stamina,
   Non arrenderti/"don't give up" heal 5% (% of max). Temp HP soaks damage first, lasts 10 s, max 10% of max HP. Same word again within
   10 s = 50% chance of no effect (seeded sim RNG). 5 s gap between any two encouragements (user set). "forza" is currently a filler word
-  (aliases.ts) and "hold on" means stop: handle both. Flash word + sound each. PAUSE after M3 for user playtest, then ask before merging.
+  (aliases.ts) and "hold on" means stop: handle both. Flash word + sound each. Then user playtest of everything, then ask before merging.
 - **Done:** M1 (decision #75: `MoveDef.uses`, `CreatureState.used`, `usesLeft`, fail `no_uses`, bot skips used-up moves, "x/y" on move cards;
   tests, `scripts/uses-shots.mjs`, net + flow OK).
 - **Done:** M2 (decision #76: `named` flag parser → `QAction` → `Strike`, `NAME_ACC_BONUS` in hitChance; right-side Words box, name lights green when used; tests, `scripts/name-test.mjs`; net/flow/IT voice/boost scripts OK).
-- **Next:** M3 (encouragements; their words go in the right-side Words box above the creature name).
+- **Done:** M3 (decision #77: `cheer` intent, `CHEERS` in data.ts, temp HP, 5 s gap, 50% repeat fail; Words box + green flash + sound; tests, `scripts/cheer-test.mjs`; net/flow/IT voice/spectator/name OK, boost-test flaky (blockers)).
+- **Next:** user playtests the whole feature (M1–M3) at once → fixes as new commits → ask before merging `encouragements` into `main` (publishes live).
 - **Earlier feature (verbal boosts, decisions #73–74):** on `main`; user still to try boosts by voice in Chrome.
 - **Known issues:** `smoke.mjs --full` crashes headless Chrome on an audio-device error, also before this feature (docs/blockers.md).
 ## Docs (read only what the task needs)

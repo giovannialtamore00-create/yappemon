@@ -2,7 +2,7 @@
 // these add short forms, distinctive keywords and likely speech-recognizer mishearings.
 // Both languages are always accepted, whatever recognition language is selected.
 
-import type { MoveId, SpeciesId } from '../sim/types';
+import type { CheerId, MoveId, SpeciesId } from '../sim/types';
 
 export const MOVE_ALIASES: Record<MoveId, string[]> = {
   // Cindrix
@@ -76,6 +76,16 @@ export const SPECIES_ALIASES: Record<SpeciesId, string[]> = {
   tempestra: ['tempestra', 'tempest ra', 'tempest', 'tempesta ra', 'tempestre'],
 };
 
+/** Encouragements (official EN/IT names come from sim data). "hold on" stays a stop word. */
+export const CHEER_ALIASES: Record<CheerId, string[]> = {
+  come_on: ['come on', 'cmon', 'c mon', 'come one', 'come own', 'forza', 'forsa', 'forze'],
+  stay_strong: ['stay strong', 'stay strung', 'stays strong', 'stay string', 'stay stronger', 'resisti', 'resiste', 'resistere', 'resisto'],
+  courage: ['courage', 'curage', 'courageous', 'coraggio', 'corraggio', 'coraggioso', 'coragio'],
+  perfect: ['perfect', 'perfectly', 'perfekt', 'perfetto', 'perfetta', 'perfecto', 'perfeto'],
+  dont_give_up: ["don't give up", 'dont give up', 'do not give up', 'never give up', 'don t give up',
+    'non arrenderti', 'non ti arrendere', 'non arrendersi', 'non arrenderti mai', 'arrenderti'],
+};
+
 export const DODGE_ALIASES = ['dodge', 'dodge it', 'doge', 'dodger', 'dodges', 'dog', 'evade', 'sidestep', 'side step', 'move aside', 'duck',
   'schiva', 'schivo', 'skiva', 'schiba', 'schivare', 'schivalo', 'scansati', 'evita'];
 /** Side words for "dodge left/right" (same segment as the dodge). Left = −1, right = +1. */
@@ -100,7 +110,7 @@ export const CONNECTORS = ['and then', 'after that', 'and after', 'followed by',
 export const FILLERS = new Set([
   'use', 'used', 'using', 'do', 'please', 'now', 'the', 'a', 'an', 'attack', 'with', 'it', 'ok', 'okay', 'lets', 'let', 's',
   'try', 'again', 'quick', 'quickly', 'move', 'go', 'i', 'choose', 'you', 'your', 'hey', 'yo', 'come', 'on', 'to', 'verso',
-  'fai', 'per', 'favore', 'adesso', 'ora', 'il', 'lo', 'la', 'le', 'gli', 'un', 'una', 'attacca', 'con', 'dai', 'forza',
+  'fai', 'per', 'favore', 'adesso', 'ora', 'il', 'lo', 'la', 'le', 'gli', 'un', 'una', 'attacca', 'con', 'dai',
   'vai', 'scelgo', 'tocca', 'a', 'te', 'tu', 'subito', 'mossa', 'ancora',
   // common exclamations that sit one edit away from keywords ("mamma" ~ "magma")
   'mamma', 'mia', 'mamma mia', 'yes', 'no', 'si', 'wow', 'nice', 'cool', 'good', 'bene', 'bravo', 'brava', 'dio', 'god',

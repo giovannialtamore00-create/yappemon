@@ -30,6 +30,7 @@ Playwright needs Chromium once: `npx playwright install chromium`.
 | `move-shots.mjs` | Move animations → `screenshots/move` |
 | `evo-shots.mjs` | Evolution sequence |
 | `music-test.mjs` | Battle music |
+| `cheer-test.mjs` | Encouragements: word reaches the sim, lights green in the Words box, flash word, 5 s gap, Italian labels, phone layout (`screenshots/cheer/`) |
 | `name-test.mjs` | Creature name bonus: "Cindrix, cinder spit" reaches the sim as a named move; plain / other-creature commands don't |
 | `contact-sheet.mjs <dir> <out.png>` | Combine screenshots into one image for review |
 

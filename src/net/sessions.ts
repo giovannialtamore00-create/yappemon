@@ -2,8 +2,8 @@
 // at ~20 Hz plus the events since the last snapshot; the client (player 1) sends only intents and
 // renders snapshots with a small interpolation delay.
 
-import { ALL_SPECIES_IDS, DT, MOVES, SPECIES_IDS } from '../sim/data';
-import type { Intent, MoveId, PlayerIdx, QAction, SimEvent, SimState, SpeciesId, BaseSpeciesId } from '../sim/types';
+import { ALL_SPECIES_IDS, CHEERS, DT, MOVES, SPECIES_IDS } from '../sim/data';
+import type { CheerId, Intent, MoveId, PlayerIdx, QAction, SimEvent, SimState, SpeciesId, BaseSpeciesId } from '../sim/types';
 import { SimRunner, type Session, type SessionView } from '../game/session';
 import type { Link } from './link';
 
@@ -46,6 +46,7 @@ export function sanitizeIntents(list: unknown): Intent[] {
     if (typeof it !== 'object' || it === null) continue;
     const i = it as Record<string, unknown>;
     if (i.type === 'stop') out.push({ type: 'stop' });
+    else if (i.type === 'cheer' && typeof i.word === 'string' && i.word in CHEERS) out.push({ type: 'cheer', word: i.word as CheerId });
     else if (i.type === 'choose' && (i.slot === 0 || i.slot === 1)) out.push({ type: 'choose', slot: i.slot });
     else if (i.type === 'go' && isSpecies(i.species)) out.push({ type: 'go', species: i.species });
     else if (i.type === 'ready') out.push({ type: 'ready' });

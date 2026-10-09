@@ -205,6 +205,12 @@ export class Battle {
         if (p.z <= 1) this.hud.boostFlash(e.boost, (p.x * 0.5 + 0.5) * window.innerWidth, (-p.y * 0.5 + 0.5) * window.innerHeight);
         break;
       }
+      case 'cheer': {
+        if (!mine) break;
+        const p = this.view.headPos(e.p).project(this.ctx.camera);
+        this.hud.cheerSaid(e.word, p.z <= 1 ? { x: (p.x * 0.5 + 0.5) * window.innerWidth, y: (-p.y * 0.5 + 0.5) * window.innerHeight } : null);
+        break;
+      }
       case 'action_start':
         if (mine && e.action.kind === 'move' && e.action.named) this.hud.nameSaid();
         break;

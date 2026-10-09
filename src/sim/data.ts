@@ -1,4 +1,4 @@
-import type { BaseSpeciesId, Element, MoveDef, MoveId, SpeciesDef, SpeciesId, SpeedClass } from './types';
+import type { BaseSpeciesId, CheerDef, CheerId, Element, MoveDef, MoveId, SpeciesDef, SpeciesId, SpeedClass } from './types';
 
 export const TICK_HZ = 30;
 export const DT = 1 / TICK_HZ;
@@ -40,6 +40,24 @@ export const FULL_POWER_MULT = 1.3;
 export const FULL_POWER_COOLDOWN_S = 60;
 /** Saying the active creature's name before a command: +10 accuracy (points, capped at 100) on its moves. */
 export const NAME_ACC_BONUS = 10;
+
+/** Encouragements: instant, free, don't interrupt. Amounts are fractions of max stamina / max HP. */
+export const CHEERS: Record<CheerId, CheerDef> = {
+  come_on: { id: 'come_on', stamina: 0.05, name: { en: 'Come on', it: 'Forza' } },
+  stay_strong: { id: 'stay_strong', tempHp: 0.02, name: { en: 'Stay strong', it: 'Resisti' } },
+  courage: { id: 'courage', tempHp: 0.01, name: { en: 'Courage', it: 'Coraggio' } },
+  perfect: { id: 'perfect', stamina: 0.05, name: { en: 'Perfect', it: 'Perfetto' } },
+  dont_give_up: { id: 'dont_give_up', heal: 0.05, name: { en: "Don't give up", it: 'Non arrenderti' } },
+};
+export const CHEER_IDS = Object.keys(CHEERS) as CheerId[];
+/** Minimum gap between any two encouragements of one player. */
+export const CHEER_GAP_S = 5;
+/** The same word again within this time has CHEER_REPEAT_FAIL chance of doing nothing. */
+export const CHEER_REPEAT_S = 10;
+export const CHEER_REPEAT_FAIL = 0.5;
+/** Temporary HP: soaks damage first, gone after TEMP_HP_S, at most TEMP_HP_MAX × max HP. */
+export const TEMP_HP_S = 10;
+export const TEMP_HP_MAX = 0.1;
 /** Quick moves wind up this long regardless of speed class; other attacks wind up at least MIN_WINDUP_S. */
 export const QUICK_WINDUP_S = 0.15;
 export const MIN_WINDUP_S = 0.6;

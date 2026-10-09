@@ -4,13 +4,13 @@
 import {
   ALERT_COST, ALERT_EVADE, ALERT_S, ALERT_STRAFE_MULT, ARENA_X_M, ATTACKING_EXPOSED, DASH_M, DASH_S, DODGE_COOLDOWN_S,
   DODGE_COST, DODGE_INVULN_S, DODGE_WINDOW_S, DT, FORCED_SWITCH_S, HALF_FAR_M, HALF_NEAR_M, HOME_Z_M, INTERRUPT_THRESHOLD,
-  MOVES, PREFERRED_GAP_M, SNAP_SPEED, HYPE_STAMINA, FULL_POWER_MULT, FULL_POWER_COOLDOWN_S, NAME_ACC_BONUS, QUEUE_MAX, QUICK_WINDUP_S, RECALL_S, SENDOUT_S, SPECIES, SPEED_MULT, STAB, STAMINA_MAX,
+  MOVES, PREFERRED_GAP_M, SNAP_SPEED, HYPE_STAMINA, FULL_POWER_MULT, FULL_POWER_COOLDOWN_S, NAME_ACC_BONUS, CHEERS, CHEER_GAP_S, CHEER_REPEAT_S, CHEER_REPEAT_FAIL, TEMP_HP_S, TEMP_HP_MAX, QUEUE_MAX, QUICK_WINDUP_S, RECALL_S, SENDOUT_S, SPECIES, SPEED_MULT, STAB, STAMINA_MAX,
   STAMINA_PAUSE_S, STAMINA_REGEN_PER_S, STEP_JITTER_M, STEP_SPEED, STRAFE_MAX_S, STRAFE_MIN_S, STRAFE_SPEED, TICK_HZ, INTERMISSION_S,
   LOADOUT_S, MAX_ROUNDS, ROUNDS_TO_WIN, defaultLoadout, sameFamily, secToTicks, speciesAtStage, typeMultiplier, validLoadout,
 } from './data';
 import { nextRandom } from './rng';
 import type {
-  ActionRun, BaseSpeciesId, CreatureState, Effectiveness, Element, FailReason, Intent, MoveDef, MoveId, PlayerIdx, QAction,
+  ActionRun, BaseSpeciesId, CheerId, CreatureState, Effectiveness, Element, FailReason, Intent, MoveDef, MoveId, PlayerIdx, QAction,
   SimEvent, SimState, SpeciesId, Strike, TrainerState,
 } from './types';
 
@@ -18,7 +18,7 @@ export function createCreature(species: SpeciesId, moves = defaultLoadout(specie
   const def = SPECIES[species];
   return {
     species, hp: def.maxHp, maxHp: def.maxHp, stamina: STAMINA_MAX, regenPause: 0, fainted: false,
-    shieldTicks: 0, staticTicks: 0, rootTicks: 0, healTicks: 0, healPerTick: 0, mirrorTicks: 0, moves, used: {},
+    shieldTicks: 0, staticTicks: 0, rootTicks: 0, healTicks: 0, healPerTick: 0, mirrorTicks: 0, moves, used: {}, tempHp: 0, tempTicks: 0,
   };
 }
 
@@ -30,7 +30,7 @@ function createTrainer(p: PlayerIdx, team: SpeciesId[], loadouts: MoveId[][] = [
     team: team.map((sp, i) => createCreature(sp, defaultLoadout(sp, loadouts[i]))), active: 0, field: 'sending', fieldTicks: secToTicks(SENDOUT_S),
     action: null, queue: [], dodgeCooldown: 0, invulnTicks: 0,
     x: 0, z: side(p) * HOME_Z_M, driftDir: p === 0 ? 1 : -1, strafeTicks: secToTicks(1.2), stepZ: HOME_Z_M,
-    dodgeReady: 0, dodgeDir: 0, dashTicks: 0, dashDir: 1, alertTicks: 0,
+    dodgeReady: 0, dodgeDir: 0, dashTicks: 0, dashDir: 1, alertTicks: 0, cheerTick: -1e9, cheerAt: {},
   };
 }
 
@@ -207,6 +207,8 @@ function applyIntent(s: SimState, p: PlayerIdx, it: Intent, ev: SimEvent[]) {
       return;
     case 'choose':
       return choose(s, p, it.slot, ev);
+    case 'cheer':
+      return cheer(s, p, it.word, ev);
     case 'loadout':
     case 'ready':
       return; // only during the loadout phase
@@ -223,6 +225,38 @@ function applyIntent(s: SimState, p: PlayerIdx, it: Intent, ev: SimEvent[]) {
       return;
     }
   }
+}
+
+/**
+ * Encouragement: only for a creature on the field, at least CHEER_GAP_S after the previous one (else ignored).
+ * The same word within CHEER_REPEAT_S has a CHEER_REPEAT_FAIL chance of doing nothing (it still counts as said).
+ */
+function cheer(s: SimState, p: PlayerIdx, word: CheerId, ev: SimEvent[]) {
+  const t = s.trainers[p];
+  const c = activeCreature(t);
+  if (t.field !== 'active' || c.fainted || s.tick - t.cheerTick < secToTicks(CHEER_GAP_S)) return;
+  const repeat = s.tick - (t.cheerAt[word] ?? -1e9) < secToTicks(CHEER_REPEAT_S);
+  t.cheerTick = t.cheerAt[word] = s.tick;
+  if (repeat && rand(s) < CHEER_REPEAT_FAIL) return;
+  const d = CHEERS[word];
+  if (d.stamina) c.stamina = Math.min(STAMINA_MAX, c.stamina + d.stamina * STAMINA_MAX);
+  if (d.tempHp) {
+    c.tempHp = Math.min(TEMP_HP_MAX * c.maxHp, c.tempHp + d.tempHp * c.maxHp);
+    c.tempTicks = secToTicks(TEMP_HP_S);
+  }
+  if (d.heal) {
+    const amount = Math.min(c.maxHp - c.hp, d.heal * c.maxHp);
+    c.hp += amount;
+    if (amount > 0) ev.push({ t: 'heal', p, amount });
+  }
+  ev.push({ t: 'cheer', p, word });
+}
+
+/** Damage minus what temporary HP soaks up. */
+function afterTempHp(c: CreatureState, damage: number): number {
+  const soak = Math.min(c.tempHp, damage);
+  c.tempHp -= soak;
+  return damage - soak;
 }
 
 function choose(s: SimState, p: PlayerIdx, slot: number, ev: SimEvent[]) {
@@ -322,6 +356,7 @@ function tickCreatureStatus(p: PlayerIdx, c: CreatureState, onField: boolean, ev
   dec('staticTicks', 'static');
   dec('rootTicks', 'root');
   dec('mirrorTicks', 'mirror');
+  if (c.tempTicks > 0 && --c.tempTicks === 0) c.tempHp = 0;
   if (c.healTicks > 0) {
     c.hp = Math.min(c.maxHp, c.hp + c.healPerTick);
     if (--c.healTicks === 0) ev.push({ t: 'status', p, status: 'heal', on: false });
@@ -331,6 +366,7 @@ function tickCreatureStatus(p: PlayerIdx, c: CreatureState, onField: boolean, ev
 function clearStatuses(c: CreatureState) {
   c.shieldTicks = c.staticTicks = c.rootTicks = c.healTicks = c.mirrorTicks = 0;
   c.healPerTick = 0;
+  c.tempHp = c.tempTicks = 0;
 }
 
 function tickTrainer(s: SimState, p: PlayerIdx, ev: SimEvent[]) {
@@ -598,14 +634,14 @@ function resolveStrike(s: SimState, k: Strike, ev: SimEvent[]) {
     ev.push({ t: 'reflect', p: k.target, target: k.owner, move: k.move, damage: back.damage });
     // The reflected hit counts as the attacker getting hit: its queued commands are lost.
     if (ownerOnField(s, k) && !attacker.fainted) {
-      attacker.hp = Math.max(0, attacker.hp - back.damage);
+      attacker.hp = Math.max(0, attacker.hp - afterTempHp(attacker, back.damage));
       if (attacker.hp <= 0) faint(s, k.owner, ev);
       else breakCombo(s, k.owner, ev);
     }
     return;
   }
   const { damage, eff: e } = computeDamage(power, m.element, attackerDef.element, SPECIES[target.species].element, rand(s), target.shieldTicks > 0, attackerDef.dmgMult);
-  target.hp = Math.max(0, target.hp - damage);
+  target.hp = Math.max(0, target.hp - afterTempHp(target, damage));
   const interrupted = damage >= INTERRUPT_THRESHOLD && !!run && run.phase === 'windup' && run.action.kind === 'move' && !MOVES[run.action.move].armored;
   ev.push({ t: 'hit', p: k.owner, target: k.target, move: k.move, damage, eff: e, interrupted, heavy: m.heavy, strike: k.id });
   if (target.hp <= 0) return faint(s, k.target, ev);

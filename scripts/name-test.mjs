@@ -38,7 +38,7 @@ try {
   check(a.length === 2 && a.every((x) => x.named === true), `"Cindrix, cinder spit then shell ram" → both named (${JSON.stringify(a)})`);
   const green = () => page.locator('.words-box .word.said').count();
   await page.waitForTimeout(100);
-  check(await green() === 1 && await page.locator('.words-box .word').textContent() === 'Cindrix', 'side word "Cindrix" lit green after a named move');
+  check(await green() === 1 && await page.locator('.words-box .word').last().textContent() === 'Cindrix', 'side word "Cindrix" lit green after a named move');
   await page.screenshot({ path: `${OUT}/name-green.png` });
   await page.waitForTimeout(1700);
   check(await green() === 0, 'green fades after 1.5 s');

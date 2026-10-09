@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import {
   ARENA_X_M, Bot, FULL_POWER_COOLDOWN_S, FULL_POWER_MULT, HYPE_STAMINA, LOADOUT_S, SNAP_SPEED, PREFERRED_GAP_M, defaultLoadout, DODGE_COST, HALF_FAR_M, HALF_NEAR_M, MOVES, MOVE_IDS, SPECIES, STAMINA_MAX, TICK_HZ, activeCreature,
   computeDamage, createMatch, hitChance, step, travelTicks, typeMultiplier, usesLeft,
-  type BaseSpeciesId, type Intent, type MoveId, type SimEvent, type SimState, type SpeciesId,
+  type BaseSpeciesId, type CheerId, type Intent, type MoveId, type SimEvent, type SimState, type SpeciesId,
 } from '../src/sim';
 
 // Accuracy rolls are random; tests about other mechanics make every move hit (restored after each test).
@@ -830,5 +830,91 @@ describe('creature name accuracy bonus', () => {
     }
     expect(namedMiss).toBe(0);
     expect(plainMiss).toBeGreaterThan(0);
+  });
+});
+
+describe('encouragements', () => {
+  const ch = (word: CheerId): Intent => ({ type: 'cheer', word });
+  const sp = (s: SimState) => activeCreature(s.trainers[0]);
+  it('stamina words: +5% of max stamina, instantly, without touching the action or queue', () => {
+    for (const w of ['come_on', 'perfect'] as const) {
+      const s = ready(['cindrix'], ['vinram']);
+      step(s, [[q('magma_burst', 'cinder_spit')], []]);
+      const before = { action: s.trainers[0].action!.uid, queue: s.trainers[0].queue.length };
+      sp(s).stamina = 40;
+      const ev = step(s, [[ch(w)], []]);
+      expect(sp(s).stamina).toBeCloseTo(45, 0);
+      expect(ev).toContainEqual({ t: 'cheer', p: 0, word: w });
+      expect(s.trainers[0].action!.uid).toBe(before.action);
+      expect(s.trainers[0].queue.length).toBe(before.queue);
+    }
+  });
+  it("don't give up: heals 5% of max HP (not above max)", () => {
+    const s = ready(['cindrix'], ['vinram']);
+    sp(s).hp = 50;
+    step(s, [[ch('dont_give_up')], []]);
+    expect(sp(s).hp).toBeCloseTo(50 + 0.05 * sp(s).maxHp);
+    const f = ready(['cindrix'], ['vinram']);
+    step(f, [[ch('dont_give_up')], []]);
+    expect(sp(f).hp).toBe(sp(f).maxHp);
+  });
+  it('temp HP: soaks damage first, capped at 10% of max HP, gone after 10 s', () => {
+    const s = ready(['cindrix'], ['vinram']);
+    const c = sp(s);
+    step(s, [[ch('stay_strong')], []]);
+    expect(c.tempHp).toBeCloseTo(0.02 * c.maxHp);
+    run(s, sec(5.1));
+    step(s, [[ch('courage')], []]);
+    expect(c.tempHp).toBeCloseTo(0.03 * c.maxHp);
+    // cap
+    c.tempHp = 0.095 * c.maxHp;
+    run(s, sec(5.1));
+    step(s, [[ch('courage')], []]);
+    expect(c.tempHp).toBeCloseTo(0.1 * c.maxHp);
+    // soak: foe hits; HP drops only by damage beyond the temp HP
+    c.tempHp = 3;
+    const hp = c.hp;
+    MOVES.horn_charge.accuracy = 100;
+    const ev = run(s, sec(3), [[], [q('horn_charge')]]);
+    const hit = ev.find((e) => e.t === 'hit' && e.target === 0) as Extract<SimEvent, { t: 'hit' }>;
+    expect(hit).toBeTruthy();
+    expect(c.hp).toBeCloseTo(hp - Math.max(0, hit.damage - 3));
+    expect(c.tempHp).toBeCloseTo(Math.max(0, 3 - hit.damage));
+    // expiry
+    const e2 = ready(['cindrix'], ['vinram']);
+    step(e2, [[ch('stay_strong')], []]);
+    run(e2, sec(10));
+    expect(sp(e2).tempHp).toBe(0);
+  });
+  it('5 s gap between any two encouragements', () => {
+    const s = ready(['cindrix'], ['vinram']);
+    sp(s).stamina = 10;
+    step(s, [[ch('come_on')], []]);
+    const ev = run(s, sec(4.5), [[ch('perfect')], []]);
+    expect(ev.filter((e) => e.t === 'cheer')).toHaveLength(0);
+    run(s, sec(0.6));
+    const ev2 = step(s, [[ch('perfect')], []]);
+    expect(ev2.filter((e) => e.t === 'cheer')).toHaveLength(1);
+  });
+  it('same word within 10 s: about half do nothing; after 10 s always works', () => {
+    let worked = 0;
+    for (let seed = 1; seed <= 100; seed++) {
+      const s = ready(['cindrix'], ['vinram'], seed);
+      step(s, [[ch('courage')], []]);
+      run(s, sec(6));
+      worked += step(s, [[ch('courage')], []]).filter((e) => e.t === 'cheer').length;
+    }
+    expect(worked).toBeGreaterThan(30);
+    expect(worked).toBeLessThan(70);
+    for (let seed = 1; seed <= 20; seed++) {
+      const s = ready(['cindrix'], ['vinram'], seed);
+      step(s, [[ch('courage')], []]);
+      run(s, sec(10.1));
+      expect(step(s, [[ch('courage')], []]).filter((e) => e.t === 'cheer')).toHaveLength(1);
+    }
+  });
+  it('nothing while the creature is not on the field', () => {
+    const s = createMatch([['cindrix'], ['vinram']], 1);
+    expect(step(s, [[ch('come_on')], []]).filter((e) => e.t === 'cheer')).toHaveLength(0);
   });
 });

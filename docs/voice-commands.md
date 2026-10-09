@@ -40,5 +40,19 @@ Say your active creature's name **before** the moves: every move after the name 
 | "**Cindrix**, Cinder Spit then Shell Ram" (both boosted) | "**Cindrix**, Sputo di Brace poi Carica Corazzata" |
 | "Cinder Spit then **Cindrix** Shell Ram" (only Shell Ram) | "Sputo di Brace poi **Cindrix** Carica Corazzata" |
 
+## Encouragements
+
+Say them any time your creature is on the field; they act instantly and don't touch your moves. The **Words** box on the right lists them (in your language) and lights a word green when it worked. Effects: [combat-rules.md](combat-rules.md).
+
+| English | Italiano |
+|---|---|
+| "come on" | "forza" |
+| "stay strong" | "resisti" |
+| "courage" | "coraggio" |
+| "perfect" | "perfetto" |
+| "don't give up" | "non arrenderti" |
+
+"Hold on" still means **stop**. They mix with moves: "forza, cinder spit then shell ram" cheers and queues both moves.
+
 ## Verbal boosts (how you say it)
 No extra words: the way a command is said can boost its first move (one boost at most). SNAP!/SCATTO! = bark it (sudden, loud start): faster windup. HYPE!/GRINTA! = say it clearly higher: +10% stamina. FULL POWER!/MASSIMA POTENZA! = stretch the vowel ("fiiiire"): +30% accuracy and damage, then 60 s cooldown (💤 chip in the commands box). Before each match a short voice check (read 3 move names normally, skippable) learns the player's normal voice. Rules: combat-rules.md; detection: decision #73.

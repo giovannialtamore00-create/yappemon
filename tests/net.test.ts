@@ -30,6 +30,9 @@ describe('remote input sanitizing', () => {
     expect(sanitizeIntents([{ type: 'queue', actions: [{ kind: 'move', move: 'cinder_spit', named: 'yes' }] }]))
       .toEqual([{ type: 'queue', actions: [{ kind: 'move', move: 'cinder_spit' }] }]);
   });
+  it('keeps known encouragement words only', () => {
+    expect(sanitizeIntents([{ type: 'cheer', word: 'courage' }, { type: 'cheer', word: 'hack' }, { type: 'cheer' }])).toEqual([{ type: 'cheer', word: 'courage' }]);
+  });
   it('drops garbage', () => {
     expect(sanitizeIntents('nope')).toEqual([]);
     expect(sanitizeIntents([{ type: 'queue', actions: [{ kind: 'move', move: 'hack' }] }, { type: 'choose', slot: 5 }, null, 3])).toEqual([]);

@@ -2,7 +2,7 @@
 
 import { MOVES } from '../sim/data';
 import { ChipMusic } from './music';
-import type { Boost, MoveId, PlayerIdx, SimEvent, SimState } from '../sim/types';
+import type { Boost, CheerId, MoveId, PlayerIdx, SimEvent, SimState } from '../sim/types';
 
 const VOL_KEY = 'yappemon.volume';
 const MUSIC_KEY = 'yappemon.music';
@@ -256,6 +256,15 @@ export class Sfx {
     }
   }
 
+  /** Encouragement landed: a short bright arpeggio, its own notes per word. */
+  cheer(word: CheerId) {
+    const notes: Record<CheerId, number[]> = {
+      come_on: [523, 659, 784], stay_strong: [392, 523, 659], courage: [440, 554, 659],
+      perfect: [659, 784, 1047], dont_give_up: [349, 440, 523, 698],
+    };
+    for (const [i, f] of notes[word].entries()) this.tone(f, 0.22, { type: 'triangle', vol: 0.12, delay: i * 0.07 });
+  }
+
   hit(damage: number, mine: boolean, eff: string) {
     const v = Math.min(0.7, 0.25 + damage / 60) * (mine ? 1.1 : 0.85);
     this.tone(150, 0.18, { type: 'sine', to: 45, vol: v });
@@ -324,6 +333,7 @@ export class Sfx {
         break;
       case 'launch': this.move(e.move); break;
       case 'boost': this.boost(e.boost); break;
+      case 'cheer': if (e.p === me) this.cheer(e.word); break;
       case 'hit': if (e.damage > 0) this.hit(e.damage, e.target === me, e.eff); break;
       case 'dodged': this.tone(1500, 0.08, { type: 'sine', to: 2400, vol: 0.1 }); break;
       case 'dodge': this.whoosh(0.3, 0.22); break;

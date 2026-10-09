@@ -2,10 +2,10 @@
 // Robust to recognizer garbling: accents/case normalized, phonetic folding, Levenshtein similarity
 // over token windows, and alias lists with distinctive keywords.
 
-import { ALL_SPECIES_IDS, MOVES, SPECIES, knowsMove, sameFamily } from '../sim/data';
-import type { Intent, MoveId, QAction, SpeciesId } from '../sim/types';
+import { ALL_SPECIES_IDS, CHEERS, CHEER_IDS, MOVES, SPECIES, knowsMove, sameFamily } from '../sim/data';
+import type { CheerId, Intent, MoveId, QAction, SpeciesId } from '../sim/types';
 import {
-  ALERT_ALIASES, CONNECTORS, DODGE_ALIASES, DODGE_DIR_WORDS, FILLERS, GO_WORDS, MOVE_ALIASES, PICK_ALIASES, RECALL_ALIASES, SPECIES_ALIASES, STOP_ALIASES,
+  ALERT_ALIASES, CHEER_ALIASES, CONNECTORS, DODGE_ALIASES, DODGE_DIR_WORDS, FILLERS, GO_WORDS, MOVE_ALIASES, PICK_ALIASES, RECALL_ALIASES, SPECIES_ALIASES, STOP_ALIASES,
 } from './aliases';
 
 export type Command =
@@ -14,6 +14,8 @@ export type Command =
   /** `dir`: −1 left / +1 right when said ("dodge left", "schiva a destra"). */
   | { kind: 'dodge'; dir?: 1 | -1 }
   | { kind: 'alert' }
+  /** Encouragement word (instant, separate from the queue). */
+  | { kind: 'cheer'; word: CheerId }
   | { kind: 'recall' }
   | { kind: 'stop' }
   | { kind: 'go'; species: SpeciesId; explicit: boolean }
@@ -117,6 +119,9 @@ function buildPhrases(): Phrase[] {
   for (const id of ALL_SPECIES_IDS) {
     add(SPECIES[id].name, { kind: 'go', species: id, explicit: false });
     for (const a of SPECIES_ALIASES[id]) add(a, { kind: 'go', species: id, explicit: false });
+  }
+  for (const w of CHEER_IDS) {
+    for (const a of [CHEERS[w].name.en, CHEERS[w].name.it, ...CHEER_ALIASES[w]]) add(a, { kind: 'cheer', word: w });
   }
   for (const a of DODGE_ALIASES) add(a, { kind: 'dodge' });
   for (const a of ALERT_ALIASES) add(a, { kind: 'alert' });
@@ -234,6 +239,7 @@ export function toIntents(cmds: Command[], opts: { forcedSwitch?: boolean; activ
       case 'alert': batch.push({ kind: 'alert' }); break;
       case 'recall': batch.push({ kind: 'recall' }); break;
       case 'stop': flush(); out.push({ type: 'stop' }); break;
+      case 'cheer': out.push({ type: 'cheer', word: c.word }); break; // instant: doesn't split the queue
       case 'go':
         if (!opts.forcedSwitch && opts.activeSpecies && sameFamily(c.species, opts.activeSpecies)) break; // already out
         flush();

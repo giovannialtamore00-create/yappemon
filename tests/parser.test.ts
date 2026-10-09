@@ -170,7 +170,7 @@ describe('toIntents', () => {
 
 describe('chatter does not trigger commands', () => {
   const lines = ['oh my god', 'are you kidding me', 'I am going to win', 'dai dai dai', 'che fortuna', 'ma dai', 'no no no',
-    'what was that', 'come on', 'perfetto', 'good game', 'non ci credo', 'vai vai vai', 'hello can you hear me', 'mamma mia', 'wow'];
+    'what was that', 'good game', 'non ci credo', 'vai vai vai', 'hello can you hear me', 'mamma mia', 'wow'];
   for (const l of lines) it(`"${l}"`, () => expect(parse(l, { activeSpecies: 'cindrix' }).commands).toEqual([]));
   it('repeats need a connector', () => {
     expect(moves('cinder spit then cinder spit', 'cindrix')).toEqual(['cinder_spit', 'cinder_spit']);
@@ -285,4 +285,28 @@ describe('creature name before a command (+accuracy)', () => {
     expect(toIntents(parse('Joltmoth spark dart then dodge', { activeSpecies: 'joltmoth' }).commands, { activeSpecies: 'joltmoth' }))
       .toEqual([{ type: 'queue', actions: [{ kind: 'move', move: 'spark_dart', named: true }, { kind: 'dodge' }] }]);
   });
+});
+
+describe('encouragements', () => {
+  const cheers = (text: string) => parse(text, { activeSpecies: 'cindrix' }).commands.map((c) => (c.kind === 'cheer' ? c.word : c.kind === 'move' ? c.move : c.kind));
+  const cases: [string, string][] = [
+    ['come on', 'come_on'], ['forza', 'come_on'], ['Forza!', 'come_on'], ["c'mon", 'come_on'],
+    ['stay strong', 'stay_strong'], ['resisti', 'stay_strong'],
+    ['courage', 'courage'], ['coraggio', 'courage'],
+    ['perfect', 'perfect'], ['perfetto', 'perfect'],
+    ["don't give up", 'dont_give_up'], ['do not give up', 'dont_give_up'], ['non arrenderti', 'dont_give_up'], ['non ti arrendere', 'dont_give_up'],
+  ];
+  for (const [text, word] of cases) it(`"${text}"`, () => expect(cheers(text)).toEqual([word]));
+  it('"hold on" is still stop; "come back" is still recall', () => {
+    expect(cheers('hold on')).toEqual(['stop']);
+    expect(cheers('come back')).toEqual(['recall']);
+  });
+  it('mixed with moves: the cheer is its own instant intent, the queue stays whole', () => {
+    expect(cheers('forza, cinder spit then shell ram')).toEqual(['come_on', 'cinder_spit', 'shell_ram']);
+    expect(toIntents(parse('cinder spit, come on, shell ram', { activeSpecies: 'cindrix' }).commands, { activeSpecies: 'cindrix' })).toEqual([
+      { type: 'cheer', word: 'come_on' },
+      { type: 'queue', actions: [{ kind: 'move', move: 'cinder_spit' }, { kind: 'move', move: 'shell_ram' }] },
+    ]);
+  });
+  it('a creature name with a cheer is just addressing it', () => expect(cheers('Cindrix coraggio')).toEqual(['courage']));
 });
