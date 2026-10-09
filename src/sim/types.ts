@@ -95,7 +95,8 @@ export interface SpeciesDef {
 export type Boost = 'snap' | 'hype' | 'full';
 
 export type QAction =
-  | { kind: 'move'; move: MoveId; boost?: Boost }
+  /** `named`: the player said the creature's name before the command (+NAME_ACC_BONUS accuracy). */
+  | { kind: 'move'; move: MoveId; boost?: Boost; named?: true }
   /** Arms a 2 s dodge window; `dir` = −1 left / +1 right (from the creature's point of view), absent = auto. */
   | { kind: 'dodge'; dir?: 1 | -1 }
   /** 3 s defensive stance: harder to hit, no attacking. */
@@ -203,6 +204,8 @@ export interface Strike {
   quiet?: boolean;
   /** Launched by a FULL POWER move: accuracy and damage ×FULL_POWER_MULT. */
   full?: boolean;
+  /** Launched by a move said after the creature's name: +NAME_ACC_BONUS accuracy. */
+  named?: boolean;
 }
 
 export interface SimState {

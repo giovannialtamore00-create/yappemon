@@ -810,3 +810,25 @@ describe('verbal boosts', () => {
     expect(s.fullPowerCd[0]).toBe(sec(FULL_POWER_COOLDOWN_S) - sec(3));
   });
 });
+
+describe('creature name accuracy bonus', () => {
+  const qn = (move: MoveId): Intent => ({ type: 'queue', actions: [{ kind: 'move', move, named: true }] });
+  it('hitChance: +10 accuracy, capped at 100, before state modifiers', () => {
+    const s = ready(['cindrix'], ['vinram']);
+    const foe = s.trainers[1];
+    expect(hitChance(MOVES.thunder_lance, foe, false, true)).toBeCloseTo(0.85);
+    expect(hitChance(MOVES.cinder_spit, foe, false, true)).toBe(1);
+    expect(hitChance(MOVES.shell_ram, foe, false, true)).toBe(1);
+    step(s, [[], [alert]]);
+    expect(hitChance(MOVES.cinder_spit, foe, false, true)).toBeCloseTo(0.7);
+  });
+  it('a named 90% move never misses; unnamed it sometimes does', () => {
+    let namedMiss = 0, plainMiss = 0;
+    for (let seed = 1; seed <= 60; seed++) {
+      namedMiss += run(ready(['cindrix'], ['vinram'], seed), sec(3), [[qn('cinder_spit')], []]).filter((e) => e.t === 'miss').length;
+      plainMiss += run(ready(['cindrix'], ['vinram'], seed), sec(3), [[q('cinder_spit')], []]).filter((e) => e.t === 'miss').length;
+    }
+    expect(namedMiss).toBe(0);
+    expect(plainMiss).toBeGreaterThan(0);
+  });
+});

@@ -4,7 +4,7 @@
 import {
   ALERT_COST, ALERT_EVADE, ALERT_S, ALERT_STRAFE_MULT, ARENA_X_M, ATTACKING_EXPOSED, DASH_M, DASH_S, DODGE_COOLDOWN_S,
   DODGE_COST, DODGE_INVULN_S, DODGE_WINDOW_S, DT, FORCED_SWITCH_S, HALF_FAR_M, HALF_NEAR_M, HOME_Z_M, INTERRUPT_THRESHOLD,
-  MOVES, PREFERRED_GAP_M, SNAP_SPEED, HYPE_STAMINA, FULL_POWER_MULT, FULL_POWER_COOLDOWN_S, QUEUE_MAX, QUICK_WINDUP_S, RECALL_S, SENDOUT_S, SPECIES, SPEED_MULT, STAB, STAMINA_MAX,
+  MOVES, PREFERRED_GAP_M, SNAP_SPEED, HYPE_STAMINA, FULL_POWER_MULT, FULL_POWER_COOLDOWN_S, NAME_ACC_BONUS, QUEUE_MAX, QUICK_WINDUP_S, RECALL_S, SENDOUT_S, SPECIES, SPEED_MULT, STAB, STAMINA_MAX,
   STAMINA_PAUSE_S, STAMINA_REGEN_PER_S, STEP_JITTER_M, STEP_SPEED, STRAFE_MAX_S, STRAFE_MIN_S, STRAFE_SPEED, TICK_HZ, INTERMISSION_S,
   LOADOUT_S, MAX_ROUNDS, ROUNDS_TO_WIN, defaultLoadout, sameFamily, secToTicks, speciesAtStage, typeMultiplier, validLoadout,
 } from './data';
@@ -95,10 +95,12 @@ function speedMult(t: TrainerState) {
 /**
  * Chance (0–1) that `move` hits a creature in state `target`: accuracy × state modifier
  * (busy with a move ×1.2, alert ×0.7, otherwise ×1). Dodges are handled separately.
+ * `named`: +NAME_ACC_BONUS to the base accuracy (capped at 100) before the modifiers.
  */
-export function hitChance(move: MoveDef, target: TrainerState, full = false): number {
+export function hitChance(move: MoveDef, target: TrainerState, full = false, named = false): number {
   const mod = target.action?.action.kind === 'move' ? ATTACKING_EXPOSED : target.alertTicks > 0 ? ALERT_EVADE : 1;
-  return Math.min(1, (move.accuracy / 100) * mod * (full ? FULL_POWER_MULT : 1));
+  const acc = named ? Math.min(100, move.accuracy + NAME_ACC_BONUS) : move.accuracy;
+  return Math.min(1, (acc / 100) * mod * (full ? FULL_POWER_MULT : 1));
 }
 
 export const distance = (a: TrainerState, b: TrainerState) => Math.hypot(a.x - b.x, a.z - b.z);
@@ -444,7 +446,7 @@ function startNext(s: SimState, p: PlayerIdx, ev: SimEvent[]) {
 /** Drops a boost that can't apply: FULL POWER while cooling down or on a self move (no cooldown spent). */
 function boostedAction(s: SimState, p: PlayerIdx, a: Extract<QAction, { kind: 'move' }>): Extract<QAction, { kind: 'move' }> {
   if (a.boost !== 'full' || (s.fullPowerCd[p] === 0 && MOVES[a.move].delivery !== 'self')) return a;
-  return { kind: 'move', move: a.move };
+  return a.named ? { kind: 'move', move: a.move, named: true } : { kind: 'move', move: a.move };
 }
 
 function advanceAction(s: SimState, p: PlayerIdx, ev: SimEvent[]) {
@@ -521,6 +523,7 @@ function onActiveStart(s: SimState, p: PlayerIdx, ev: SimEvent[]) {
       move: m.id, left: travel + delay, total: travel, fromX: t.x, fromZ: t.z, toX: ot.x, toZ: ot.z,
     };
     if (a.boost === 'full') strike.full = true;
+    if (a.named) strike.named = true;
     ev.push({ t: 'launch', p, move: m.id, strike: strike.id });
     if (m.delivery === 'melee') resolveStrike(s, strike, ev);
     else s.strikes.push(strike);
@@ -573,7 +576,7 @@ function resolveStrike(s: SimState, k: Strike, ev: SimEvent[]) {
     dash(s, k.target, ev);
     return void ev.push({ t: 'dodged', p: k.owner, target: k.target, move: k.move, strike: k.id });
   }
-  if (rand(s) >= hitChance(m, tt, k.full)) return void ev.push({ t: 'miss', p: k.owner, target: k.target, move: k.move, strike: k.id });
+  if (rand(s) >= hitChance(m, tt, k.full, k.named)) return void ev.push({ t: 'miss', p: k.owner, target: k.target, move: k.move, strike: k.id });
 
   const eff = m.effect;
   if (eff.kind === 'root' || eff.kind === 'static') {

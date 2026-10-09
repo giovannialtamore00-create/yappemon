@@ -32,7 +32,8 @@ function sanitizeAction(a: unknown): QAction | null {
   if (k === 'move' && typeof m === 'string' && m in MOVES) {
     // The voice boost is the sender's own measurement; the sim enforces the FULL POWER cooldown.
     const b = (a as { boost?: unknown }).boost;
-    return b === 'snap' || b === 'hype' || b === 'full' ? { kind: 'move', move: m as MoveId, boost: b } : { kind: 'move', move: m as MoveId };
+    const out: QAction = b === 'snap' || b === 'hype' || b === 'full' ? { kind: 'move', move: m as MoveId, boost: b } : { kind: 'move', move: m as MoveId };
+    return (a as { named?: unknown }).named === true ? { ...out, named: true } : out;
   }
   return null;
 }

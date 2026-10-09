@@ -38,6 +38,8 @@ export const HYPE_STAMINA = 0.1;
 /** FULL POWER: accuracy and damage ×1.3, then unusable for this long (keeps counting between rounds). */
 export const FULL_POWER_MULT = 1.3;
 export const FULL_POWER_COOLDOWN_S = 60;
+/** Saying the active creature's name before a command: +10 accuracy (points, capped at 100) on its moves. */
+export const NAME_ACC_BONUS = 10;
 /** Quick moves wind up this long regardless of speed class; other attacks wind up at least MIN_WINDUP_S. */
 export const QUICK_WINDUP_S = 0.15;
 export const MIN_WINDUP_S = 0.6;

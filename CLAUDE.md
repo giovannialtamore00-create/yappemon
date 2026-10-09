@@ -31,7 +31,8 @@ Stack: TypeScript, Vite, Three.js, PeerJS, Web Speech API, Vitest, Playwright. N
   (aliases.ts) and "hold on" means stop: handle both. Flash word + sound each. PAUSE after M3 for user playtest, then ask before merging.
 - **Done:** M1 (decision #75: `MoveDef.uses`, `CreatureState.used`, `usesLeft`, fail `no_uses`, bot skips used-up moves, "x/y" on move cards;
   tests, `scripts/uses-shots.mjs`, net + flow OK).
-- **Next:** M2 (creature name bonus).
+- **Done:** M2 (decision #76: `named` flag parser → `QAction` → `Strike`, `NAME_ACC_BONUS` in hitChance; right-side Words box, name lights green when used; tests, `scripts/name-test.mjs`; net/flow/IT voice/boost scripts OK).
+- **Next:** M3 (encouragements; their words go in the right-side Words box above the creature name).
 - **Earlier feature (verbal boosts, decisions #73–74):** on `main`; user still to try boosts by voice in Chrome.
 - **Known issues:** `smoke.mjs --full` crashes headless Chrome on an audio-device error, also before this feature (docs/blockers.md).
 ## Docs (read only what the task needs)

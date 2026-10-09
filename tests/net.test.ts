@@ -24,6 +24,12 @@ describe('remote input sanitizing', () => {
     expect(sanitizeIntents([{ type: 'queue', actions: [{ kind: 'move', move: 'cinder_spit', boost: 'mega' }] }]))
       .toEqual([{ type: 'queue', actions: [{ kind: 'move', move: 'cinder_spit' }] }]);
   });
+  it('keeps the creature-name flag only when it is exactly true', () => {
+    const named = [{ type: 'queue', actions: [{ kind: 'move', move: 'cinder_spit', named: true, boost: 'snap' }] }];
+    expect(sanitizeIntents(named)).toEqual([{ type: 'queue', actions: [{ kind: 'move', move: 'cinder_spit', boost: 'snap', named: true }] }]);
+    expect(sanitizeIntents([{ type: 'queue', actions: [{ kind: 'move', move: 'cinder_spit', named: 'yes' }] }]))
+      .toEqual([{ type: 'queue', actions: [{ kind: 'move', move: 'cinder_spit' }] }]);
+  });
   it('drops garbage', () => {
     expect(sanitizeIntents('nope')).toEqual([]);
     expect(sanitizeIntents([{ type: 'queue', actions: [{ kind: 'move', move: 'hack' }] }, { type: 'choose', slot: 5 }, null, 3])).toEqual([]);

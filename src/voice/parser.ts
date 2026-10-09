@@ -9,7 +9,8 @@ import {
 } from './aliases';
 
 export type Command =
-  | { kind: 'move'; move: MoveId }
+  /** `named`: said after the active creature's name (any stage) in the same utterance: +accuracy. */
+  | { kind: 'move'; move: MoveId; named?: true }
   /** `dir`: −1 left / +1 right when said ("dodge left", "schiva a destra"). */
   | { kind: 'dodge'; dir?: 1 | -1 }
   | { kind: 'alert' }
@@ -200,6 +201,12 @@ export function parse(text: string, ctx: ParseContext = {}): ParseResult {
     });
     unmatched.push(...leftover);
   }
+  // Moves said after the active creature's name (any stage of its line) get the name accuracy bonus.
+  let named = false;
+  commands.forEach((c, i) => {
+    if (c.kind === 'go' && !c.explicit && ctx.activeSpecies && sameFamily(c.species, ctx.activeSpecies)) named = true;
+    else if (c.kind === 'move' && named) commands[i] = { ...c, named: true };
+  });
   // A creature name said alongside other commands ("Cindrix, cinder spit") is just addressing it.
   const hasOther = commands.some((c) => c.kind !== 'go' && c.kind !== 'pick');
   const filtered = commands.filter((c) => !(c.kind === 'go' && !c.explicit && hasOther));
@@ -222,7 +229,7 @@ export function toIntents(cmds: Command[], opts: { forcedSwitch?: boolean; activ
   };
   for (const c of cmds) {
     switch (c.kind) {
-      case 'move': batch.push({ kind: 'move', move: c.move }); break;
+      case 'move': batch.push(c.named ? { kind: 'move', move: c.move, named: true } : { kind: 'move', move: c.move }); break;
       case 'dodge': batch.push(c.dir ? { kind: 'dodge', dir: c.dir } : { kind: 'dodge' }); break;
       case 'alert': batch.push({ kind: 'alert' }); break;
       case 'recall': batch.push({ kind: 'recall' }); break;

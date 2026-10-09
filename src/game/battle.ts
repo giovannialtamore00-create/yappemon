@@ -205,6 +205,9 @@ export class Battle {
         if (p.z <= 1) this.hud.boostFlash(e.boost, (p.x * 0.5 + 0.5) * window.innerWidth, (-p.y * 0.5 + 0.5) * window.innerHeight);
         break;
       }
+      case 'action_start':
+        if (mine && e.action.kind === 'move' && e.action.named) this.hud.nameSaid();
+        break;
       case 'combo_broken':
         if (mine) this.hud.toast(t('comboBroken'), 'bad', 2400);
         break;

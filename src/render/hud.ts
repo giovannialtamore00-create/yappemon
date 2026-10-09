@@ -85,6 +85,11 @@ export class Hud {
   private calTimer = 0;
   private fpChip = h('div', 'fp-chip hidden');
   private fpKey = '';
+  /** Side list of special words (creature name now, encouragements later); a word lights green when it took effect. */
+  private wordsBox = h('div', 'words-box');
+  private wordsLabel = h('div', 'words-label');
+  private nameWord = h('div', 'word');
+  private nameTimer = 0;
 
   /** Spectator: no voice box / move list; panels labelled Player 1 (bottom) and Player 2 (top). */
   setSpectator(on: boolean) {
@@ -100,6 +105,7 @@ export class Hud {
     this.debug.placeholder = t('debugHint');
     this.cmdLabel.textContent = t('commands');
     this.energyLabel.textContent = t('energy');
+    this.wordsLabel.textContent = t('words');
     this.cmdKey = this.energyKey = '#stale';
     this.movesKey = this.queueKey = this.roundKey = '#stale';
     this.me.key = this.foe.key = '';
@@ -119,6 +125,9 @@ export class Hud {
     track.append(this.energyFill, this.energyTicks);
     this.energy.append(this.energyLabel, track, this.energyVal);
     root.append(this.energy);
+    this.wordsLabel.textContent = t('words');
+    this.wordsBox.append(this.wordsLabel, this.nameWord);
+    root.append(this.wordsBox);
     bottom.append(voice);
     this.debug.placeholder = t('debugHint');
     this.debug.style.display = 'none';
@@ -187,6 +196,8 @@ export class Hud {
     this.updateMoves(mine);
     this.updateCommands(mine);
     this.updateEnergy(mine);
+    const name = SPECIES[mine.team[mine.active]!.species].name;
+    if (this.nameWord.textContent !== name) this.nameWord.textContent = name;
   }
 
   private updatePanel(p: Panel, tr: TrainerState) {
@@ -399,6 +410,13 @@ export class Hud {
     this.fpKey = fpKey;
     this.fpChip.className = `fp-chip${!fpKey ? ' hidden' : secs > 0 ? ' sleeping' : ''}`;
     this.fpChip.textContent = secs > 0 ? `💤 ${t('fullPowerName')} ZZZ… ${secs}s` : `⚡ ${t('fullPowerName')}`;
+  }
+
+  /** The creature name was said before a move that just started: light it green for a moment. */
+  nameSaid() {
+    this.nameWord.classList.add('said');
+    window.clearTimeout(this.nameTimer);
+    this.nameTimer = window.setTimeout(() => this.nameWord.classList.remove('said'), 1500);
   }
 
   /** Just-Dance-style word burst over a creature when a verbal boost lands. */

@@ -31,5 +31,14 @@ Saying **"dodge"** at the start of a command arms the dodge window **immediately
 
 **Testing without a microphone:** press the **backtick key** (`` ` ``) during a battle to open a hidden text box. Typed commands go through exactly the same parser.
 
+## Creature name (+10 accuracy)
+
+Say your active creature's name **before** the moves: every move after the name in that command gets +10 accuracy (max 100%). Any stage name of the same line works (Cindrix / Pyroxen / Calderox). Another creature's name gives nothing. The **Words** box on the right side shows the name; it lights green for 1.5 s when a move said after it starts (the effect itself is not shown).
+
+| English | Italiano |
+|---|---|
+| "**Cindrix**, Cinder Spit then Shell Ram" (both boosted) | "**Cindrix**, Sputo di Brace poi Carica Corazzata" |
+| "Cinder Spit then **Cindrix** Shell Ram" (only Shell Ram) | "Sputo di Brace poi **Cindrix** Carica Corazzata" |
+
 ## Verbal boosts (how you say it)
 No extra words: the way a command is said can boost its first move (one boost at most). SNAP!/SCATTO! = bark it (sudden, loud start): faster windup. HYPE!/GRINTA! = say it clearly higher: +10% stamina. FULL POWER!/MASSIMA POTENZA! = stretch the vowel ("fiiiire"): +30% accuracy and damage, then 60 s cooldown (💤 chip in the commands box). Before each match a short voice check (read 3 move names normally, skippable) learns the player's normal voice. Rules: combat-rules.md; detection: decision #73.

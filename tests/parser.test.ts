@@ -262,3 +262,27 @@ describe('loadout: only chosen moves are understood', () => {
     expect(parse('magma burst', { activeSpecies: 'pyroxen' }).commands).toEqual([{ kind: 'move', move: 'magma_burst' }]);
   });
 });
+
+describe('creature name before a command (+accuracy)', () => {
+  const named = (text: string, sp: SpeciesId) =>
+    parse(text, { activeSpecies: sp }).commands.map((c) => (c.kind === 'move' ? `${c.move}${c.named ? '+' : ''}` : c.kind));
+  it('marks every move said after the active creature name', () => {
+    expect(named('Cindrix, cinder spit then shell ram', 'cindrix')).toEqual(['cinder_spit+', 'shell_ram+']);
+    expect(named('Cindrix sputo di brace e poi carica corazzata', 'cindrix')).toEqual(['cinder_spit+', 'shell_ram+']);
+    expect(named('Brinkle water jet', 'brinkle')).toEqual(['water_jet+']);
+  });
+  it('no name, a name after the move, or another creature name: no bonus', () => {
+    expect(named('cinder spit', 'cindrix')).toEqual(['cinder_spit']);
+    expect(named('cinder spit then Cindrix shell ram', 'cindrix')).toEqual(['cinder_spit', 'shell_ram+']);
+    expect(named('Brinkle, cinder spit', 'cindrix')).toEqual(['cinder_spit']);
+  });
+  it('any stage name of the active line counts', () => {
+    expect(named('Pyroxen cinder spit', 'pyroxen')).toEqual(['cinder_spit+']);
+    expect(named('Cindrix molten leap', 'pyroxen')).toEqual(['molten_leap+']);
+    expect(named('Calderox magma burst', 'cindrix')).toEqual(['magma_burst+']);
+  });
+  it('toIntents keeps the flag', () => {
+    expect(toIntents(parse('Joltmoth spark dart then dodge', { activeSpecies: 'joltmoth' }).commands, { activeSpecies: 'joltmoth' }))
+      .toEqual([{ type: 'queue', actions: [{ kind: 'move', move: 'spark_dart', named: true }, { kind: 'dodge' }] }]);
+  });
+});
