@@ -426,3 +426,22 @@ describe('aliases do not collide inside one creature', () => {
     });
   }
 });
+
+describe('custom names', () => {
+  const names = { creatures: { cindrix: 'Blazey' }, moves: { cinder_spit: 'Ember', shell_ram: 'Bonk' } };
+  const ids = (text: string) =>
+    parse(text, { activeSpecies: 'cindrix', names }).commands.map((c) => (c.kind === 'move' ? c.move : c.kind === 'go' ? `go:${c.species}` : c.kind));
+  it('understands a renamed move (first word replaced) and keeps the old name', () => {
+    expect(ids('ember spit')).toEqual(['cinder_spit']);
+    expect(ids('bonk')).toEqual([]);
+    expect(ids('Bonk Ram then ember spit')).toEqual(['shell_ram', 'cinder_spit']);
+    expect(ids('cinder spit')).toEqual(['cinder_spit']);
+  });
+  it('a renamed creature name gives the accuracy bonus', () => {
+    const r = parse('Blazey, ember spit', { activeSpecies: 'cindrix', names }).commands;
+    expect(r).toEqual([{ kind: 'move', move: 'cinder_spit', named: true }]);
+  });
+  it('without names the new words mean nothing', () => {
+    expect(parse('ember spit', { activeSpecies: 'cindrix' }).commands.map((c) => c.kind)).not.toContain('go');
+  });
+});

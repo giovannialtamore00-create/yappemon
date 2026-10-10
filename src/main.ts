@@ -15,7 +15,7 @@ import type { Boost } from './sim/types';
 import { hostRoom, joinRoom, type Link, type Pending } from './net/link';
 import { normalizeCode } from './net/protocol';
 import { ClientSession, HostSession, SpectatorHostSession, sanitizeTeam } from './net/sessions';
-import { clearNames, myMove, setMe, setNames } from './names';
+import { clearNames, myMove, sanitizeNames, setMe, setNames, type TeamNames } from './names';
 
 const LANG_KEY = 'yappemon.lang';
 
@@ -229,15 +229,19 @@ class App {
   /** Wait for both players' teams, then start the match they play and we watch. */
   private spectatorTeams(links: [Link, Link], ui: { setStatus(text: string): void } | null) {
     const teams: (BaseSpeciesId[] | null)[] = [null, null];
+    const names: TeamNames[] = [{ creatures: {}, moves: {} }, { creatures: {}, moves: {} }];
+    clearNames();
     links.forEach((link, i) => {
       link.onMessage = (m) => {
         if (m.k !== 'ready') return;
         teams[i] = sanitizeTeam(m.team);
+        names[i] = sanitizeNames(m.names);
         if (!teams[0] || !teams[1]) return;
+        setNames(0, names[0]!); setNames(1, names[1]!);
         const both: [BaseSpeciesId[], BaseSpeciesId[]] = [teams[0], teams[1]];
         const session = new SpectatorHostSession(both, links);
         links.forEach((l, j) => {
-          l.send({ k: 'start', teams: both, you: j as 0 | 1 });
+          l.send({ k: 'start', teams: both, you: j as 0 | 1, names: [names[0]!, names[1]!] });
           l.onMessage = (msg) => {
             if (msg.k === 'intents') session.receiveIntents(j as 0 | 1, msg.list);
             else if (msg.k === 'rematch') this.rematch.remote(j);
@@ -282,28 +286,34 @@ class App {
   /** Team select for an online match. The host collects both teams and starts the match. */
   private netTeamSelect(link: Link, role: 'host' | 'client') {
     this.endBattle();
-    clearNames(); // custom names are practice-only for now
+    clearNames();
     this.link = link;
     link.onClose = () => this.disconnected();
     let mine: BaseSpeciesId[] | null = null;
     let theirs: BaseSpeciesId[] | null = null;
+    let myNames: TeamNames = { creatures: {}, moves: {} };
+    let theirNames: TeamNames = { creatures: {}, moves: {} };
     const ui = this.screens.teamSelect({
       subtitle: isSupportedBrowser() ? t('micAsk') : undefined,
       onHover: (sp) => this.showcase.show(sp),
       onReady: (team) => {
-        mine = team;
         ui.setWaiting();
-        this.voiceCheck(team, () => {
-          this.screens.message(t('waitingOpponent'));
-          if (role === 'client') link.send({ k: 'ready', team });
-          else tryStart();
+        this.askNames(team, (n) => {
+          myNames = n;
+          this.voiceCheck(team, () => {
+            this.screens.message(t('waitingOpponent'));
+            if (role === 'client') link.send({ k: 'ready', team, names: n });
+            else { mine = team; tryStart(); }
+          });
         });
       },
     });
     const tryStart = () => {
       if (role !== 'host' || !mine || !theirs) return;
       const teams: [BaseSpeciesId[], BaseSpeciesId[]] = [mine, theirs];
-      link.send({ k: 'start', teams });
+      const names: [TeamNames, TeamNames] = [myNames, theirNames];
+      setNames(0, myNames); setNames(1, theirNames);
+      link.send({ k: 'start', teams, names });
       const session = new HostSession(teams, link);
       link.onMessage = (m) => {
         if (m.k === 'intents') session.receiveIntents(m.list);
@@ -314,9 +324,11 @@ class App {
     link.onMessage = (m) => {
       if (role === 'host' && m.k === 'ready') {
         theirs = sanitizeTeam(m.team);
+        theirNames = sanitizeNames(m.names);
         tryStart();
       } else if (role === 'client' && m.k === 'start') {
         const teams = m.teams;
+        if (Array.isArray(m.names)) { setNames(0, sanitizeNames(m.names[0])); setNames(1, sanitizeNames(m.names[1])); }
         const session = new ClientSession(link, m.you ?? 1);
         link.onMessage = (msg) => {
           if (msg.k === 'snap') session.receiveSnapshot(msg.state, msg.events);
@@ -384,13 +396,16 @@ class App {
       subtitle: isSupportedBrowser() ? t('micAsk') : undefined,
       onHover: (sp) => this.showcase.show(sp),
       onReady: (team) => {
-        const go = () => this.voiceCheck(team, () => this.startPractice(team));
-        // Test runs (?seed=…) skip the rename screen unless ?rename=1.
-        const q = new URLSearchParams(location.search);
-        if (q.has('seed') && !q.has('rename')) return go();
-        this.screens.rename({ team, onDone: (n) => { setNames(0, n); go(); } });
+        this.askNames(team, (n) => { setNames(0, n); this.voiceCheck(team, () => this.startPractice(team)); });
       },
     });
+  }
+
+  /** Rename screen. Test runs (?seed=…) skip it unless ?rename=1. */
+  private askNames(team: BaseSpeciesId[], done: (n: TeamNames) => void) {
+    const q = new URLSearchParams(location.search);
+    if (q.has('seed') && !q.has('rename')) return done({ creatures: {}, moves: {} });
+    this.screens.rename({ team, onDone: done });
   }
 
   /**

@@ -3,7 +3,7 @@
 
 import * as THREE from 'three';
 import { FAIL_REASON, getLang, t } from '../i18n';
-import { creatureName, moveName, setMe } from '../names';
+import { creatureName, getNames, moveName, setMe } from '../names';
 import { activeCreature } from '../sim/sim';
 import type { Boost, Intent, PlayerIdx, SimEvent, SimState, SpeciesId, BaseSpeciesId } from '../sim/types';
 import { normalize, parse, toIntents } from '../voice/parser';
@@ -122,7 +122,7 @@ export class Battle {
     const moves = activeCreature(tr).moves;
     const forcedSwitch = tr.field === 'choosing';
     for (const text of alts) {
-      const intents = toIntents(parse(text, { activeSpecies, moves }).commands, { forcedSwitch, activeSpecies });
+      const intents = toIntents(parse(text, { activeSpecies, moves, names: getNames(this.me) }).commands, { forcedSwitch, activeSpecies });
       if (intents.length) {
         this.hud.setTranscript(text, true, true);
         this.session.send(boost ? attachBoost(intents, boost) : intents);

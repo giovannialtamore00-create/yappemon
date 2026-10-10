@@ -3,6 +3,7 @@
 // over token windows, and alias lists with distinctive keywords.
 
 import { ALL_SPECIES_IDS, CHEERS, CHEER_IDS, MOVES, SPECIES, knowsMove, sameFamily } from '../sim/data';
+import type { TeamNames } from '../names';
 import type { CheerId, Intent, MoveId, QAction, SpeciesId } from '../sim/types';
 import {
   ALERT_ALIASES, CHEER_ALIASES, CONNECTORS, DODGE_ALIASES, DODGE_DIR_WORDS, FILLERS, GO_WORDS, MOVE_ALIASES, PICK_ALIASES, RECALL_ALIASES, SPECIES_ALIASES, STOP_ALIASES,
@@ -26,6 +27,8 @@ export interface ParseContext {
   activeSpecies?: SpeciesId;
   /** When set, only these moves (the creature's chosen loadout) are considered. */
   moves?: MoveId[];
+  /** The player's custom names: understood in addition to the original names. */
+  names?: TeamNames;
 }
 
 export interface ParseResult {
@@ -131,6 +134,25 @@ function buildPhrases(): Phrase[] {
   return out;
 }
 
+/** Extra phrases for renamed creatures and moves (the new first word replaces the old one). */
+function namePhrases(names: TeamNames): Phrase[] {
+  const out: Phrase[] = [];
+  const add = (text: string, cmd: Command, species?: SpeciesId) => {
+    const n = normalize(text);
+    if (n) out.push({ text: n, tokens: n.split(' ').length, cmd, species });
+  };
+  for (const [fam, w] of Object.entries(names.creatures)) {
+    if (fam in SPECIES) add(w, { kind: 'go', species: fam as SpeciesId, explicit: false });
+  }
+  for (const [id, w] of Object.entries(names.moves)) {
+    const m = MOVES[id as MoveId];
+    if (!m) continue;
+    const cmd: Command = { kind: 'move', move: m.id };
+    for (const lang of ['en', 'it'] as const) add([w, ...m.name[lang].split(' ').slice(1)].join(' '), cmd, m.species);
+  }
+  return out;
+}
+
 const PHRASES = buildPhrases();
 const PHRASE_TOKENS = new Set(PHRASES.flatMap((p) => p.text.split(' ')));
 const CONNECTOR_SEQS = CONNECTORS.map((c) => normalize(c).split(' ')).sort((a, b) => b.length - a.length);
@@ -154,14 +176,14 @@ function splitSegments(tokens: string[]): string[][] {
 
 interface Match { start: number; end: number; score: number; phrase: Phrase }
 
-function matchSegment(seg: string[], ctx: ParseContext): { found: Match[]; leftover: string[] } {
+function matchSegment(seg: string[], ctx: ParseContext, phrases: Phrase[], known: Set<string>): { found: Match[]; leftover: string[] } {
   // Explicit "go <creature>" marker anywhere in the segment.
   const explicitGo = seg.some((w) => GO_WORDS.has(w));
   // A side word ("left", "destra") goes with a dodge in the same segment; it is not matched on its own.
   const dirWord = seg.find((w) => w in DODGE_DIR_WORDS);
-  const words = seg.filter((w) => (!FILLERS.has(w) || PHRASE_TOKENS.has(w)) && !(w in DODGE_DIR_WORDS));
+  const words = seg.filter((w) => (!FILLERS.has(w) || known.has(w)) && !(w in DODGE_DIR_WORDS));
   const candidates: Match[] = [];
-  for (const ph of PHRASES) {
+  for (const ph of phrases) {
     if (ph.cmd.kind === 'move' && ctx.moves && !ctx.moves.includes(ph.cmd.move)) continue;
     if (ph.cmd.kind === 'move' && ctx.activeSpecies && !knowsMove(ctx.activeSpecies, ph.cmd.move)) continue;
     const need = threshold(ph.text);
@@ -196,8 +218,11 @@ export function parse(text: string, ctx: ParseContext = {}): ParseResult {
   const tokens = normalize(text).split(' ').filter(Boolean);
   const commands: Command[] = [];
   const unmatched: string[] = [];
+  const extra = ctx.names ? namePhrases(ctx.names) : [];
+  const phrases = extra.length ? [...PHRASES, ...extra] : PHRASES;
+  const known = extra.length ? new Set([...PHRASE_TOKENS, ...extra.flatMap((p) => p.text.split(' '))]) : PHRASE_TOKENS;
   for (const seg of splitSegments(tokens)) {
-    const { found, leftover } = matchSegment(seg, ctx);
+    const { found, leftover } = matchSegment(seg, ctx, phrases, known);
     // Pieces of one garbled name ("esplosione di magna") can match separately: merge adjacent
     // identical commands inside a segment. Repeats must be joined with a connector ("spit then spit").
     found.forEach((m, i) => {

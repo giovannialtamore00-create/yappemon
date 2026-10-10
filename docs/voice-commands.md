@@ -56,3 +56,7 @@ Say them any time your creature is on the field; they act instantly and don't to
 
 ## Verbal boosts (how you say it)
 No extra words: the way a command is said can boost its first move (one boost at most). SNAP!/SCATTO! = bark it (sudden, loud start): faster windup. HYPE!/GRINTA! = say it clearly higher: +10% stamina. FULL POWER!/MASSIMA POTENZA! = stretch the vowel ("fiiiire"): +30% accuracy and damage, then 60 s cooldown (💤 chip in the commands box). Before each match a short voice check (read 3 move names normally, skippable) learns the player's normal voice. Rules: combat-rules.md; detection: decision #73.
+
+## Custom names (rename screen)
+
+Names chosen on the Rename screen work by voice for the player who chose them: a renamed creature counts as the creature name (+10 accuracy), a renamed move is said with its new first word ("Ember Spit" for "Cinder Spit"). The original names keep working. Works in practice and online (each player speaks their own names).
