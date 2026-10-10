@@ -306,6 +306,8 @@ const MOTIONS: Record<MoveId, MotionFn> = {
   shade_nip: bounce, spook_bolt: jab, dread_stare: tremble, nightmare_wave: crash, wisp_flame: spit, grave_miasma: crash,
   claw_swipe: pirouette, wyrm_spit: spit, scale_guard: tuck, meteor_fall: rear, storm_fang: leap, inferno_roar: dive(1.2),
   goo_slap: bounce, acid_spit: spit, sticky_goo: whip, sludge_wave: crash, swamp_jet: jet, mire_slam: stomp,
+  cog_bash: bounce, nail_shot: jab, self_repair: levitate, iron_crush: stomp, arc_weld: leap, forge_blast: dive(1.2),
+  snow_bump: bounce, ice_shard: spit, frost_bind: tremble, blizzard: crash, aurora_gaze: levitate, avalanche: rear,
   volcanic_ruin: stomp, maelstrom: crash, ancient_bloom: levitate, sky_judgement: dive(1.6),
 };
 

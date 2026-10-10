@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import type { SpeciesId } from '../sim/types';
 import { gravelo, pipwing, wispurr } from './creatures-a';
 import { dusklet, gloopit, scalet } from './creatures-b';
+import { cogling, flurrbit } from './creatures-c';
 import { eyes, kit, type CreatureModel, type Mat } from './creature-kit';
 
 export type { CreatureModel };
@@ -594,6 +595,8 @@ const BUILDERS: Record<SpeciesId, () => CreatureModel> = {
   dusklet: () => dusklet(1), gloamwraith: () => dusklet(2), nightpall: () => dusklet(3),
   scalet: () => scalet(1), drakonet: () => scalet(2), wyverno: () => scalet(3),
   gloopit: () => gloopit(1), toxifrog: () => gloopit(2), plaguelord: () => gloopit(3),
+  cogling: () => cogling(1), gearhound: () => cogling(2), mechadon: () => cogling(3),
+  flurrbit: () => flurrbit(1), hailstag: () => flurrbit(2), glaciarch: () => flurrbit(3),
   wispurr: () => wispurr(1), mystiline: () => wispurr(2), astralynx: () => wispurr(3),
 };
 

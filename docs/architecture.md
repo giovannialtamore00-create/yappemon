@@ -47,6 +47,7 @@ src/game/    session (local/host/client) and battle controller
 | `render/creature-kit.ts` | Shared `CreatureModel` interface, `kit` (material/mesh helper), `eyes` | |
 | `render/creatures-a.ts` | Batch A models: Gravelo, Pipwing, Wispurr lines | `gravelo`, `pipwing`, `wispurr` |
 | `render/creatures-b.ts` | Batch B models: Dusklet, Scalet, Gloopit lines | `dusklet`, `scalet`, `gloopit` |
+| `render/creatures-c.ts` | Batch C models: Cogling (Steel), Flurrbit (Ice) lines | `cogling`, `flurrbit` |
 | `render/motion.ts` | Per-move body poses (windup/active/recovery), dodge, alert | `movePose`, `dodgePose`, `alertPose`, `Pose` |
 | `render/vfx.ts` | Pooled VFX: particles, beams, arcs, rings, eruptions, spikes, waves | `Vfx`, `FxKind` |
 | `render/view.ts` | `SimState` + events → 3D scene (placement, animation, VFX, floating text) | `BattleView`, `FloatText` |

@@ -85,7 +85,7 @@ export const STEP_JITTER_M = 0.6;
 export const SPEED_MULT: Record<SpeedClass, number> = { slow: 1.15, medium: 1, fast: 0.85 };
 export const STRAFE_SPEED: Record<SpeedClass, number> = { slow: 1.2, medium: 1.6, fast: 2.2 };
 /** Distance (m) each evolution line likes to keep from the opponent: it stands about half of it from the centre line. */
-export const PREFERRED_GAP_M: Record<BaseSpeciesId, number> = { cindrix: 4.5, brinkle: 5.5, vinram: 4, joltmoth: 5, gravelo: 4, pipwing: 5, wispurr: 4.5, dusklet: 5, scalet: 4.5, gloopit: 4 };
+export const PREFERRED_GAP_M: Record<BaseSpeciesId, number> = { cindrix: 4.5, brinkle: 5.5, vinram: 4, joltmoth: 5, gravelo: 4, pipwing: 5, wispurr: 4.5, dusklet: 5, scalet: 4.5, gloopit: 4, cogling: 4.5, flurrbit: 5 };
 
 /** Rounds needed to win the match (best of 3). Set to 3 to always play all three rounds. */
 export const ROUNDS_TO_WIN = 2;
@@ -107,6 +107,8 @@ const WISPURR_MOVES: MoveId[] = ['paw_tap', 'psy_orb', 'calm_mind', 'mind_crush'
 const DUSKLET_MOVES: MoveId[] = ['shade_nip', 'spook_bolt', 'dread_stare', 'nightmare_wave'];
 const SCALET_MOVES: MoveId[] = ['claw_swipe', 'wyrm_spit', 'scale_guard', 'meteor_fall'];
 const GLOOPIT_MOVES: MoveId[] = ['goo_slap', 'acid_spit', 'sticky_goo', 'sludge_wave'];
+const COGLING_MOVES: MoveId[] = ['cog_bash', 'nail_shot', 'self_repair', 'iron_crush'];
+const FLURRBIT_MOVES: MoveId[] = ['snow_bump', 'ice_shard', 'frost_bind', 'blizzard'];
 
 // Stage 2: HP ×1.25, damage ×1.15, +1 move. Stage 3: HP ×1.5, damage ×1.3, +1 more move.
 export const SPECIES: Record<SpeciesId, SpeciesDef> = {
@@ -123,6 +125,9 @@ export const SPECIES: Record<SpeciesId, SpeciesDef> = {
   scalet: { id: 'scalet', name: 'Scalet', element: 'dragon', maxHp: 115, speed: 'medium', moves: SCALET_MOVES, stage: 1, family: 'scalet', next: 'drakonet', dmgMult: 1 },
   gloopit: { id: 'gloopit', name: 'Gloopit', element: 'poison', maxHp: 128, speed: 'slow', moves: GLOOPIT_MOVES, stage: 1, family: 'gloopit', next: 'toxifrog', dmgMult: 1 },
 
+  cogling: { id: 'cogling', name: 'Cogling', element: 'steel', maxHp: 125, speed: 'slow', moves: COGLING_MOVES, stage: 1, family: 'cogling', next: 'gearhound', dmgMult: 1 },
+  flurrbit: { id: 'flurrbit', name: 'Flurrbit', element: 'ice', maxHp: 105, speed: 'medium', moves: FLURRBIT_MOVES, stage: 1, family: 'flurrbit', next: 'hailstag', dmgMult: 1 },
+
   pyroxen: { id: 'pyroxen', name: 'Pyroxen', element: 'fire', maxHp: 138, speed: 'medium', moves: [...CINDRIX_MOVES, 'rock_hurl', 'molten_leap'], stage: 2, family: 'cindrix', next: 'calderox', dmgMult: 1.15 },
   tsunafin: { id: 'tsunafin', name: 'Tsunafin', element: 'water', maxHp: 150, speed: 'medium', moves: [...BRINKLE_MOVES, 'frost_fin', 'tide_mirror'], stage: 2, family: 'brinkle', next: 'abyssmaw', dmgMult: 1.15 },
   thornhorn: { id: 'thornhorn', name: 'Thornhorn', element: 'grass', maxHp: 156, speed: 'slow', moves: [...VINRAM_MOVES, 'toxic_thorns', 'bramble_stampede'], stage: 2, family: 'vinram', next: 'elderoot', dmgMult: 1.15 },
@@ -136,6 +141,9 @@ export const SPECIES: Record<SpeciesId, SpeciesDef> = {
   drakonet: { id: 'drakonet', name: 'Drakonet', element: 'dragon', maxHp: 144, speed: 'medium', moves: [...SCALET_MOVES, 'storm_fang'], stage: 2, family: 'scalet', next: 'wyverno', dmgMult: 1.15 },
   toxifrog: { id: 'toxifrog', name: 'Toxifrog', element: 'poison', maxHp: 160, speed: 'slow', moves: [...GLOOPIT_MOVES, 'swamp_jet'], stage: 2, family: 'gloopit', next: 'plaguelord', dmgMult: 1.15 },
 
+  gearhound: { id: 'gearhound', name: 'Gearhound', element: 'steel', maxHp: 156, speed: 'slow', moves: [...COGLING_MOVES, 'arc_weld'], stage: 2, family: 'cogling', next: 'mechadon', dmgMult: 1.15 },
+  hailstag: { id: 'hailstag', name: 'Hailstag', element: 'ice', maxHp: 131, speed: 'medium', moves: [...FLURRBIT_MOVES, 'aurora_gaze'], stage: 2, family: 'flurrbit', next: 'glaciarch', dmgMult: 1.15 },
+
   calderox: { id: 'calderox', name: 'Calderox', element: 'fire', maxHp: 165, speed: 'medium', moves: [...CINDRIX_MOVES, 'rock_hurl', 'molten_leap', 'tremor_crush', 'volcanic_ruin'], stage: 3, family: 'cindrix', dmgMult: 1.3 },
   abyssmaw: { id: 'abyssmaw', name: 'Abyssmaw', element: 'water', maxHp: 180, speed: 'medium', moves: [...BRINKLE_MOVES, 'frost_fin', 'tide_mirror', 'void_bite', 'maelstrom'], stage: 3, family: 'brinkle', dmgMult: 1.3 },
   elderoot: { id: 'elderoot', name: 'Elderoot', element: 'grass', maxHp: 188, speed: 'slow', moves: [...VINRAM_MOVES, 'toxic_thorns', 'bramble_stampede', 'mind_bloom', 'ancient_bloom'], stage: 3, family: 'vinram', dmgMult: 1.3 },
@@ -146,10 +154,12 @@ export const SPECIES: Record<SpeciesId, SpeciesDef> = {
   nightpall: { id: 'nightpall', name: 'Nightpall', element: 'ghost', element2: 'dark', maxHp: 150, speed: 'fast', moves: [...DUSKLET_MOVES, 'wisp_flame', 'grave_miasma'], stage: 3, family: 'dusklet', dmgMult: 1.3 },
   wyverno: { id: 'wyverno', name: 'Wyverno', element: 'dragon', maxHp: 173, speed: 'medium', moves: [...SCALET_MOVES, 'storm_fang', 'inferno_roar'], stage: 3, family: 'scalet', dmgMult: 1.3 },
   plaguelord: { id: 'plaguelord', name: 'Plaguelord', element: 'poison', maxHp: 192, speed: 'slow', moves: [...GLOOPIT_MOVES, 'swamp_jet', 'mire_slam'], stage: 3, family: 'gloopit', dmgMult: 1.3 },
+  mechadon: { id: 'mechadon', name: 'Mechadon', element: 'steel', maxHp: 188, speed: 'slow', moves: [...COGLING_MOVES, 'arc_weld', 'forge_blast'], stage: 3, family: 'cogling', dmgMult: 1.3 },
+  glaciarch: { id: 'glaciarch', name: 'Glaciarch', element: 'ice', maxHp: 158, speed: 'medium', moves: [...FLURRBIT_MOVES, 'aurora_gaze', 'avalanche'], stage: 3, family: 'flurrbit', dmgMult: 1.3 },
 };
 
 /** Selectable (stage-1) species. */
-export const SPECIES_IDS: BaseSpeciesId[] = ['cindrix', 'brinkle', 'vinram', 'joltmoth', 'gravelo', 'pipwing', 'wispurr', 'dusklet', 'scalet', 'gloopit'];
+export const SPECIES_IDS: BaseSpeciesId[] = ['cindrix', 'brinkle', 'vinram', 'joltmoth', 'gravelo', 'pipwing', 'wispurr', 'dusklet', 'scalet', 'gloopit', 'cogling', 'flurrbit'];
 export const ALL_SPECIES_IDS = Object.keys(SPECIES) as SpeciesId[];
 
 /** The form of a base species at a given stage (1–3). */
@@ -275,6 +285,21 @@ export const MOVES: Record<MoveId, MoveDef> = {
   sludge_wave: { id: 'sludge_wave', species: 'gloopit', element: 'poison', cost: 35, power: 30, delivery: 'wave', effect: dmg, windup: 1.5, active: 0.4, recovery: 0.7, speed: 9, heavy: true, accuracy: 80, name: { en: 'Sludge Wave', it: 'Onda Fangosa' } },
   swamp_jet: { id: 'swamp_jet', species: 'toxifrog', element: 'water', cost: 30, power: 22, delivery: 'beam', effect: dmg, windup: 0.8, active: 0.4, recovery: 0.5, hitDelay: 0.15, heavy: false, accuracy: 85, name: { en: 'Swamp Jet', it: 'Getto di Palude' } },
   mire_slam: { id: 'mire_slam', species: 'plaguelord', element: 'ground', cost: 45, power: 38, delivery: 'ground', effect: dmg, windup: 1.9, active: 0.6, recovery: 0.9, hitDelay: 0.2, heavy: true, accuracy: 75, name: { en: 'Mire Slam', it: 'Schianto di Palude' } },
+
+  // Cogling line (Steel): Gearhound learns an Electric move, Mechadon a Fire move
+  cog_bash: { id: 'cog_bash', species: 'cogling', element: 'normal', cost: 15, power: 8, delivery: 'melee', effect: dmg, windup: 0.15, active: 0.25, recovery: 0.35, heavy: false, quick: true, accuracy: 100, name: { en: 'Cog Bash', it: 'Botta di Ingranaggio' } },
+  nail_shot: { id: 'nail_shot', species: 'cogling', element: 'steel', cost: 15, power: 15, delivery: 'projectile', effect: dmg, windup: 0.6, active: 0.15, recovery: 0.45, speed: 17, heavy: false, accuracy: 90, name: { en: 'Nail Shot', it: 'Sparo di Chiodi' } },
+  self_repair: { id: 'self_repair', species: 'cogling', element: 'steel', cost: 25, power: 0, delivery: 'self', effect: { kind: 'heal', amount: 18, seconds: 3 }, windup: 0.6, active: 0.3, recovery: 0.4, heavy: false, accuracy: 100, name: { en: 'Self Repair', it: 'Autoriparazione' } },
+  iron_crush: { id: 'iron_crush', species: 'cogling', element: 'steel', cost: 35, power: 30, delivery: 'ground', effect: dmg, windup: 1.5, active: 0.5, recovery: 0.7, hitDelay: 0.25, heavy: true, accuracy: 80, name: { en: 'Iron Crush', it: 'Schianto di Ferro' } },
+  arc_weld: { id: 'arc_weld', species: 'gearhound', element: 'electric', cost: 30, power: 22, delivery: 'melee', effect: dmg, windup: 0.8, active: 0.3, recovery: 0.6, heavy: false, accuracy: 85, name: { en: 'Arc Weld', it: 'Saldatura ad Arco' } },
+  forge_blast: { id: 'forge_blast', species: 'mechadon', element: 'fire', cost: 45, power: 38, delivery: 'beam', effect: dmg, windup: 1.8, active: 0.5, recovery: 0.9, hitDelay: 0.1, heavy: true, accuracy: 75, name: { en: 'Forge Blast', it: 'Getto di Fornace' } },
+  // Flurrbit line (Ice): Hailstag learns a Psychic move, Glaciarch a Rock move
+  snow_bump: { id: 'snow_bump', species: 'flurrbit', element: 'normal', cost: 15, power: 8, delivery: 'melee', effect: dmg, windup: 0.15, active: 0.2, recovery: 0.3, heavy: false, quick: true, accuracy: 100, name: { en: 'Snow Bump', it: 'Spinta di Neve' } },
+  ice_shard: { id: 'ice_shard', species: 'flurrbit', element: 'ice', cost: 15, power: 15, delivery: 'projectile', effect: dmg, windup: 0.6, active: 0.15, recovery: 0.4, speed: 16, heavy: false, accuracy: 90, name: { en: 'Ice Shard', it: 'Scheggia di Ghiaccio' } },
+  frost_bind: { id: 'frost_bind', species: 'flurrbit', element: 'ice', cost: 20, power: 0, delivery: 'beam', effect: { kind: 'root', seconds: 2 }, windup: 0.6, active: 0.3, recovery: 0.4, hitDelay: 0.2, heavy: false, accuracy: 85, name: { en: 'Frost Bind', it: 'Morsa di Gelo' } },
+  blizzard: { id: 'blizzard', species: 'flurrbit', element: 'ice', cost: 35, power: 30, delivery: 'wave', effect: dmg, windup: 1.5, active: 0.4, recovery: 0.7, speed: 9, heavy: true, accuracy: 80, name: { en: 'Blizzard', it: 'Bufera' } },
+  aurora_gaze: { id: 'aurora_gaze', species: 'hailstag', element: 'psychic', cost: 30, power: 22, delivery: 'projectile', effect: dmg, windup: 0.8, active: 0.2, recovery: 0.5, speed: 12, heavy: false, accuracy: 85, name: { en: 'Aurora Gaze', it: 'Sguardo Aurorale' } },
+  avalanche: { id: 'avalanche', species: 'glaciarch', element: 'rock', cost: 45, power: 38, delivery: 'ground', effect: dmg, windup: 1.9, active: 0.6, recovery: 0.9, hitDelay: 0.2, heavy: true, accuracy: 75, name: { en: 'Avalanche', it: 'Valanga' } },
 };
 
 /** Uses per round by base stamina cost: strongest (≥35) 5, strong (30) 10, normal (20–25) 15, common (15) 20. */

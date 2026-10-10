@@ -5,13 +5,14 @@ export type Element =
   | 'rock' | 'ground' | 'flying' | 'psychic' | 'ghost' | 'dark' | 'dragon' | 'poison' | 'steel' | 'ice';
 /** Base forms (stage 1), then stage 2 and stage 3 evolutions. */
 export type BaseSpeciesId = 'cindrix' | 'brinkle' | 'vinram' | 'joltmoth' | 'gravelo' | 'pipwing' | 'wispurr'
-  | 'dusklet' | 'scalet' | 'gloopit';
+  | 'dusklet' | 'scalet' | 'gloopit' | 'cogling' | 'flurrbit';
 export type SpeciesId =
   | BaseSpeciesId
   | 'pyroxen' | 'tsunafin' | 'thornhorn' | 'stormoth'
   | 'calderox' | 'abyssmaw' | 'elderoot' | 'tempestra'
   | 'boulderax' | 'tectonyx' | 'galehawk' | 'zephyrion' | 'mystiline' | 'astralynx'
-  | 'gloamwraith' | 'nightpall' | 'drakonet' | 'wyverno' | 'toxifrog' | 'plaguelord';
+  | 'gloamwraith' | 'nightpall' | 'drakonet' | 'wyverno' | 'toxifrog' | 'plaguelord'
+  | 'gearhound' | 'mechadon' | 'hailstag' | 'glaciarch';
 export type Stage = 1 | 2 | 3;
 export type PlayerIdx = 0 | 1;
 export type Lang = 'en' | 'it';
@@ -46,7 +47,10 @@ export type MoveId =
   // Dusklet (Ghost/Dark), Scalet (Dragon), Gloopit (Poison) lines
   | 'shade_nip' | 'spook_bolt' | 'dread_stare' | 'nightmare_wave' | 'wisp_flame' | 'grave_miasma'
   | 'claw_swipe' | 'wyrm_spit' | 'scale_guard' | 'meteor_fall' | 'storm_fang' | 'inferno_roar'
-  | 'goo_slap' | 'acid_spit' | 'sticky_goo' | 'sludge_wave' | 'swamp_jet' | 'mire_slam';
+  | 'goo_slap' | 'acid_spit' | 'sticky_goo' | 'sludge_wave' | 'swamp_jet' | 'mire_slam'
+  // Cogling (Steel), Flurrbit (Ice) lines
+  | 'cog_bash' | 'nail_shot' | 'self_repair' | 'iron_crush' | 'arc_weld' | 'forge_blast'
+  | 'snow_bump' | 'ice_shard' | 'frost_bind' | 'blizzard' | 'aurora_gaze' | 'avalanche';
 
 /**
  * How a move reaches its target.

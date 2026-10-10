@@ -11,6 +11,8 @@ const LINES = {
   wispurr: [6, 4, [['paw tap', 400], ['psy orb', 700], ['calm mind', 700], ['mind crush', 1700]]],
   dusklet: [7, 8, [['shade nip', 400], ['spook bolt', 700], ['dread stare', 800], ['nightmare wave', 1700]]],
   scalet: [8, 9, [['claw swipe', 400], ['wyrm spit', 700], ['scale guard', 500], ['meteor fall', 1900]]],
+  cogling: [10, 11, [['cog bash', 400], ['nail shot', 700], ['self repair', 700], ['iron crush', 1800]]],
+  flurrbit: [11, 10, [['snow bump', 400], ['ice shard', 700], ['frost bind', 800], ['blizzard', 1700]]],
   gloopit: [9, 7, [['goo slap', 400], ['acid spit', 700], ['sticky goo', 800], ['sludge wave', 1700]]],
 };
 const only = process.argv.slice(2).filter((a) => a in LINES);

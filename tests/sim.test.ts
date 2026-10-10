@@ -697,7 +697,7 @@ describe('determinism and bot', () => {
     expect(SPECIES.brinkle.maxHp).toBe(120);
     expect(SPECIES.vinram.maxHp).toBe(125);
     expect(SPECIES.joltmoth.maxHp).toBe(95);
-    expect(Object.values(MOVES)).toHaveLength(68);
+    expect(Object.values(MOVES)).toHaveLength(80);
   });
 });
 

@@ -112,6 +112,19 @@ export const MOVE_ALIASES: Record<MoveId, string[]> = {
   sludge_wave: ['sludge wave', 'sludge', 'slug wave', 'sludge way', 'onda fangosa', 'fangosa', 'fango'],
   swamp_jet: ['swamp jet', 'swamp', 'jet', 'swamp get', 'swap jet', 'getto di palude', 'palude', 'getto palude'],
   mire_slam: ['mire slam', 'mire', 'slam', 'mayor slam', 'mire slim', 'schianto di palude', 'schianto', 'schianto palude'],
+  // Cogling / Flurrbit lines
+  cog_bash: ['cog bash', 'cog', 'bash', 'cog bush', 'cock bash', 'botta di ingranaggio', 'botta', 'ingranaggio'],
+  nail_shot: ['nail shot', 'nail', 'shot', 'nail shop', 'nails shot', 'sparo di chiodi', 'sparo', 'chiodi'],
+  self_repair: ['self repair', 'repair', 'self', 'self prepare', 'self a pair', 'autoriparazione', 'auto riparazione', 'riparazione'],
+  iron_crush: ['iron crush', 'iron', 'iron crash', 'ion crush', 'iron brush', 'schianto di ferro', 'ferro'],
+  arc_weld: ['arc weld', 'weld', 'arc', 'ark weld', 'arc well', 'saldatura ad arco', 'saldatura', 'arco'],
+  forge_blast: ['forge blast', 'forge', 'blast', 'forge blasts', 'four blast', 'getto di fornace', 'fornace', 'getto'],
+  snow_bump: ['snow bump', 'snow', 'bump', 'snow bomb', 'no bump', 'spinta di neve', 'spinta', 'neve'],
+  ice_shard: ['ice shard', 'shard', 'ice', 'ice shot', 'eyes shard', 'scheggia di ghiaccio', 'scheggia', 'ghiaccio'],
+  frost_bind: ['frost bind', 'bind', 'frost', 'frost behind', 'frozen bind', 'morsa di gelo', 'morsa', 'gelo'],
+  blizzard: ['blizzard', 'blizzards', 'blizzer', 'blizzed', 'bufera', 'la bufera', 'tormenta'],
+  aurora_gaze: ['aurora gaze', 'aurora', 'gaze', 'aurora gays', 'aurora case', 'sguardo aurorale', 'aurorale', 'sguardo aurora'],
+  avalanche: ['avalanche', 'avalanches', 'a valanche', 'avalanch', 'valanga', 'la valanga', 'slavina'],
   sky_judgement: ['sky judgement', 'sky judgment', 'judgement', 'judgment', 'sky', 'skye judgement',
     'giudizio celeste', 'giudizio', 'celeste', 'giudizio celestre'],
 };
@@ -146,6 +159,12 @@ export const SPECIES_ALIASES: Record<SpeciesId, string[]> = {
   gloopit: ['gloopit', 'gloop it', 'glupit', 'gloop eat', 'gloopet'],
   toxifrog: ['toxifrog', 'toxi frog', 'toxic frog', 'tocsi frog', 'toxy frog'],
   plaguelord: ['plaguelord', 'plague lord', 'plaguelard', 'plague lard', 'plague lorde'],
+  cogling: ['cogling', 'cog ling', 'cogline', 'cockling', 'cog lean'],
+  gearhound: ['gearhound', 'gear hound', 'gear hand', 'gearhounds', 'gear sound'],
+  mechadon: ['mechadon', 'mecha don', 'mechadong', 'meccadon', 'mecca don'],
+  flurrbit: ['flurrbit', 'flur bit', 'flurbit', 'flurry bit', 'flurrybit'],
+  hailstag: ['hailstag', 'hail stag', 'hail stack', 'hailstack', 'hale stag'],
+  glaciarch: ['glaciarch', 'glacier arch', 'glacia arch', 'glaciark', 'glacier ark'],
   astralynx: ['astralynx', 'astral lynx', 'astral links', 'astro lynx', 'astralinks'],
 };
 

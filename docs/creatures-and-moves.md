@@ -16,6 +16,8 @@ Player-facing numbers. Source of truth for values is `src/sim/data.ts` (stats, m
 | Dusklet → Gloamwraith → Nightpall: a pale round lantern ghost with a wispy tail → a dark hooded wraith with glowing eyes, skeletal claws and a tattered hem → a huge tattered reaper cloak with a horned crown, six red eyes, floating hands and shadow wisps | Ghost/Dark | 100 / 125 / 150 | Fast |
 | Scalet → Drakonet → Wyverno: a teal wingless hatchling with horn nubs → a blue wyvern with bat wings, swept horns and a spiked tail → a huge purple-and-gold dragon with great wings, a horned crest, glowing chest and blade-tipped tail | Dragon | 115 / 144 / 173 | Medium |
 | Gloopit → Toxifrog → Plaguelord: a glossy green slime frog → a warty purple-green frog with spore sacs and a throat sac → a bloated toad king with a spotted-mushroom crown, tusks, glowing pustules and a spore cloud | Poison | 128 / 160 / 192 | Slow |
+| Cogling → Gearhound → Mechadon: a round steel ball-bot with one lens eye and a back cog → an angular robot dog with plated flanks, antenna ears and shoulder cogs → a huge walking fortress with a back cannon, smoke stacks and a glowing furnace core | Steel | 125 / 156 / 188 | Slow |
+| Flurrbit → Hailstag → Glaciarch: a fluffy snow bunny with a blue scarf → a pale-blue stag with crystal antlers → a towering glacier beast with tusks of ice, a crystal spine and drifting snowflakes | Ice | 105 / 131 / 158 | Medium |
 
 ## Type chart
 
@@ -98,6 +100,14 @@ Uses per round (see combat-rules.md): Stamina 47+ → 5 uses, 41 → 10, 27–34
 | | Acid Spit | Sputo Acido | 20 | 90% | Poison projectile, 15 dmg |
 | | Sticky Goo | Melma Appiccicosa | 27 | 85% | Root target 2 s (can't dodge or move) |
 | | Sludge Wave | Onda Fangosa | 47 | 80% | Toxic wave, 30 dmg |
+| **Cogling** (Steel) | Cog Bash | Botta di Ingranaggio | 20 | 100% | **Quick** melee, 8 dmg (Normal) |
+| | Nail Shot | Sparo di Chiodi | 20 | 90% | Fast steel projectile, 15 dmg |
+| | Self Repair | Autoriparazione | 34 | – | Heal 18 HP over 3 s |
+| | Iron Crush | Schianto di Ferro | 47 | 80% | Ground slam, 30 dmg |
+| **Flurrbit** (Ice) | Snow Bump | Spinta di Neve | 20 | 100% | **Quick** melee, 8 dmg (Normal) |
+| | Ice Shard | Scheggia di Ghiaccio | 20 | 90% | Fast ice projectile, 15 dmg |
+| | Frost Bind | Morsa di Gelo | 27 | 85% | Root target 2 s (can't dodge or move) |
+| | Blizzard | Bufera | 47 | 80% | Snow wave, 30 dmg |
 
 **Off-type moves of the new lines** (one per evolution, always a different type than the creature's own; nothing else is learned):
 
@@ -115,6 +125,10 @@ Uses per round (see combat-rules.md): Stamina 47+ → 5 uses, 41 → 10, 27–34
 | **Wyverno** | Inferno Roar | Ruggito Infernale | Fire | 61 | 75% | Fire beam, 38 dmg, very long windup |
 | **Toxifrog** | Swamp Jet | Getto di Palude | Water | 41 | 85% | Muddy water beam, 22 dmg |
 | **Plaguelord** | Mire Slam | Schianto di Palude | Earth | 61 | 75% | Ground slam, 38 dmg, very long windup |
+| **Gearhound** | Arc Weld | Saldatura ad Arco | Electric | 41 | 85% | Melee sparking weld, 22 dmg |
+| **Mechadon** | Forge Blast | Getto di Fornace | Fire | 61 | 75% | Furnace beam, 38 dmg, very long windup |
+| **Hailstag** | Aurora Gaze | Sguardo Aurorale | Psychic | 41 | 85% | Aurora ray projectile, 22 dmg |
+| **Glaciarch** | Avalanche | Valanga | Rock | 61 | 75% | Ground avalanche, 38 dmg, very long windup |
 
 **Off-type moves learned by evolving** (each existing evolution also learns one move of another type; every evolved form keeps all earlier moves, so stage 3 knows 8 and picks 4 in the loadout screen. The default loadout still swaps in the same-type move above, not these):
 
