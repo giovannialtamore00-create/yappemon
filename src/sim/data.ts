@@ -19,7 +19,7 @@ export const DODGE_COST = 5;
 export const DODGE_WINDOW_S = 2;
 /** Super-effective multiplier (was 2×). */
 export const SUPER_EFFECTIVE = 1.25;
-export const NOT_VERY_EFFECTIVE = 0.5;
+export const NOT_VERY_EFFECTIVE = 0.75;
 /** The dash triggered by the window: invulnerable 0.4 s, moves 1.8 m sideways over 0.3 s, then 1 s before another dash. */
 export const DODGE_INVULN_S = 0.4;
 export const DASH_S = 0.3;
@@ -315,7 +315,7 @@ for (const m of Object.values(MOVES)) {
 
 export const MOVE_IDS = Object.keys(MOVES) as MoveId[];
 
-/** Attack element → defender element → multiplier (absent = 1). Super effective = ×1.25, not very effective = ×0.5. */
+/** Attack element → defender element → multiplier (absent = 1). Super effective = ×1.25, not very effective = ×0.75. */
 const SE = SUPER_EFFECTIVE;
 const NV = NOT_VERY_EFFECTIVE;
 const CHART: Partial<Record<Element, Partial<Record<Element, number>>>> = {

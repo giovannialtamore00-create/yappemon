@@ -35,18 +35,18 @@ const alert: Intent = { type: 'queue', actions: [{ kind: 'alert' }] };
 describe('type chart', () => {
   it('matches the spec', () => {
     expect(typeMultiplier('fire', 'grass')).toBe(1.25);
-    expect(typeMultiplier('fire', 'fire')).toBe(0.5);
-    expect(typeMultiplier('fire', 'water')).toBe(0.5);
+    expect(typeMultiplier('fire', 'fire')).toBe(0.75);
+    expect(typeMultiplier('fire', 'water')).toBe(0.75);
     expect(typeMultiplier('fire', 'electric')).toBe(1);
     expect(typeMultiplier('water', 'fire')).toBe(1.25);
-    expect(typeMultiplier('water', 'water')).toBe(0.5);
-    expect(typeMultiplier('water', 'grass')).toBe(0.5);
+    expect(typeMultiplier('water', 'water')).toBe(0.75);
+    expect(typeMultiplier('water', 'grass')).toBe(0.75);
     expect(typeMultiplier('grass', 'water')).toBe(1.25);
-    expect(typeMultiplier('grass', 'grass')).toBe(0.5);
-    expect(typeMultiplier('grass', 'fire')).toBe(0.5);
+    expect(typeMultiplier('grass', 'grass')).toBe(0.75);
+    expect(typeMultiplier('grass', 'fire')).toBe(0.75);
     expect(typeMultiplier('electric', 'water')).toBe(1.25);
-    expect(typeMultiplier('electric', 'electric')).toBe(0.5);
-    expect(typeMultiplier('electric', 'grass')).toBe(0.5);
+    expect(typeMultiplier('electric', 'electric')).toBe(0.75);
+    expect(typeMultiplier('electric', 'grass')).toBe(0.75);
     expect(typeMultiplier('electric', 'fire')).toBe(1);
     expect(typeMultiplier('normal', 'water')).toBe(1);
   });
@@ -57,16 +57,16 @@ describe('new types and dual types', () => {
     expect(typeMultiplier('ice', 'dragon')).toBe(1.25);
     expect(typeMultiplier('steel', 'ice')).toBe(1.25);
     expect(typeMultiplier('ghost', 'ghost')).toBe(1.25);
-    expect(typeMultiplier('ghost', 'dark')).toBe(0.5);
-    expect(typeMultiplier('dragon', 'steel')).toBe(0.5);
-    expect(typeMultiplier('ground', 'flying')).toBe(0.5);
+    expect(typeMultiplier('ghost', 'dark')).toBe(0.75);
+    expect(typeMultiplier('dragon', 'steel')).toBe(0.75);
+    expect(typeMultiplier('ground', 'flying')).toBe(0.75);
     expect(typeMultiplier('ground', 'electric')).toBe(1.25);
-    expect(typeMultiplier('poison', 'steel')).toBe(0.5);
+    expect(typeMultiplier('poison', 'steel')).toBe(0.75);
   });
   it('multiplies both defender types', () => {
     expect(typeMultiplier('water', ['rock', 'ground'])).toBe(1.5625);
-    expect(typeMultiplier('fire', ['water', 'rock'])).toBe(0.25);
-    expect(typeMultiplier('fire', ['grass', 'water'])).toBe(0.625);
+    expect(typeMultiplier('fire', ['water', 'rock'])).toBe(0.5625);
+    expect(typeMultiplier('fire', ['grass', 'water'])).toBe(0.9375);
     expect(typeMultiplier('normal', ['rock', 'ground'])).toBe(1);
   });
   it('same-type bonus applies for either attacker type', () => {
@@ -81,7 +81,7 @@ describe('damage formula', () => {
   it('base × type × STAB × variance', () => {
     // roll 0.5 → variance 1.0
     expect(computeDamage(16, 'fire', 'fire', 'grass', 0.5, false)).toEqual({ damage: 25, eff: 'super' }); // 16*1.25*1.25
-    expect(computeDamage(16, 'fire', 'fire', 'water', 0.5, false)).toEqual({ damage: 10, eff: 'weak' }); // 16*.5*1.25
+    expect(computeDamage(16, 'fire', 'fire', 'water', 0.5, false)).toEqual({ damage: 15, eff: 'weak' }); // 16*.75*1.25
     expect(computeDamage(12, 'normal', 'fire', 'grass', 0.5, false)).toEqual({ damage: 12, eff: 'neutral' }); // normal: neutral, no STAB
     expect(computeDamage(30, 'fire', 'fire', 'electric', 0.5, false).damage).toBe(38); // 37.5 → 38
   });
