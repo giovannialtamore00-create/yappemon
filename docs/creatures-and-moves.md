@@ -68,6 +68,19 @@ Uses per round (see combat-rules.md): Stamina 47+ → 5 uses, 41 → 10, 27–34
 | **Stormoth** (stage 2 of Joltmoth) | Chain Storm | Tempesta a Catena | 41 | 85% | 3 bolts of 10 dmg, each dodgeable separately |
 | **Tempestra** (stage 3) | Sky Judgement | Giudizio Celeste | 61 | 75% | Lightning from the sky, 38 dmg, very long windup |
 
+**Off-type moves learned by evolving** (each existing evolution also learns one move of another type; every evolved form keeps all earlier moves, so stage 3 knows 8 and picks 4 in the loadout screen. The default loadout still swaps in the same-type move above, not these):
+
+| Evolution | English | Italiano | Type | Stamina | Accuracy | Effect |
+|---|---|---|---|---|---|---|
+| **Pyroxen** | Rock Hurl | Lancio di Roccia | Rock | 41 | 85% | Boulder projectile, 22 dmg |
+| **Calderox** | Tremor Crush | Frantuma Terra | Earth | 61 | 75% | Ground crush, 38 dmg, very long windup |
+| **Tsunafin** | Frost Fin | Pinna Gelida | Ice | 41 | 85% | Ice-water beam, 22 dmg |
+| **Abyssmaw** | Void Bite | Morso del Vuoto | Dark | 61 | 80% | Heavy melee bite, 38 dmg |
+| **Thornhorn** | Toxic Thorns | Spine Tossiche | Poison | 41 | 85% | Thorn projectile, 22 dmg |
+| **Elderoot** | Mind Bloom | Fiore Mentale | Psychic | 61 | 75% | Psychic beam, 37 dmg, very long windup |
+| **Stormoth** | Gale Slash | Fendente di Vento | Flying | 41 | 85% | Fast wind projectile, 22 dmg |
+| **Tempestra** | Razor Pinion | Penna Tagliente | Steel | 61 | 75% | Very fast steel feather, 38 dmg |
+
 **Quick moves** (the four Normal melee moves) wind up in 0.15 s, always hit an unguarded foe and **can't be caught by the dodge window**; every other attack winds up at least 0.6 s.
 
 Short keywords work too, for example *magma*, *jet*, *lance*, *spit*, *quake*, *tuono*, *spine*, *brace*, *marea*, *foglie*, *mirror*, *specchio*, *gorgo*, *rovi*. The parser is fuzzy, so common mishearings ("sinner spit", "water get", "thunder dance") still work.

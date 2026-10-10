@@ -27,6 +27,7 @@ Playwright needs Chromium once: `npx playwright install chromium`.
 | `loadout-shots.mjs` | Move-choice panel screenshots |
 | `creature-sheet.mjs` | Lineup of all 12 creature forms |
 | `vfx-shots.mjs [species]` | Screenshot every move's VFX |
+| `offtype-shots.mjs` | Fire the 8 off-type evolution moves → `screenshots/offtype` |
 | `move-shots.mjs` | Move animations → `screenshots/move` |
 | `evo-shots.mjs` | Evolution sequence |
 | `music-test.mjs` | Battle music |

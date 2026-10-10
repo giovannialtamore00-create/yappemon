@@ -6,17 +6,9 @@ import type { MoveId, PlayerIdx, SimEvent, SimState, SpeciesId } from '../sim/ty
 import { ELEMENT_COLOR } from '../i18n';
 import { buildCreature, type CreatureModel } from './creatures';
 import { TRAINER_Z, creatureZ, makeOrb, worldX, type SceneCtx } from './scene';
-import { Vfx, type FxKind } from './vfx';
+import { CHARGE_FX, ELEMENT_FX, Vfx } from './vfx';
 import { alertPose, dodgePose, movePose, type Pose } from './motion';
 
-const ELEMENT_FX: Record<string, FxKind> = {
-  fire: 'fire', water: 'water', grass: 'grass', electric: 'electric', normal: 'normal',
-  rock: 'rock', ground: 'dust', flying: 'wind', psychic: 'psychic', ghost: 'shadow', dark: 'shadow', dragon: 'dragon', poison: 'poison', steel: 'metal', ice: 'ice',
-};
-const CHARGE_FX: Record<string, FxKind> = {
-  fire: 'ember', water: 'splash', grass: 'leaf', electric: 'static', normal: 'dust',
-  rock: 'dust', ground: 'dust', flying: 'wind', psychic: 'psychic', ghost: 'shadow', dark: 'shadow', dragon: 'dragon', poison: 'poison', steel: 'metal', ice: 'ice',
-};
 
 interface Side {
   models: CreatureModel[];

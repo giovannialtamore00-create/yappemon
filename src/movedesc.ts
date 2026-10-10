@@ -27,5 +27,13 @@ export const MOVE_DESC: Record<MoveId, Record<Lang, string>> = {
   volcanic_ruin: { en: 'Triple eruption · {d} dmg · very long charge', it: 'Tripla eruzione · {d} danni · carica lunghissima' },
   maelstrom: { en: 'Whirlpool · {d} dmg + roots 1.5 s', it: 'Vortice · {d} danni + blocca 1,5 s' },
   ancient_bloom: { en: 'Heals 35 HP over 3 s', it: 'Cura 35 PS in 3 s' },
+  rock_hurl: { en: 'Hurls a boulder · {d} dmg', it: 'Scaglia un masso · {d} danni' },
+  frost_fin: { en: 'Freezing water beam · {d} dmg', it: 'Raggio gelido · {d} danni' },
+  toxic_thorns: { en: 'Poisoned thorns · {d} dmg', it: 'Spine avvelenate · {d} danni' },
+  gale_slash: { en: 'Fast cutting wind · {d} dmg', it: 'Vento tagliente veloce · {d} danni' },
+  tremor_crush: { en: 'Ground crushes the foe · {d} dmg · very long charge', it: 'Il terreno schiaccia il nemico · {d} danni · carica lunghissima' },
+  void_bite: { en: 'Dark bite · {d} dmg · long charge', it: 'Morso oscuro · {d} danni · carica lunga' },
+  mind_bloom: { en: 'Psychic blast · {d} dmg · very long charge', it: 'Onda psichica · {d} danni · carica lunghissima' },
+  razor_pinion: { en: 'Steel feather bolt · {d} dmg · very long charge', it: "Piuma d'acciaio velocissima · {d} danni · carica lunghissima" },
   sky_judgement: { en: 'Lightning from the sky · {d} dmg · very long charge', it: 'Fulmine dal cielo · {d} danni · carica lunghissima' },
 };

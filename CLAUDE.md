@@ -38,7 +38,9 @@ Stack: TypeScript, Vite, Three.js, PeerJS, Web Speech API, Vitest, Playwright. N
 - **Done:** M4 (decision #78: `src/names.ts`, `Screens.rename`, HUD/toasts use names; `scripts/rename-test.mjs` OK, tests pass). Note: the "say …" hint shows the new move name but voice only knows the old one until M5.
 - **Next:** M5 (parser `ParseContext.names`), then M6. Old Next, still pending: user playtests the whole feature (M1–M3) at once → fixes as new commits → ask before merging `encouragements` into `main` (publishes live).
 - **Creatures feature (user request 2026-10-10, branch `creatures` off `rename`; plan in decisions #79):** 8 new 3-stage lines (Rock/Earth dual, Flying, Psychic, Ghost/Dark dual, Dragon, Poison, Steel, Ice) with different body shapes per stage; every evolution (new + existing lines) learns one off-type move (existing lines keep their same-type evo move and add one). M7 types engine · M8 existing lines +off-type moves · M9 batch A (Rock/Earth, Flying, Psychic) · M10 batch B (Ghost/Dark, Dragon, Poison) · M11 batch C (Steel, Ice, 12-card team screen) · M12 balance + docs + net.
-- **Done:** M7 (decision #79: 10 elements, dual types, chart, badges/VFX/SFX hooks; tests pass). PAUSE: user approves the type chart (docs/creatures-and-moves.md) before M8.
+- **Done:** M7 (decision #79: 10 elements, dual types, chart, badges/VFX/SFX hooks; tests pass).
+- **Done:** M8 (decision #80: 8 off-type evolution moves on the existing lines, EN+IT voice, fallback VFX/SFX; tests 289 pass, `scripts/offtype-shots.mjs`).
+- **Next:** M9 batch A (Rock/Earth, Flying, Psychic: species, moves, voice, 9 models). PAUSE after M9 so the user judges the look first.
 - **Earlier feature (verbal boosts, decisions #73–74):** on `main`; user still to try boosts by voice in Chrome.
 - **Known issues:** `smoke.mjs --full` crashes headless Chrome on an audio-device error, also before this feature (docs/blockers.md).
 ## Docs (read only what the task needs)

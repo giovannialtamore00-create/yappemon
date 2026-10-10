@@ -32,7 +32,10 @@ export type MoveId =
   // stage 2
   | 'molten_leap' | 'tide_mirror' | 'bramble_stampede' | 'chain_storm'
   // stage 3
-  | 'volcanic_ruin' | 'maelstrom' | 'ancient_bloom' | 'sky_judgement';
+  | 'volcanic_ruin' | 'maelstrom' | 'ancient_bloom' | 'sky_judgement'
+  // off-type moves learned by evolving (existing lines)
+  | 'rock_hurl' | 'frost_fin' | 'toxic_thorns' | 'gale_slash'
+  | 'tremor_crush' | 'void_bite' | 'mind_bloom' | 'razor_pinion';
 
 /**
  * How a move reaches its target.

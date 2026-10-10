@@ -109,15 +109,15 @@ export const SPECIES: Record<SpeciesId, SpeciesDef> = {
   vinram: { id: 'vinram', name: 'Vinram', element: 'grass', maxHp: 125, speed: 'slow', moves: VINRAM_MOVES, stage: 1, family: 'vinram', next: 'thornhorn', dmgMult: 1 },
   joltmoth: { id: 'joltmoth', name: 'Joltmoth', element: 'electric', maxHp: 95, speed: 'fast', moves: JOLTMOTH_MOVES, stage: 1, family: 'joltmoth', next: 'stormoth', dmgMult: 1 },
 
-  pyroxen: { id: 'pyroxen', name: 'Pyroxen', element: 'fire', maxHp: 138, speed: 'medium', moves: [...CINDRIX_MOVES, 'molten_leap'], stage: 2, family: 'cindrix', next: 'calderox', dmgMult: 1.15 },
-  tsunafin: { id: 'tsunafin', name: 'Tsunafin', element: 'water', maxHp: 150, speed: 'medium', moves: [...BRINKLE_MOVES, 'tide_mirror'], stage: 2, family: 'brinkle', next: 'abyssmaw', dmgMult: 1.15 },
-  thornhorn: { id: 'thornhorn', name: 'Thornhorn', element: 'grass', maxHp: 156, speed: 'slow', moves: [...VINRAM_MOVES, 'bramble_stampede'], stage: 2, family: 'vinram', next: 'elderoot', dmgMult: 1.15 },
-  stormoth: { id: 'stormoth', name: 'Stormoth', element: 'electric', maxHp: 119, speed: 'fast', moves: [...JOLTMOTH_MOVES, 'chain_storm'], stage: 2, family: 'joltmoth', next: 'tempestra', dmgMult: 1.15 },
+  pyroxen: { id: 'pyroxen', name: 'Pyroxen', element: 'fire', maxHp: 138, speed: 'medium', moves: [...CINDRIX_MOVES, 'rock_hurl', 'molten_leap'], stage: 2, family: 'cindrix', next: 'calderox', dmgMult: 1.15 },
+  tsunafin: { id: 'tsunafin', name: 'Tsunafin', element: 'water', maxHp: 150, speed: 'medium', moves: [...BRINKLE_MOVES, 'frost_fin', 'tide_mirror'], stage: 2, family: 'brinkle', next: 'abyssmaw', dmgMult: 1.15 },
+  thornhorn: { id: 'thornhorn', name: 'Thornhorn', element: 'grass', maxHp: 156, speed: 'slow', moves: [...VINRAM_MOVES, 'toxic_thorns', 'bramble_stampede'], stage: 2, family: 'vinram', next: 'elderoot', dmgMult: 1.15 },
+  stormoth: { id: 'stormoth', name: 'Stormoth', element: 'electric', maxHp: 119, speed: 'fast', moves: [...JOLTMOTH_MOVES, 'gale_slash', 'chain_storm'], stage: 2, family: 'joltmoth', next: 'tempestra', dmgMult: 1.15 },
 
-  calderox: { id: 'calderox', name: 'Calderox', element: 'fire', maxHp: 165, speed: 'medium', moves: [...CINDRIX_MOVES, 'molten_leap', 'volcanic_ruin'], stage: 3, family: 'cindrix', dmgMult: 1.3 },
-  abyssmaw: { id: 'abyssmaw', name: 'Abyssmaw', element: 'water', maxHp: 180, speed: 'medium', moves: [...BRINKLE_MOVES, 'tide_mirror', 'maelstrom'], stage: 3, family: 'brinkle', dmgMult: 1.3 },
-  elderoot: { id: 'elderoot', name: 'Elderoot', element: 'grass', maxHp: 188, speed: 'slow', moves: [...VINRAM_MOVES, 'bramble_stampede', 'ancient_bloom'], stage: 3, family: 'vinram', dmgMult: 1.3 },
-  tempestra: { id: 'tempestra', name: 'Tempestra', element: 'electric', maxHp: 143, speed: 'fast', moves: [...JOLTMOTH_MOVES, 'chain_storm', 'sky_judgement'], stage: 3, family: 'joltmoth', dmgMult: 1.3 },
+  calderox: { id: 'calderox', name: 'Calderox', element: 'fire', maxHp: 165, speed: 'medium', moves: [...CINDRIX_MOVES, 'rock_hurl', 'molten_leap', 'tremor_crush', 'volcanic_ruin'], stage: 3, family: 'cindrix', dmgMult: 1.3 },
+  abyssmaw: { id: 'abyssmaw', name: 'Abyssmaw', element: 'water', maxHp: 180, speed: 'medium', moves: [...BRINKLE_MOVES, 'frost_fin', 'tide_mirror', 'void_bite', 'maelstrom'], stage: 3, family: 'brinkle', dmgMult: 1.3 },
+  elderoot: { id: 'elderoot', name: 'Elderoot', element: 'grass', maxHp: 188, speed: 'slow', moves: [...VINRAM_MOVES, 'toxic_thorns', 'bramble_stampede', 'mind_bloom', 'ancient_bloom'], stage: 3, family: 'vinram', dmgMult: 1.3 },
+  tempestra: { id: 'tempestra', name: 'Tempestra', element: 'electric', maxHp: 143, speed: 'fast', moves: [...JOLTMOTH_MOVES, 'gale_slash', 'chain_storm', 'razor_pinion', 'sky_judgement'], stage: 3, family: 'joltmoth', dmgMult: 1.3 },
 };
 
 /** Selectable (stage-1) species. */
@@ -193,6 +193,16 @@ export const MOVES: Record<MoveId, MoveDef> = {
   maelstrom: { id: 'maelstrom', species: 'abyssmaw', element: 'water', cost: 40, power: 26, delivery: 'wave', effect: dmg, windup: 1.6, active: 0.5, recovery: 0.8, speed: 8, alsoRoot: 1.5, heavy: true, accuracy: 80, name: { en: 'Maelstrom', it: 'Gorgo Abissale' } },
   ancient_bloom: { id: 'ancient_bloom', species: 'elderoot', element: 'grass', cost: 35, power: 0, delivery: 'self', effect: { kind: 'heal', amount: 35, seconds: 3 }, windup: 0.8, active: 0.4, recovery: 0.5, heavy: false, accuracy: 100, name: { en: 'Ancient Bloom', it: 'Fioritura Antica' } },
   sky_judgement: { id: 'sky_judgement', species: 'tempestra', element: 'electric', cost: 45, power: 38, delivery: 'beam', effect: dmg, windup: 1.8, active: 0.4, recovery: 0.9, hitDelay: 0.1, heavy: true, accuracy: 75, name: { en: 'Sky Judgement', it: 'Giudizio Celeste' } },
+
+  // Off-type moves learned by evolving (stage 2: rock/ice/poison/flying, stage 3: ground/dark/psychic/steel)
+  rock_hurl: { id: 'rock_hurl', species: 'pyroxen', element: 'rock', cost: 30, power: 22, delivery: 'projectile', effect: dmg, windup: 0.8, active: 0.2, recovery: 0.5, speed: 13, heavy: false, accuracy: 85, name: { en: 'Rock Hurl', it: 'Lancio di Roccia' } },
+  frost_fin: { id: 'frost_fin', species: 'tsunafin', element: 'ice', cost: 30, power: 22, delivery: 'beam', effect: dmg, windup: 0.8, active: 0.4, recovery: 0.5, hitDelay: 0.15, heavy: false, accuracy: 85, name: { en: 'Frost Fin', it: 'Pinna Gelida' } },
+  toxic_thorns: { id: 'toxic_thorns', species: 'thornhorn', element: 'poison', cost: 30, power: 22, delivery: 'projectile', effect: dmg, windup: 0.8, active: 0.2, recovery: 0.5, speed: 14, heavy: false, accuracy: 85, name: { en: 'Toxic Thorns', it: 'Spine Tossiche' } },
+  gale_slash: { id: 'gale_slash', species: 'stormoth', element: 'flying', cost: 30, power: 22, delivery: 'projectile', effect: dmg, windup: 0.8, active: 0.2, recovery: 0.45, speed: 24, heavy: false, accuracy: 85, name: { en: 'Gale Slash', it: 'Fendente di Vento' } },
+  tremor_crush: { id: 'tremor_crush', species: 'calderox', element: 'ground', cost: 45, power: 38, delivery: 'ground', effect: dmg, windup: 1.9, active: 0.6, recovery: 0.9, hitDelay: 0.2, heavy: true, accuracy: 75, name: { en: 'Tremor Crush', it: 'Frantuma Terra' } },
+  void_bite: { id: 'void_bite', species: 'abyssmaw', element: 'dark', cost: 45, power: 38, delivery: 'melee', effect: dmg, windup: 1.2, active: 0.3, recovery: 0.8, heavy: true, accuracy: 80, name: { en: 'Void Bite', it: 'Morso del Vuoto' } },
+  mind_bloom: { id: 'mind_bloom', species: 'elderoot', element: 'psychic', cost: 45, power: 37, delivery: 'beam', effect: dmg, windup: 1.8, active: 0.4, recovery: 0.9, hitDelay: 0.1, heavy: true, accuracy: 75, name: { en: 'Mind Bloom', it: 'Fiore Mentale' } },
+  razor_pinion: { id: 'razor_pinion', species: 'tempestra', element: 'steel', cost: 45, power: 38, delivery: 'projectile', effect: dmg, windup: 1.6, active: 0.3, recovery: 0.8, speed: 40, heavy: true, accuracy: 75, name: { en: 'Razor Pinion', it: 'Penna Tagliente' } },
 };
 
 /** Uses per round by base stamina cost: strongest (≥35) 5, strong (30) 10, normal (20–25) 15, common (15) 20. */

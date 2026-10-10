@@ -195,6 +195,15 @@ describe('evolutions: new moves and names', () => {
     ['tempesta a catena', 'tempestra', ['chain_storm']],
     ['sky judgement', 'tempestra', ['sky_judgement']],
     ['giudizio celeste', 'tempestra', ['sky_judgement']],
+    // off-type evolution moves
+    ['rock hurl', 'pyroxen', ['rock_hurl']], ['lancio di roccia', 'calderox', ['rock_hurl']],
+    ['frost fin', 'tsunafin', ['frost_fin']], ['pinna gelida', 'abyssmaw', ['frost_fin']],
+    ['toxic thorns', 'thornhorn', ['toxic_thorns']], ['spine tossiche', 'elderoot', ['toxic_thorns']],
+    ['gale slash', 'stormoth', ['gale_slash']], ['fendente di vento', 'tempestra', ['gale_slash']],
+    ['tremor crush', 'calderox', ['tremor_crush']], ['frantuma terra', 'calderox', ['tremor_crush']],
+    ['void bite', 'abyssmaw', ['void_bite']], ['morso del vuoto', 'abyssmaw', ['void_bite']],
+    ['mind bloom', 'elderoot', ['mind_bloom']], ['fiore mentale', 'elderoot', ['mind_bloom']],
+    ['razor pinion', 'tempestra', ['razor_pinion']], ['penna tagliente', 'tempestra', ['razor_pinion']],
     // evolved forms keep their earlier moves
     ['cinder spit', 'calderox', ['cinder_spit']],
     ['thunder lance', 'tempestra', ['thunder_lance']],

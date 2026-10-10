@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import {
-  ARENA_X_M, Bot, FULL_POWER_COOLDOWN_S, FULL_POWER_MULT, HYPE_STAMINA, LOADOUT_S, SNAP_SPEED, PREFERRED_GAP_M, defaultLoadout, DODGE_COST, HALF_FAR_M, HALF_NEAR_M, MOVES, MOVE_IDS, SPECIES, STAMINA_MAX, TICK_HZ, activeCreature,
+  ARENA_X_M, Bot, FULL_POWER_COOLDOWN_S, FULL_POWER_MULT, HYPE_STAMINA, LOADOUT_S, SNAP_SPEED, PREFERRED_GAP_M, defaultLoadout, DODGE_COST, HALF_FAR_M, HALF_NEAR_M, MOVES, MOVE_IDS, SPECIES, elementsOf, STAMINA_MAX, TICK_HZ, activeCreature,
   computeDamage, createMatch, hitChance, step, travelTicks, typeMultiplier, usesLeft,
   type BaseSpeciesId, type CheerId, type Intent, type MoveId, type SimEvent, type SimState, type SpeciesId,
 } from '../src/sim';
@@ -589,9 +589,18 @@ describe('rounds and evolution', () => {
   });
   it('evolutions keep earlier moves and learn one more each stage', () => {
     expect(SPECIES.cindrix.moves).toHaveLength(4);
-    expect(SPECIES.pyroxen.moves).toEqual([...SPECIES.cindrix.moves, 'molten_leap']);
-    expect(SPECIES.calderox.moves).toEqual([...SPECIES.pyroxen.moves, 'volcanic_ruin']);
-    expect(SPECIES.tempestra.moves).toHaveLength(6);
+    expect(SPECIES.pyroxen.moves).toEqual([...SPECIES.cindrix.moves, 'rock_hurl', 'molten_leap']);
+    expect(SPECIES.calderox.moves).toEqual([...SPECIES.pyroxen.moves, 'tremor_crush', 'volcanic_ruin']);
+    expect(SPECIES.tempestra.moves).toHaveLength(8);
+  });
+  it('every evolution learns a move of a different type than its own', () => {
+    for (const id of Object.keys(SPECIES) as SpeciesId[]) {
+      const d = SPECIES[id];
+      if (d.stage === 1) continue;
+      const mine = elementsOf(id);
+      const learned = d.moves.filter((m) => MOVES[m].species === id).map((m) => MOVES[m].element);
+      expect(learned.some((el) => el !== 'normal' && !mine.includes(el)), id).toBe(true);
+    }
   });
   it('evolved forms hit harder', () => {
     const base = computeDamage(20, 'normal', 'fire', 'fire', 0.5, false, SPECIES.cindrix.dmgMult).damage;
@@ -688,7 +697,7 @@ describe('determinism and bot', () => {
     expect(SPECIES.brinkle.maxHp).toBe(120);
     expect(SPECIES.vinram.maxHp).toBe(125);
     expect(SPECIES.joltmoth.maxHp).toBe(95);
-    expect(Object.values(MOVES)).toHaveLength(24);
+    expect(Object.values(MOVES)).toHaveLength(32);
   });
 });
 

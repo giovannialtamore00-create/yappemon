@@ -298,6 +298,8 @@ const MOTIONS: Record<MoveId, MotionFn> = {
   horn_charge: gallop(0.55), leaf_volley: shake, vine_snare: whip, thorn_quake: rear,
   wing_flick: pirouette, spark_dart: jab, static_field: tremble, thunder_lance: dive(1.0),
   molten_leap: leap, tide_mirror: tuck, bramble_stampede: gallop(0.6), chain_storm: triple,
+  rock_hurl: spit, frost_fin: jet, toxic_thorns: spit, gale_slash: jab,
+  tremor_crush: stomp, void_bite: leap, mind_bloom: levitate, razor_pinion: dive(1.0),
   volcanic_ruin: stomp, maelstrom: crash, ancient_bloom: levitate, sky_judgement: dive(1.6),
 };
 

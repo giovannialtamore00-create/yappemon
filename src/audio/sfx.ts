@@ -2,6 +2,9 @@
 
 import { MOVES } from '../sim/data';
 import { ChipMusic } from './music';
+
+/** Base pitch (Hz) of each type's charge-up and fallback move sounds. */
+const ELEMENT_PITCH: Record<string, number> = { fire: 120, water: 200, grass: 160, electric: 300, normal: 150, rock: 90, ground: 100, flying: 260, psychic: 340, ghost: 110, dark: 80, dragon: 70, poison: 140, steel: 220, ice: 400 };
 import type { Boost, CheerId, MoveId, PlayerIdx, SimEvent, SimState } from '../sim/types';
 
 const VOL_KEY = 'yappemon.volume';
@@ -144,7 +147,7 @@ export class Sfx {
   }
 
   private charge(element: string) {
-    const base = { fire: 120, water: 200, grass: 160, electric: 300, normal: 150, rock: 90, ground: 100, flying: 260, psychic: 340, ghost: 110, dark: 80, dragon: 70, poison: 140, steel: 220, ice: 400 }[element] ?? 150;
+    const base = ELEMENT_PITCH[element] ?? 150;
     this.tone(base, 1.0, { type: 'sawtooth', vol: 0.06, to: base * 4, attack: 0.3 });
     this.tone(base * 1.5, 1.0, { type: 'sine', vol: 0.08, to: base * 6, attack: 0.3 });
   }
@@ -236,6 +239,14 @@ export class Sfx {
         this.tone(3000, 0.2, { type: 'square', to: 80, vol: 0.25 });
         this.tone(55, 1.2, { type: 'sawtooth', vol: 0.25, to: 30, delay: 0.05 });
         break;
+      default: {
+        // Moves without a custom sound: a whoosh and a tone that follow the move's type and weight.
+        const m = MOVES[id];
+        const base = ELEMENT_PITCH[m.element] ?? 150;
+        this.whoosh(m.heavy ? 0.4 : 0.25, m.heavy ? 0.5 : 0.3);
+        this.tone(base * 2, m.heavy ? 0.5 : 0.25, { type: m.heavy ? 'sawtooth' : 'triangle', to: base, vol: 0.14 });
+        if (m.heavy) this.noise(0.6, { filter: 'lowpass', freq: 1500, to: 120, vol: 0.4, delay: 0.05 });
+      }
     }
   }
 

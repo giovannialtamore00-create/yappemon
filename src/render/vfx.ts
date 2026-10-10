@@ -2,9 +2,21 @@
 // (beams, lightning arcs, rings, eruptions, ground spikes, waves, leaves).
 
 import * as THREE from 'three';
+import { ELEMENT_COLOR } from '../i18n';
+import { MOVES } from '../sim/data';
+import type { MoveId } from '../sim/types';
 
 export type FxKind = 'fire' | 'ember' | 'water' | 'splash' | 'grass' | 'leaf' | 'electric' | 'spark' | 'heal' | 'dust' | 'orb' | 'normal' | 'smoke' | 'static'
   | 'rock' | 'wind' | 'psychic' | 'shadow' | 'dragon' | 'poison' | 'metal' | 'ice';
+
+export const ELEMENT_FX: Record<string, FxKind> = {
+  fire: 'fire', water: 'water', grass: 'grass', electric: 'electric', normal: 'normal',
+  rock: 'rock', ground: 'dust', flying: 'wind', psychic: 'psychic', ghost: 'shadow', dark: 'shadow', dragon: 'dragon', poison: 'poison', steel: 'metal', ice: 'ice',
+};
+export const CHARGE_FX: Record<string, FxKind> = {
+  fire: 'ember', water: 'splash', grass: 'leaf', electric: 'static', normal: 'dust',
+  rock: 'dust', ground: 'dust', flying: 'wind', psychic: 'psychic', ghost: 'shadow', dark: 'shadow', dragon: 'dragon', poison: 'poison', steel: 'metal', ice: 'ice',
+};
 
 interface FxStyle { colors: string[]; size: [number, number]; life: [number, number]; speed: [number, number]; gravity: number; drag: number; up: number }
 
@@ -384,6 +396,7 @@ export class Vfx {
       }
       default:
         o.position.copy(pos);
+        this.emit(ELEMENT_FX[MOVES[move as MoveId]?.element ?? 'normal'] ?? 'normal', pos, 2, 0.06);
     }
   }
 
@@ -462,7 +475,7 @@ export class Vfx {
         return g;
       }
       default:
-        return new THREE.Mesh(new THREE.SphereGeometry(0.15, 8, 6), new THREE.MeshBasicMaterial({ color: '#ffffff' }));
+        return new THREE.Mesh(new THREE.SphereGeometry(0.15, 8, 6), new THREE.MeshBasicMaterial({ color: ELEMENT_COLOR[MOVES[move as MoveId]?.element ?? 'normal'] }));
     }
   }
 
