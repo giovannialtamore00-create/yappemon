@@ -57,7 +57,7 @@ html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
 .big-msg { font-size: 1.4rem; font-weight: 700; }
 
 /* ---------------------------------------------------------------- team select */
-.team { justify-content: flex-end; padding-bottom: 28px; background: linear-gradient(180deg, rgba(8, 12, 30, 0.05) 30%, rgba(8, 12, 30, 0.75)); }
+.team { justify-content: safe flex-end; padding-bottom: 28px; background: linear-gradient(180deg, rgba(8, 12, 30, 0.05) 30%, rgba(8, 12, 30, 0.75)); }
 .team-head { text-align: center; text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7); }
 .team-head h2 { margin: 0; font-size: 2rem; }
 .team-head p { margin: 4px 0; }

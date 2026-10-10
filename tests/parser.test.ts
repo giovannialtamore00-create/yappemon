@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { levenshtein, normalize, parse, toIntents, type Command } from '../src/voice/parser';
+import { MOVE_ALIASES } from '../src/voice/aliases';
+import { SPECIES } from '../src/sim/data';
 import type { MoveId, SpeciesId } from '../src/sim/types';
 
 const moves = (text: string, sp?: SpeciesId) =>
@@ -204,6 +206,45 @@ describe('evolutions: new moves and names', () => {
     ['void bite', 'abyssmaw', ['void_bite']], ['morso del vuoto', 'abyssmaw', ['void_bite']],
     ['mind bloom', 'elderoot', ['mind_bloom']], ['fiore mentale', 'elderoot', ['mind_bloom']],
     ['razor pinion', 'tempestra', ['razor_pinion']], ['penna tagliente', 'tempestra', ['razor_pinion']],
+    // Gravelo / Pipwing / Wispurr lines
+    ['pebble bump', 'gravelo', ['pebble_bump']],
+    ['botta di sasso', 'gravelo', ['pebble_bump']],
+    ['gravel shot', 'gravelo', ['gravel_shot']],
+    ['colpo di ghiaia', 'boulderax', ['gravel_shot']],
+    ['stone skin', 'gravelo', ['stone_skin']],
+    ['pelle di pietra', 'tectonyx', ['stone_skin']],
+    ['fault quake', 'gravelo', ['fault_quake']],
+    ['faglia sismica', 'tectonyx', ['fault_quake']],
+    ['magma chunk', 'boulderax', ['magma_chunk']],
+    ['blocco di magma', 'tectonyx', ['magma_chunk']],
+    ['glacier drop', 'tectonyx', ['glacier_drop']],
+    ['caduta glaciale', 'tectonyx', ['glacier_drop']],
+    ['beak peck', 'pipwing', ['beak_peck']],
+    ['beccata', 'pipwing', ['beak_peck']],
+    ['feather dart', 'pipwing', ['feather_dart']],
+    ['dardo di piuma', 'galehawk', ['feather_dart']],
+    ['dizzy gale', 'pipwing', ['dizzy_gale']],
+    ['vento stordente', 'pipwing', ['dizzy_gale']],
+    ['hurricane', 'pipwing', ['hurricane']],
+    ['uragano', 'zephyrion', ['hurricane']],
+    ['shadow talon', 'galehawk', ['shadow_talon']],
+    ['artiglio ombra', 'galehawk', ['shadow_talon']],
+    ['draco zephyr', 'zephyrion', ['draco_zephyr']],
+    ['soffio draconico', 'zephyrion', ['draco_zephyr']],
+    ['paw tap', 'wispurr', ['paw_tap']],
+    ['zampata', 'wispurr', ['paw_tap']],
+    ['psy orb', 'wispurr', ['psy_orb']],
+    ['sfera psichica', 'wispurr', ['psy_orb']],
+    ['calm mind', 'wispurr', ['calm_mind']],
+    ['mente calma', 'mystiline', ['calm_mind']],
+    ['mind crush', 'wispurr', ['mind_crush']],
+    ['schianto mentale', 'wispurr', ['mind_crush']],
+    ['spirit hex', 'mystiline', ['spirit_hex']],
+    ['maleficio spettrale', 'astralynx', ['spirit_hex']],
+    ['astral blade', 'astralynx', ['astral_blade']],
+    ['lama astrale', 'astralynx', ['astral_blade']],
+    ['go boulderax', 'gravelo', ['go:boulderax']], ['vai zephyrion', 'pipwing', ['go:zephyrion']], ['go astral lynx', 'wispurr', ['go:astralynx']],
+    ['go pipwing', 'gravelo', ['go:pipwing']], ['vai wispurr', 'pipwing', ['go:wispurr']],
     // evolved forms keep their earlier moves
     ['cinder spit', 'calderox', ['cinder_spit']],
     ['thunder lance', 'tempestra', ['thunder_lance']],
@@ -318,4 +359,16 @@ describe('encouragements', () => {
     ]);
   });
   it('a creature name with a cheer is just addressing it', () => expect(cheers('Cindrix coraggio')).toEqual(['courage']));
+});
+
+describe('aliases do not collide inside one creature', () => {
+  for (const id of Object.keys(SPECIES) as SpeciesId[]) {
+    it(id, () => {
+      const seen = new Map<string, string>();
+      for (const m of SPECIES[id].moves) for (const a of MOVE_ALIASES[m]) {
+        expect(seen.get(a) ?? m, `"${a}" is an alias of both ${seen.get(a)} and ${m}`).toBe(m);
+        seen.set(a, m);
+      }
+    });
+  }
 });

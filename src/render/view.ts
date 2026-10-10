@@ -339,7 +339,13 @@ export class BattleView {
         this.vfx.ring(pos, '#ffffff', 0.5, 3, false);
         this.vfx.emit('electric', pos, 60, 0.6, undefined, 1.4);
         break;
-      default: if (!miss) this.vfx.ring(pos, '#ffffff', 0.25, 1.2, false);
+      default: {
+        // Moves without a custom impact: type particles, plus a ground ring for heavy ground attacks.
+        const m = MOVES[move];
+        this.vfx.emit(ELEMENT_FX[m.element] ?? 'normal', pos, miss ? 8 : 25, 0.3);
+        if (m.delivery === 'ground' && m.heavy) this.vfx.ring(pos.clone().setY(0.05), ELEMENT_COLOR[m.element], 0.7, 3);
+        else if (!miss) this.vfx.ring(pos, ELEMENT_COLOR[m.element], 0.25, 1.2, false);
+      }
     }
   }
 

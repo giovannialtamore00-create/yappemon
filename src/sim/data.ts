@@ -85,7 +85,7 @@ export const STEP_JITTER_M = 0.6;
 export const SPEED_MULT: Record<SpeedClass, number> = { slow: 1.15, medium: 1, fast: 0.85 };
 export const STRAFE_SPEED: Record<SpeedClass, number> = { slow: 1.2, medium: 1.6, fast: 2.2 };
 /** Distance (m) each evolution line likes to keep from the opponent: it stands about half of it from the centre line. */
-export const PREFERRED_GAP_M: Record<BaseSpeciesId, number> = { cindrix: 4.5, brinkle: 5.5, vinram: 4, joltmoth: 5 };
+export const PREFERRED_GAP_M: Record<BaseSpeciesId, number> = { cindrix: 4.5, brinkle: 5.5, vinram: 4, joltmoth: 5, gravelo: 4, pipwing: 5, wispurr: 4.5 };
 
 /** Rounds needed to win the match (best of 3). Set to 3 to always play all three rounds. */
 export const ROUNDS_TO_WIN = 2;
@@ -101,6 +101,9 @@ const CINDRIX_MOVES: MoveId[] = ['shell_ram', 'cinder_spit', 'heat_shell', 'magm
 const BRINKLE_MOVES: MoveId[] = ['bubble_bump', 'water_jet', 'healing_rain', 'tidal_crash'];
 const VINRAM_MOVES: MoveId[] = ['horn_charge', 'leaf_volley', 'vine_snare', 'thorn_quake'];
 const JOLTMOTH_MOVES: MoveId[] = ['wing_flick', 'spark_dart', 'static_field', 'thunder_lance'];
+const GRAVELO_MOVES: MoveId[] = ['pebble_bump', 'gravel_shot', 'stone_skin', 'fault_quake'];
+const PIPWING_MOVES: MoveId[] = ['beak_peck', 'feather_dart', 'dizzy_gale', 'hurricane'];
+const WISPURR_MOVES: MoveId[] = ['paw_tap', 'psy_orb', 'calm_mind', 'mind_crush'];
 
 // Stage 2: HP ×1.25, damage ×1.15, +1 move. Stage 3: HP ×1.5, damage ×1.3, +1 more move.
 export const SPECIES: Record<SpeciesId, SpeciesDef> = {
@@ -109,19 +112,30 @@ export const SPECIES: Record<SpeciesId, SpeciesDef> = {
   vinram: { id: 'vinram', name: 'Vinram', element: 'grass', maxHp: 125, speed: 'slow', moves: VINRAM_MOVES, stage: 1, family: 'vinram', next: 'thornhorn', dmgMult: 1 },
   joltmoth: { id: 'joltmoth', name: 'Joltmoth', element: 'electric', maxHp: 95, speed: 'fast', moves: JOLTMOTH_MOVES, stage: 1, family: 'joltmoth', next: 'stormoth', dmgMult: 1 },
 
+  gravelo: { id: 'gravelo', name: 'Gravelo', element: 'rock', element2: 'ground', maxHp: 130, speed: 'slow', moves: GRAVELO_MOVES, stage: 1, family: 'gravelo', next: 'boulderax', dmgMult: 1 },
+  pipwing: { id: 'pipwing', name: 'Pipwing', element: 'flying', maxHp: 90, speed: 'fast', moves: PIPWING_MOVES, stage: 1, family: 'pipwing', next: 'galehawk', dmgMult: 1 },
+  wispurr: { id: 'wispurr', name: 'Wispurr', element: 'psychic', maxHp: 100, speed: 'medium', moves: WISPURR_MOVES, stage: 1, family: 'wispurr', next: 'mystiline', dmgMult: 1 },
+
   pyroxen: { id: 'pyroxen', name: 'Pyroxen', element: 'fire', maxHp: 138, speed: 'medium', moves: [...CINDRIX_MOVES, 'rock_hurl', 'molten_leap'], stage: 2, family: 'cindrix', next: 'calderox', dmgMult: 1.15 },
   tsunafin: { id: 'tsunafin', name: 'Tsunafin', element: 'water', maxHp: 150, speed: 'medium', moves: [...BRINKLE_MOVES, 'frost_fin', 'tide_mirror'], stage: 2, family: 'brinkle', next: 'abyssmaw', dmgMult: 1.15 },
   thornhorn: { id: 'thornhorn', name: 'Thornhorn', element: 'grass', maxHp: 156, speed: 'slow', moves: [...VINRAM_MOVES, 'toxic_thorns', 'bramble_stampede'], stage: 2, family: 'vinram', next: 'elderoot', dmgMult: 1.15 },
   stormoth: { id: 'stormoth', name: 'Stormoth', element: 'electric', maxHp: 119, speed: 'fast', moves: [...JOLTMOTH_MOVES, 'gale_slash', 'chain_storm'], stage: 2, family: 'joltmoth', next: 'tempestra', dmgMult: 1.15 },
 
+  boulderax: { id: 'boulderax', name: 'Boulderax', element: 'rock', element2: 'ground', maxHp: 163, speed: 'slow', moves: [...GRAVELO_MOVES, 'magma_chunk'], stage: 2, family: 'gravelo', next: 'tectonyx', dmgMult: 1.15 },
+  galehawk: { id: 'galehawk', name: 'Galehawk', element: 'flying', maxHp: 113, speed: 'fast', moves: [...PIPWING_MOVES, 'shadow_talon'], stage: 2, family: 'pipwing', next: 'zephyrion', dmgMult: 1.15 },
+  mystiline: { id: 'mystiline', name: 'Mystiline', element: 'psychic', maxHp: 125, speed: 'medium', moves: [...WISPURR_MOVES, 'spirit_hex'], stage: 2, family: 'wispurr', next: 'astralynx', dmgMult: 1.15 },
+
   calderox: { id: 'calderox', name: 'Calderox', element: 'fire', maxHp: 165, speed: 'medium', moves: [...CINDRIX_MOVES, 'rock_hurl', 'molten_leap', 'tremor_crush', 'volcanic_ruin'], stage: 3, family: 'cindrix', dmgMult: 1.3 },
   abyssmaw: { id: 'abyssmaw', name: 'Abyssmaw', element: 'water', maxHp: 180, speed: 'medium', moves: [...BRINKLE_MOVES, 'frost_fin', 'tide_mirror', 'void_bite', 'maelstrom'], stage: 3, family: 'brinkle', dmgMult: 1.3 },
   elderoot: { id: 'elderoot', name: 'Elderoot', element: 'grass', maxHp: 188, speed: 'slow', moves: [...VINRAM_MOVES, 'toxic_thorns', 'bramble_stampede', 'mind_bloom', 'ancient_bloom'], stage: 3, family: 'vinram', dmgMult: 1.3 },
   tempestra: { id: 'tempestra', name: 'Tempestra', element: 'electric', maxHp: 143, speed: 'fast', moves: [...JOLTMOTH_MOVES, 'gale_slash', 'chain_storm', 'razor_pinion', 'sky_judgement'], stage: 3, family: 'joltmoth', dmgMult: 1.3 },
+  tectonyx: { id: 'tectonyx', name: 'Tectonyx', element: 'rock', element2: 'ground', maxHp: 195, speed: 'slow', moves: [...GRAVELO_MOVES, 'magma_chunk', 'glacier_drop'], stage: 3, family: 'gravelo', dmgMult: 1.3 },
+  zephyrion: { id: 'zephyrion', name: 'Zephyrion', element: 'flying', maxHp: 135, speed: 'fast', moves: [...PIPWING_MOVES, 'shadow_talon', 'draco_zephyr'], stage: 3, family: 'pipwing', dmgMult: 1.3 },
+  astralynx: { id: 'astralynx', name: 'Astralynx', element: 'psychic', maxHp: 150, speed: 'medium', moves: [...WISPURR_MOVES, 'spirit_hex', 'astral_blade'], stage: 3, family: 'wispurr', dmgMult: 1.3 },
 };
 
 /** Selectable (stage-1) species. */
-export const SPECIES_IDS: BaseSpeciesId[] = ['cindrix', 'brinkle', 'vinram', 'joltmoth'];
+export const SPECIES_IDS: BaseSpeciesId[] = ['cindrix', 'brinkle', 'vinram', 'joltmoth', 'gravelo', 'pipwing', 'wispurr'];
 export const ALL_SPECIES_IDS = Object.keys(SPECIES) as SpeciesId[];
 
 /** The form of a base species at a given stage (1–3). */
@@ -203,6 +217,28 @@ export const MOVES: Record<MoveId, MoveDef> = {
   void_bite: { id: 'void_bite', species: 'abyssmaw', element: 'dark', cost: 45, power: 38, delivery: 'melee', effect: dmg, windup: 1.2, active: 0.3, recovery: 0.8, heavy: true, accuracy: 80, name: { en: 'Void Bite', it: 'Morso del Vuoto' } },
   mind_bloom: { id: 'mind_bloom', species: 'elderoot', element: 'psychic', cost: 45, power: 37, delivery: 'beam', effect: dmg, windup: 1.8, active: 0.4, recovery: 0.9, hitDelay: 0.1, heavy: true, accuracy: 75, name: { en: 'Mind Bloom', it: 'Fiore Mentale' } },
   razor_pinion: { id: 'razor_pinion', species: 'tempestra', element: 'steel', cost: 45, power: 38, delivery: 'projectile', effect: dmg, windup: 1.6, active: 0.3, recovery: 0.8, speed: 40, heavy: true, accuracy: 75, name: { en: 'Razor Pinion', it: 'Penna Tagliente' } },
+
+  // Gravelo line (Rock/Earth): Boulderax learns a Fire move, Tectonyx an Ice move
+  pebble_bump: { id: 'pebble_bump', species: 'gravelo', element: 'normal', cost: 15, power: 9, delivery: 'melee', effect: dmg, windup: 0.15, active: 0.25, recovery: 0.4, heavy: false, quick: true, accuracy: 100, name: { en: 'Pebble Bump', it: 'Botta di Sasso' } },
+  gravel_shot: { id: 'gravel_shot', species: 'gravelo', element: 'rock', cost: 15, power: 15, delivery: 'projectile', effect: dmg, windup: 0.6, active: 0.2, recovery: 0.45, speed: 14, heavy: false, accuracy: 90, name: { en: 'Gravel Shot', it: 'Colpo di Ghiaia' } },
+  stone_skin: { id: 'stone_skin', species: 'gravelo', element: 'rock', cost: 20, power: 0, delivery: 'self', effect: { kind: 'shield', factor: 0.5, seconds: 4 }, windup: 0.3, active: 0.2, recovery: 0.3, heavy: false, accuracy: 100, name: { en: 'Stone Skin', it: 'Pelle di Pietra' } },
+  fault_quake: { id: 'fault_quake', species: 'gravelo', element: 'ground', cost: 35, power: 30, delivery: 'ground', effect: dmg, windup: 1.5, active: 0.5, recovery: 0.7, hitDelay: 0.2, heavy: true, accuracy: 80, name: { en: 'Fault Quake', it: 'Faglia Sismica' } },
+  magma_chunk: { id: 'magma_chunk', species: 'boulderax', element: 'fire', cost: 30, power: 22, delivery: 'projectile', effect: dmg, windup: 0.8, active: 0.2, recovery: 0.5, speed: 12, heavy: false, accuracy: 85, name: { en: 'Magma Chunk', it: 'Blocco di Magma' } },
+  glacier_drop: { id: 'glacier_drop', species: 'tectonyx', element: 'ice', cost: 45, power: 38, delivery: 'ground', effect: dmg, windup: 1.9, active: 0.6, recovery: 0.9, hitDelay: 0.2, heavy: true, accuracy: 75, name: { en: 'Glacier Drop', it: 'Caduta Glaciale' } },
+  // Pipwing line (Flying): Galehawk learns a Dark move, Zephyrion a Dragon move
+  beak_peck: { id: 'beak_peck', species: 'pipwing', element: 'normal', cost: 15, power: 8, delivery: 'melee', effect: dmg, windup: 0.15, active: 0.2, recovery: 0.3, heavy: false, quick: true, accuracy: 100, name: { en: 'Beak Peck', it: 'Beccata' } },
+  feather_dart: { id: 'feather_dart', species: 'pipwing', element: 'flying', cost: 15, power: 15, delivery: 'projectile', effect: dmg, windup: 0.6, active: 0.15, recovery: 0.4, speed: 20, heavy: false, accuracy: 90, name: { en: 'Feather Dart', it: 'Dardo di Piuma' } },
+  dizzy_gale: { id: 'dizzy_gale', species: 'pipwing', element: 'flying', cost: 20, power: 0, delivery: 'beam', effect: { kind: 'static', seconds: 5 }, windup: 0.6, active: 0.3, recovery: 0.4, hitDelay: 0.2, heavy: false, accuracy: 85, name: { en: 'Dizzy Gale', it: 'Vento Stordente' } },
+  hurricane: { id: 'hurricane', species: 'pipwing', element: 'flying', cost: 35, power: 30, delivery: 'wave', effect: dmg, windup: 1.5, active: 0.4, recovery: 0.7, speed: 10, heavy: true, accuracy: 80, name: { en: 'Hurricane', it: 'Uragano' } },
+  shadow_talon: { id: 'shadow_talon', species: 'galehawk', element: 'dark', cost: 30, power: 22, delivery: 'melee', effect: dmg, windup: 0.8, active: 0.3, recovery: 0.6, heavy: false, accuracy: 85, name: { en: 'Shadow Talon', it: 'Artiglio Ombra' } },
+  draco_zephyr: { id: 'draco_zephyr', species: 'zephyrion', element: 'dragon', cost: 45, power: 38, delivery: 'beam', effect: dmg, windup: 1.8, active: 0.4, recovery: 0.9, hitDelay: 0.1, heavy: true, accuracy: 75, name: { en: 'Draco Zephyr', it: 'Soffio Draconico' } },
+  // Wispurr line (Psychic): Mystiline learns a Ghost move, Astralynx a Steel move
+  paw_tap: { id: 'paw_tap', species: 'wispurr', element: 'normal', cost: 15, power: 8, delivery: 'melee', effect: dmg, windup: 0.15, active: 0.2, recovery: 0.3, heavy: false, quick: true, accuracy: 100, name: { en: 'Paw Tap', it: 'Zampata' } },
+  psy_orb: { id: 'psy_orb', species: 'wispurr', element: 'psychic', cost: 15, power: 15, delivery: 'projectile', effect: dmg, windup: 0.6, active: 0.2, recovery: 0.4, speed: 12, heavy: false, accuracy: 90, name: { en: 'Psy Orb', it: 'Sfera Psichica' } },
+  calm_mind: { id: 'calm_mind', species: 'wispurr', element: 'psychic', cost: 25, power: 0, delivery: 'self', effect: { kind: 'heal', amount: 18, seconds: 3 }, windup: 0.6, active: 0.3, recovery: 0.4, heavy: false, accuracy: 100, name: { en: 'Calm Mind', it: 'Mente Calma' } },
+  mind_crush: { id: 'mind_crush', species: 'wispurr', element: 'psychic', cost: 35, power: 30, delivery: 'beam', effect: dmg, windup: 1.5, active: 0.4, recovery: 0.7, hitDelay: 0.15, heavy: true, accuracy: 80, name: { en: 'Mind Crush', it: 'Schianto Mentale' } },
+  spirit_hex: { id: 'spirit_hex', species: 'mystiline', element: 'ghost', cost: 30, power: 22, delivery: 'projectile', effect: dmg, windup: 0.8, active: 0.2, recovery: 0.5, speed: 11, heavy: false, accuracy: 85, name: { en: 'Spirit Hex', it: 'Maleficio Spettrale' } },
+  astral_blade: { id: 'astral_blade', species: 'astralynx', element: 'steel', cost: 45, power: 38, delivery: 'beam', effect: dmg, windup: 1.7, active: 0.4, recovery: 0.9, hitDelay: 0.1, heavy: true, accuracy: 75, name: { en: 'Astral Blade', it: 'Lama Astrale' } },
 };
 
 /** Uses per round by base stamina cost: strongest (≥35) 5, strong (30) 10, normal (20–25) 15, common (15) 20. */

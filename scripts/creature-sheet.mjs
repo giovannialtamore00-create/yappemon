@@ -4,7 +4,8 @@ import { mkdirSync } from 'node:fs';
 import { chromium } from 'playwright';
 import { createServer } from 'vite';
 
-const LINES = [['cindrix', 'pyroxen', 'calderox'], ['brinkle', 'tsunafin', 'abyssmaw'], ['vinram', 'thornhorn', 'elderoot'], ['joltmoth', 'stormoth', 'tempestra']];
+const LINES = [['cindrix', 'pyroxen', 'calderox'], ['brinkle', 'tsunafin', 'abyssmaw'], ['vinram', 'thornhorn', 'elderoot'], ['joltmoth', 'stormoth', 'tempestra'],
+  ['gravelo', 'boulderax', 'tectonyx'], ['pipwing', 'galehawk', 'zephyrion'], ['wispurr', 'mystiline', 'astralynx']];
 mkdirSync('screenshots/creatures', { recursive: true });
 const server = await createServer({ server: { port: 5196 }, logLevel: 'error' });
 await server.listen();
@@ -30,9 +31,9 @@ try {
         ctx.setFocus(null);
         line.forEach((sp, i) => {
           const m = buildCreature(sp);
-          m.root.position.set((i - 1) * 2.3, 0, 3.4);
+          m.root.position.set((i - 1) * 3.0, 0, 2.2);
           m.root.rotation.y = yaw;
-          m.root.scale.setScalar(m.size * 1.25);
+          m.root.scale.setScalar(m.size * 1.0);
           m.animate(1.3, 0.016, 0, 0);
           ctx.scene.add(m.root);
           window.__lineup.push(m.root);

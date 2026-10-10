@@ -4,11 +4,12 @@ export type Element =
   | 'normal' | 'fire' | 'water' | 'grass' | 'electric'
   | 'rock' | 'ground' | 'flying' | 'psychic' | 'ghost' | 'dark' | 'dragon' | 'poison' | 'steel' | 'ice';
 /** Base forms (stage 1), then stage 2 and stage 3 evolutions. */
-export type BaseSpeciesId = 'cindrix' | 'brinkle' | 'vinram' | 'joltmoth';
+export type BaseSpeciesId = 'cindrix' | 'brinkle' | 'vinram' | 'joltmoth' | 'gravelo' | 'pipwing' | 'wispurr';
 export type SpeciesId =
   | BaseSpeciesId
   | 'pyroxen' | 'tsunafin' | 'thornhorn' | 'stormoth'
-  | 'calderox' | 'abyssmaw' | 'elderoot' | 'tempestra';
+  | 'calderox' | 'abyssmaw' | 'elderoot' | 'tempestra'
+  | 'boulderax' | 'tectonyx' | 'galehawk' | 'zephyrion' | 'mystiline' | 'astralynx';
 export type Stage = 1 | 2 | 3;
 export type PlayerIdx = 0 | 1;
 export type Lang = 'en' | 'it';
@@ -35,7 +36,11 @@ export type MoveId =
   | 'volcanic_ruin' | 'maelstrom' | 'ancient_bloom' | 'sky_judgement'
   // off-type moves learned by evolving (existing lines)
   | 'rock_hurl' | 'frost_fin' | 'toxic_thorns' | 'gale_slash'
-  | 'tremor_crush' | 'void_bite' | 'mind_bloom' | 'razor_pinion';
+  | 'tremor_crush' | 'void_bite' | 'mind_bloom' | 'razor_pinion'
+  // Gravelo (Rock/Earth), Pipwing (Flying), Wispurr (Psychic) lines
+  | 'pebble_bump' | 'gravel_shot' | 'stone_skin' | 'fault_quake' | 'magma_chunk' | 'glacier_drop'
+  | 'beak_peck' | 'feather_dart' | 'dizzy_gale' | 'hurricane' | 'shadow_talon' | 'draco_zephyr'
+  | 'paw_tap' | 'psy_orb' | 'calm_mind' | 'mind_crush' | 'spirit_hex' | 'astral_blade';
 
 /**
  * How a move reaches its target.

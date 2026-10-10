@@ -10,6 +10,9 @@ Player-facing numbers. Source of truth for values is `src/sim/data.ts` (stats, m
 | Brinkle → Tsunafin → Abyssmaw: a pufferfish in a water bubble → a streamlined shark-finned fish surfing a water ring → a deep-sea angler with a giant toothed jaw, glowing spots and a lure, in a swirling vortex | Water | 120 / 150 / 180 | Medium |
 | Vinram → Thornhorn → Elderoot: a woolly mossy ram → a lean long-legged goat with forward thorn horns and a bramble mane → a bark-bodied tree ram on root legs with branching antlers and a leafy canopy | Grass | 125 / 156 / 188 | Slow |
 | Joltmoth → Stormoth → Tempestra: a fluffy electric moth → a sleek moth with swept pointed wings and lightning antennae → a six-winged storm moth with jagged wings, a spiked crown and orbiting sparks | Electric | 95 / 119 / 143 | Fast |
+| Gravelo → Boulderax → Tectonyx: a round pebble-plated armadillo → a long lizard with boulders on its back, a horn ridge and a rock-club tail → a walking mountain, a huge shell crowned with glowing crystal spires | Rock/Earth | 130 / 163 / 195 | Slow |
+| Pipwing → Galehawk → Zephyrion: a round yellow chick with stubby wings → a sleek brown hawk with a hooked beak and tail fan → a long white-and-teal storm eagle with two pairs of wings, a feather crest, ribbon tail and wind rings | Flying | 90 / 113 / 135 | Fast |
+| Wispurr → Mystiline → Astralynx: a small lavender kitten with a pink brow gem → a tall indigo cat on long legs with two tails and floating orbs → a floating star lynx with tufted ears, leaf-shaped ear fans, ribbon tails and halo rings | Psychic | 100 / 125 / 150 | Medium |
 
 ## Type chart
 
@@ -67,6 +70,30 @@ Uses per round (see combat-rules.md): Stamina 47+ → 5 uses, 41 → 10, 27–34
 | **Elderoot** (stage 3) | Ancient Bloom | Fioritura Antica | 47 | – | Heal 35 HP over 3 s |
 | **Stormoth** (stage 2 of Joltmoth) | Chain Storm | Tempesta a Catena | 41 | 85% | 3 bolts of 10 dmg, each dodgeable separately |
 | **Tempestra** (stage 3) | Sky Judgement | Giudizio Celeste | 61 | 75% | Lightning from the sky, 38 dmg, very long windup |
+
+| **Gravelo** (Rock/Earth) | Pebble Bump | Botta di Sasso | 20 | 100% | **Quick** melee, 9 dmg (Normal) |
+| | Gravel Shot | Colpo di Ghiaia | 20 | 90% | Rock projectile, 15 dmg |
+| | Stone Skin | Pelle di Pietra | 27 | – | Take 50% damage for 4 s |
+| | Fault Quake | Faglia Sismica | 47 | 80% | Earth eruption under target, 30 dmg |
+| **Pipwing** (Flying) | Beak Peck | Beccata | 20 | 100% | **Quick** melee, 8 dmg (Normal) |
+| | Feather Dart | Dardo di Piuma | 20 | 90% | Fast feather projectile, 15 dmg |
+| | Dizzy Gale | Vento Stordente | 27 | 85% | Halve target's stamina regen for 5 s |
+| | Hurricane | Uragano | 47 | 80% | Wind wave, 30 dmg |
+| **Wispurr** (Psychic) | Paw Tap | Zampata | 20 | 100% | **Quick** melee, 8 dmg (Normal) |
+| | Psy Orb | Sfera Psichica | 20 | 90% | Slow psychic orb, 15 dmg |
+| | Calm Mind | Mente Calma | 34 | – | Heal 18 HP over 3 s |
+| | Mind Crush | Schianto Mentale | 47 | 80% | Psychic beam, 30 dmg |
+
+**Off-type moves of the new lines** (one per evolution, always a different type than the creature's own; nothing else is learned):
+
+| Evolution | English | Italiano | Type | Stamina | Accuracy | Effect |
+|---|---|---|---|---|---|---|
+| **Boulderax** | Magma Chunk | Blocco di Magma | Fire | 41 | 85% | Flaming boulder, 22 dmg |
+| **Tectonyx** | Glacier Drop | Caduta Glaciale | Ice | 61 | 75% | Ice falls on the foe, 38 dmg, very long windup |
+| **Galehawk** | Shadow Talon | Artiglio Ombra | Dark | 41 | 85% | Melee claw strike, 22 dmg |
+| **Zephyrion** | Draco Zephyr | Soffio Draconico | Dragon | 61 | 75% | Dragon wind beam, 38 dmg, very long windup |
+| **Mystiline** | Spirit Hex | Maleficio Spettrale | Ghost | 41 | 85% | Haunting curse projectile, 22 dmg |
+| **Astralynx** | Astral Blade | Lama Astrale | Steel | 61 | 75% | Blade of starlight beam, 38 dmg, very long windup |
 
 **Off-type moves learned by evolving** (each existing evolution also learns one move of another type; every evolved form keeps all earlier moves, so stage 3 knows 8 and picks 4 in the loadout screen. The default loadout still swaps in the same-type move above, not these):
 

@@ -234,12 +234,14 @@ export class Screens {
       const evo = h('div', 'cc-evo', t('evolvesTo', { chain: line.map((x) => SPECIES[x].name).join(' → ') }));
       const extra = h('ul', 'cc-moves cc-new');
       for (const x of line) {
-        const m = MOVES[SPECIES[x].moves[SPECIES[x].moves.length - 1]!];
-        const li = h('li');
-        const dot = h('span', 'el-dot');
-        dot.style.background = ELEMENT_COLOR[m.element];
-        li.append(dot, h('span', '', `+ ${m.name[lang]}`), h('span', 'move-cost', String(m.cost)));
-        extra.append(li);
+        for (const id of SPECIES[x].moves.filter((mv) => MOVES[mv].species === x)) {
+          const m = MOVES[id];
+          const li = h('li');
+          const dot = h('span', 'el-dot');
+          dot.style.background = ELEMENT_COLOR[m.element];
+          li.append(dot, h('span', '', `+ ${m.name[lang]}`), h('span', 'move-cost', String(m.cost)));
+          extra.append(li);
+        }
       }
       c.append(top, stats, ml, evo, extra);
       c.addEventListener('mouseenter', () => o.onHover(sp));

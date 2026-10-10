@@ -43,7 +43,9 @@ src/game/    session (local/host/client) and battle controller
 | `net/link.ts` | PeerJS wrapper: host/join, reliable channel, heartbeat | `Link`, `Pending`, `hostRoom`, `joinRoom` |
 | `net/sessions.ts` | Host / client / spectator sessions; remote input sanitizing | `HostSession`, `ClientSession`, `SpectatorHostSession`, `sanitizeTeam`, `sanitizeIntents` |
 | `render/scene.ts` | Renderer, camera (dynamic, `setFocus`), arena, layout constants | `createScene`, `SceneCtx`, `CREATURE_Z`, `TRAINER_Z`, `EYE_HEIGHT`, `makeOrb` |
-| `render/creatures.ts` | Procedural models for all 12 forms (face +z) | `buildCreature`, `CreatureModel` |
+| `render/creatures.ts` | Procedural models for the first 4 lines (face +z), `BUILDERS` for all forms | `buildCreature`, `CreatureModel` |
+| `render/creature-kit.ts` | Shared `CreatureModel` interface, `kit` (material/mesh helper), `eyes` | |
+| `render/creatures-a.ts` | Batch A models: Gravelo, Pipwing, Wispurr lines | `gravelo`, `pipwing`, `wispurr` |
 | `render/motion.ts` | Per-move body poses (windup/active/recovery), dodge, alert | `movePose`, `dodgePose`, `alertPose`, `Pose` |
 | `render/vfx.ts` | Pooled VFX: particles, beams, arcs, rings, eruptions, spikes, waves | `Vfx`, `FxKind` |
 | `render/view.ts` | `SimState` + events → 3D scene (placement, animation, VFX, floating text) | `BattleView`, `FloatText` |
@@ -66,7 +68,7 @@ src/game/    session (local/host/client) and battle controller
 ## Where data lives
 
 - **`src/sim/data.ts`** (single source of truth): timing `TICK_HZ=30`, `DT`; stamina `STAMINA_MAX=100`, regen/pause, `STAMINA_COST_MULT`, `scaledCost`; `QUEUE_MAX`, `INTERRUPT_THRESHOLD`; damage `STAB`, `SUPER_EFFECTIVE`, `NOT_VERY_EFFECTIVE`; `DODGE_*`, `ALERT_*`, `RECALL_S`, `SENDOUT_S`, `FORCED_SWITCH_S`; arena/movement `ARENA_X_M`, `PREFERRED_GAP_M`, `STEP_SPEED`, `STRAFE_*`, `SPEED_MULT`; rounds/loadout `ROUNDS_TO_WIN`, `MAX_ROUNDS`, `INTERMISSION_S`, `LOADOUT_SIZE`, `LOADOUT_S`.
-- **Creatures:** `SPECIES` (4 lines × 3 stages; stage 2 HP ×1.25, dmg ×1.15, +1 move; stage 3 HP ×1.5, dmg ×1.3, +1 move). ID unions in `sim/types.ts`. Models in `render/creatures.ts`.
+- **Creatures:** `SPECIES` (7 lines × 3 stages so far, more coming; dual types via `element2`; stage 2 HP ×1.25, dmg ×1.15, +1 move; stage 3 HP ×1.5, dmg ×1.3, +1 move). ID unions in `sim/types.ts`. Models in `render/creatures.ts`.
 - **Moves:** `MOVES` (24: 16 base, 4 stage-2, 4 stage-3). Adding a move touches: `types.ts` (id), `data.ts` (def incl. EN/IT `name`), `movedesc.ts` (text), `aliases.ts` (EN+IT words), `motion.ts` (pose), `view.ts`/`vfx.ts` (effects), tests.
 - **UI strings:** `i18n.ts`. **3D/world constants:** `render/scene.ts`.
 
