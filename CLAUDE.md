@@ -42,8 +42,9 @@ Stack: TypeScript, Vite, Three.js, PeerJS, Web Speech API, Vitest, Playwright. N
 - **Done:** M8 (decision #80: 8 off-type evolution moves on the existing lines, EN+IT voice, fallback VFX/SFX; tests 289 pass, `scripts/offtype-shots.mjs`).
 - **Done:** M9 (decision #81: Gravelo/Pipwing/Wispurr lines with 9 models, 18 moves, EN+IT voice, team screen 7 cards; tests 351 pass, `scripts/newcreatures-test.mjs`, flow/net OK). User approved the look (said go).
 - **Done:** M10 (decision #82: Dusklet/Scalet/Gloopit lines, 9 models, 18 moves, EN+IT voice; tests 402 pass, `scripts/newcreatures-test.mjs` all 6 lines OK).
-- **Done:** M11 (decision #83: Cogling/Gearhound/Mechadon Steel + Flurrbit/Hailstag/Glaciarch Ice, 6 models, 12 moves, EN+IT voice; tests 438 pass, `scripts/newcreatures-test.mjs` all 8 lines OK). Team screen with 12 cards is crowded: interface fix requested by user, in progress.
-- **Next:** team-screen redesign (crowding), then M12 balance + docs + net, then user playtest of everything and ask before merging.
+- **Done:** M11 (decision #83: Cogling/Gearhound/Mechadon Steel + Flurrbit/Hailstag/Glaciarch Ice, 6 models, 12 moves, EN+IT voice; tests 438 pass, `scripts/newcreatures-test.mjs` all 8 lines OK). 
+- **Done:** team-screen fix (decision #84): scrolling card grid with a picture of each creature; `scripts/team-shots.mjs` OK.
+- **Next:** M12 balance + docs + net, then user playtest of everything and ask before merging.
 - **Earlier feature (verbal boosts, decisions #73–74):** on `main`; user still to try boosts by voice in Chrome.
 - **Known issues:** `smoke.mjs --full` crashes headless Chrome on an audio-device error, also before this feature (docs/blockers.md).
 ## Docs (read only what the task needs)
