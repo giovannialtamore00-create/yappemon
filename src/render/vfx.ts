@@ -3,7 +3,8 @@
 
 import * as THREE from 'three';
 
-export type FxKind = 'fire' | 'ember' | 'water' | 'splash' | 'grass' | 'leaf' | 'electric' | 'spark' | 'heal' | 'dust' | 'orb' | 'normal' | 'smoke' | 'static';
+export type FxKind = 'fire' | 'ember' | 'water' | 'splash' | 'grass' | 'leaf' | 'electric' | 'spark' | 'heal' | 'dust' | 'orb' | 'normal' | 'smoke' | 'static'
+  | 'rock' | 'wind' | 'psychic' | 'shadow' | 'dragon' | 'poison' | 'metal' | 'ice';
 
 interface FxStyle { colors: string[]; size: [number, number]; life: [number, number]; speed: [number, number]; gravity: number; drag: number; up: number }
 
@@ -22,6 +23,14 @@ const STYLES: Record<FxKind, FxStyle> = {
   normal: { colors: ['#ffffff', '#ffeecc'], size: [0.1, 0.22], life: [0.2, 0.4], speed: [2, 5], gravity: 2, drag: 3, up: 0.3 },
   smoke: { colors: ['#7a6f66', '#5a514c'], size: [0.35, 0.7], life: [0.8, 1.5], speed: [0.2, 0.8], gravity: -0.8, drag: 1.5, up: 1 },
   static: { colors: ['#c89bff', '#fff27a'], size: [0.05, 0.12], life: [0.1, 0.25], speed: [0.5, 2], gravity: 0, drag: 2, up: 0 },
+  rock: { colors: ['#b8a06a', '#8a7650', '#d9c79a'], size: [0.1, 0.24], life: [0.4, 0.8], speed: [1.5, 4], gravity: 8, drag: 1, up: 1 },
+  wind: { colors: ['#ffffff', '#dbe8ff', '#b4ccff'], size: [0.08, 0.2], life: [0.3, 0.6], speed: [2, 5], gravity: 0, drag: 2.5, up: 0.2 },
+  psychic: { colors: ['#ff9fd2', '#c78bff', '#ffffff'], size: [0.08, 0.2], life: [0.4, 0.9], speed: [0.5, 2.5], gravity: -0.6, drag: 2, up: 0.5 },
+  shadow: { colors: ['#2a1f3d', '#6b4fa8', '#9b7fe0'], size: [0.15, 0.35], life: [0.5, 1.1], speed: [0.4, 1.8], gravity: -0.5, drag: 1.8, up: 0.6 },
+  dragon: { colors: ['#7a8bff', '#c9a8ff', '#ffffff'], size: [0.12, 0.28], life: [0.3, 0.7], speed: [1.5, 4], gravity: -1, drag: 2, up: 0.7 },
+  poison: { colors: ['#d98cff', '#9b3fd0', '#5fe05f'], size: [0.1, 0.24], life: [0.5, 1], speed: [0.6, 2.2], gravity: 0.8, drag: 1.8, up: 0.5 },
+  metal: { colors: ['#ffffff', '#c3d1dc', '#8da0b0'], size: [0.06, 0.14], life: [0.2, 0.45], speed: [2, 6], gravity: 7, drag: 1.5, up: 0.6 },
+  ice: { colors: ['#ffffff', '#bff4ff', '#7fd8f0'], size: [0.08, 0.2], life: [0.4, 0.9], speed: [1, 3.5], gravity: 3, drag: 1.5, up: 0.6 },
 };
 
 const MAX = 5000;

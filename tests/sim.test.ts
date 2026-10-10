@@ -52,6 +52,31 @@ describe('type chart', () => {
   });
 });
 
+describe('new types and dual types', () => {
+  it('has the expected relations', () => {
+    expect(typeMultiplier('ice', 'dragon')).toBe(1.25);
+    expect(typeMultiplier('steel', 'ice')).toBe(1.25);
+    expect(typeMultiplier('ghost', 'ghost')).toBe(1.25);
+    expect(typeMultiplier('ghost', 'dark')).toBe(0.5);
+    expect(typeMultiplier('dragon', 'steel')).toBe(0.5);
+    expect(typeMultiplier('ground', 'flying')).toBe(0.5);
+    expect(typeMultiplier('ground', 'electric')).toBe(1.25);
+    expect(typeMultiplier('poison', 'steel')).toBe(0.5);
+  });
+  it('multiplies both defender types', () => {
+    expect(typeMultiplier('water', ['rock', 'ground'])).toBe(1.5625);
+    expect(typeMultiplier('fire', ['water', 'rock'])).toBe(0.25);
+    expect(typeMultiplier('fire', ['grass', 'water'])).toBe(0.625);
+    expect(typeMultiplier('normal', ['rock', 'ground'])).toBe(1);
+  });
+  it('same-type bonus applies for either attacker type', () => {
+    expect(computeDamage(16, 'ground', ['rock', 'ground'], 'normal', 0.5, false).damage).toBe(20); // 16*1.25
+    expect(computeDamage(16, 'rock', ['rock', 'ground'], 'normal', 0.5, false).damage).toBe(20);
+    expect(computeDamage(16, 'fire', ['rock', 'ground'], 'normal', 0.5, false).damage).toBe(16);
+    expect(computeDamage(16, 'water', 'fire', ['rock', 'ground'], 0.5, false)).toEqual({ damage: 25, eff: 'super' }); // 16*1.5625
+  });
+});
+
 describe('damage formula', () => {
   it('base × type × STAB × variance', () => {
     // roll 0.5 → variance 1.0

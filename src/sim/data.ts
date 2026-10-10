@@ -209,15 +209,35 @@ for (const m of Object.values(MOVES)) {
 export const MOVE_IDS = Object.keys(MOVES) as MoveId[];
 
 /** Attack element → defender element → multiplier (absent = 1). Super effective = ×1.25, not very effective = ×0.5. */
+const SE = SUPER_EFFECTIVE;
+const NV = NOT_VERY_EFFECTIVE;
 const CHART: Partial<Record<Element, Partial<Record<Element, number>>>> = {
-  fire: { grass: SUPER_EFFECTIVE, fire: NOT_VERY_EFFECTIVE, water: NOT_VERY_EFFECTIVE },
-  water: { fire: SUPER_EFFECTIVE, water: NOT_VERY_EFFECTIVE, grass: NOT_VERY_EFFECTIVE },
-  grass: { water: SUPER_EFFECTIVE, grass: NOT_VERY_EFFECTIVE, fire: NOT_VERY_EFFECTIVE },
-  electric: { water: SUPER_EFFECTIVE, electric: NOT_VERY_EFFECTIVE, grass: NOT_VERY_EFFECTIVE },
+  fire: { grass: SE, ice: SE, steel: SE, fire: NV, water: NV, rock: NV, dragon: NV },
+  water: { fire: SE, rock: SE, ground: SE, water: NV, grass: NV, dragon: NV },
+  grass: { water: SE, rock: SE, ground: SE, grass: NV, fire: NV, poison: NV, flying: NV, dragon: NV, steel: NV },
+  electric: { water: SE, flying: SE, electric: NV, grass: NV, dragon: NV, ground: NV },
+  rock: { fire: SE, ice: SE, flying: SE, ground: NV, steel: NV },
+  ground: { fire: SE, electric: SE, poison: SE, rock: SE, steel: SE, grass: NV, flying: NV },
+  flying: { grass: SE, electric: NV, rock: NV, steel: NV },
+  psychic: { poison: SE, psychic: NV, steel: NV, dark: NV },
+  ghost: { psychic: SE, ghost: SE, dark: NV },
+  dark: { psychic: SE, ghost: SE, dark: NV },
+  dragon: { dragon: SE, steel: NV },
+  poison: { grass: SE, poison: NV, ground: NV, rock: NV, ghost: NV, steel: NV },
+  steel: { rock: SE, ice: SE, fire: NV, water: NV, electric: NV, steel: NV },
+  ice: { grass: SE, ground: SE, flying: SE, dragon: SE, fire: NV, water: NV, ice: NV, steel: NV },
 };
 
-export function typeMultiplier(attack: Element, defend: Element): number {
-  return CHART[attack]?.[defend] ?? 1;
+/** Multiplier of an attack element against one or two defender elements (dual types multiply: 0.25–1.56). */
+export function typeMultiplier(attack: Element, defend: Element | readonly Element[]): number {
+  const defs = typeof defend === 'string' ? [defend] : defend;
+  return defs.reduce((m, d) => m * (CHART[attack]?.[d] ?? 1), 1);
 }
+
+/** The one or two elements of a species. */
+export const elementsOf = (species: SpeciesId): Element[] => {
+  const d = SPECIES[species];
+  return d.element2 ? [d.element, d.element2] : [d.element];
+};
 
 export const secToTicks = (s: number) => Math.max(1, Math.round(s * TICK_HZ));

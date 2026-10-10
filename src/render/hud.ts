@@ -1,6 +1,6 @@
 // DOM HUD overlay: creature panels, queue chips, move reference, transcript, mic status, toasts, floating numbers.
 
-import { ELEMENT_COLOR, ELEMENT_LABEL, getLang, t } from '../i18n';
+import { ELEMENT_COLOR, ELEMENT_LABEL, getLang, t, typeBadge } from '../i18n';
 import { ALERT_COST, CHEERS, CHEER_IDS, DODGE_COST, MOVES, SPECIES, STAMINA_MAX, TICK_HZ } from '../sim/data';
 import { MOVE_DESC } from '../movedesc';
 import { usesLeft } from '../sim/sim';
@@ -215,8 +215,9 @@ export class Hud {
     if (key !== p.key) {
       p.key = key;
       p.name.textContent = creatureName(who, c.species);
-      p.badge.textContent = ELEMENT_LABEL[getLang()][def.element];
-      p.badge.style.background = ELEMENT_COLOR[def.element];
+      const tb = typeBadge(def, getLang());
+      p.badge.textContent = tb.text;
+      p.badge.style.background = tb.bg;
       p.dots.innerHTML = '';
       tr.team.forEach((m) => p.dots.append(h('span', `dot${m.fainted ? ' out' : ''}`)));
     }

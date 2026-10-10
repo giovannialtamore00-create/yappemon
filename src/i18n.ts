@@ -298,8 +298,8 @@ export function t(key: StrKey, vars: Record<string, string | number> = {}): stri
 }
 
 export const ELEMENT_LABEL: Record<Lang, Record<Element, string>> = {
-  en: { normal: 'Normal', fire: 'Fire', water: 'Water', grass: 'Grass', electric: 'Electric' },
-  it: { normal: 'Normale', fire: 'Fuoco', water: 'Acqua', grass: 'Erba', electric: 'Elettro' },
+  en: { normal: 'Normal', fire: 'Fire', water: 'Water', grass: 'Grass', electric: 'Electric', rock: 'Rock', ground: 'Earth', flying: 'Flying', psychic: 'Psychic', ghost: 'Ghost', dark: 'Dark', dragon: 'Dragon', poison: 'Poison', steel: 'Steel', ice: 'Ice' },
+  it: { normal: 'Normale', fire: 'Fuoco', water: 'Acqua', grass: 'Erba', electric: 'Elettro', rock: 'Roccia', ground: 'Terra', flying: 'Volante', psychic: 'Psico', ghost: 'Spettro', dark: 'Buio', dragon: 'Drago', poison: 'Veleno', steel: 'Acciaio', ice: 'Ghiaccio' },
 };
 
 export const FAIL_REASON: Record<Lang, Record<FailReason, string>> = {
@@ -309,4 +309,15 @@ export const FAIL_REASON: Record<Lang, Record<FailReason, string>> = {
 
 export const ELEMENT_COLOR: Record<Element, string> = {
   normal: '#b9b2a4', fire: '#ff7a2f', water: '#3aa4ff', grass: '#5cc94f', electric: '#ffd83a',
+  rock: '#b8a06a', ground: '#c98f4e', flying: '#9db8ff', psychic: '#ff6fb5', ghost: '#8a6bd6', dark: '#6b5a78',
+  dragon: '#5a6bff', poison: '#b45cd9', steel: '#9fb4c4', ice: '#8fe6f2',
 };
+
+/** Badge text and background for a creature's one or two types. */
+export function typeBadge(def: { element: Element; element2?: Element }, lang: Lang): { text: string; bg: string } {
+  if (!def.element2) return { text: ELEMENT_LABEL[lang][def.element], bg: ELEMENT_COLOR[def.element] };
+  return {
+    text: `${ELEMENT_LABEL[lang][def.element]}/${ELEMENT_LABEL[lang][def.element2]}`,
+    bg: `linear-gradient(90deg, ${ELEMENT_COLOR[def.element]} 50%, ${ELEMENT_COLOR[def.element2]} 50%)`,
+  };
+}

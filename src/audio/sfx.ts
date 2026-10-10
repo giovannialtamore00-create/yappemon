@@ -144,7 +144,7 @@ export class Sfx {
   }
 
   private charge(element: string) {
-    const base = { fire: 120, water: 200, grass: 160, electric: 300, normal: 150 }[element] ?? 150;
+    const base = { fire: 120, water: 200, grass: 160, electric: 300, normal: 150, rock: 90, ground: 100, flying: 260, psychic: 340, ghost: 110, dark: 80, dragon: 70, poison: 140, steel: 220, ice: 400 }[element] ?? 150;
     this.tone(base, 1.0, { type: 'sawtooth', vol: 0.06, to: base * 4, attack: 0.3 });
     this.tone(base * 1.5, 1.0, { type: 'sine', vol: 0.08, to: base * 6, attack: 0.3 });
   }

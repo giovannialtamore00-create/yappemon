@@ -13,12 +13,24 @@ Player-facing numbers. Source of truth for values is `src/sim/data.ts` (stats, m
 
 ## Type chart
 
-Super effective = **+25%** (`SUPER_EFFECTIVE`), not very effective = 0.5× (`NOT_VERY_EFFECTIVE`); Normal moves are always neutral.
+Super effective = **+25%** (`SUPER_EFFECTIVE`), not very effective = 0.5× (`NOT_VERY_EFFECTIVE`); Normal moves are always neutral; no immunities.
+**Dual-type creatures** (Rock/Earth, Ghost/Dark): moves of either type get the +25% same-type bonus, and incoming damage multiplies both types (0.25×–1.56×).
+Chart lives in `CHART` in `src/sim/data.ts`. Attack type: ×1.25 vs … / 0.5× vs …
 
-- Fire: ×1.25 vs Grass; 0.5× vs Fire, Water
-- Water: ×1.25 vs Fire; 0.5× vs Water, Grass
-- Grass: ×1.25 vs Water; 0.5× vs Grass, Fire
-- Electric: ×1.25 vs Water; 0.5× vs Electric, Grass
+- Fire: Grass, Ice, Steel / Fire, Water, Rock, Dragon
+- Water: Fire, Rock, Earth / Water, Grass, Dragon
+- Grass: Water, Rock, Earth / Grass, Fire, Poison, Flying, Dragon, Steel
+- Electric: Water, Flying / Electric, Grass, Dragon, Earth
+- Rock: Fire, Ice, Flying / Earth, Steel
+- Earth: Fire, Electric, Poison, Rock, Steel / Grass, Flying
+- Flying: Grass / Electric, Rock, Steel
+- Psychic: Poison / Psychic, Steel, Dark
+- Ghost: Psychic, Ghost / Dark
+- Dark: Psychic, Ghost / Dark
+- Dragon: Dragon / Steel
+- Poison: Grass / Poison, Earth, Rock, Ghost, Steel
+- Steel: Rock, Ice / Fire, Water, Steel, Electric
+- Ice: Grass, Earth, Flying, Dragon / Fire, Water, Ice, Steel
 
 ## Moves (base stage)
 

@@ -1,6 +1,6 @@
 // Click-driven menus: lobby, room code, team select, forced switch, end screen, disconnect.
 
-import { ELEMENT_COLOR, ELEMENT_LABEL, getLang, t } from '../i18n';
+import { ELEMENT_COLOR, ELEMENT_LABEL, getLang, t, typeBadge } from '../i18n';
 import { LOADOUT_SIZE, MOVES, SPECIES, SPECIES_IDS, evolutionLine } from '../sim/data';
 import type { BaseSpeciesId, Lang, MoveId, SpeciesId } from '../sim/types';
 import { MOVE_DESC } from '../movedesc';
@@ -217,8 +217,9 @@ export class Screens {
       const c = h('div', 'creature-card');
       c.style.setProperty('--el', ELEMENT_COLOR[d.element]);
       const top = h('div', 'cc-top');
-      const badge = h('span', 'badge', ELEMENT_LABEL[lang][d.element]);
-      badge.style.background = ELEMENT_COLOR[d.element];
+      const tb = typeBadge(d, lang);
+      const badge = h('span', 'badge', tb.text);
+      badge.style.background = tb.bg;
       top.append(h('span', 'cc-name', d.name), badge, h('span', 'pick-num'));
       const stats = h('div', 'cc-stats', `HP ${d.maxHp} · ${speedLabel(d.speed, lang)}`);
       const ml = h('ul', 'cc-moves');
@@ -333,7 +334,7 @@ export class Screens {
         const def = SPECIES[c.species];
         const col = h('div', 'lo-col');
         const head = h('div', 'lo-head');
-        const tag = h('span', 'mc-type', ELEMENT_LABEL[lang][def.element]);
+        const tag = h('span', 'mc-type', typeBadge(def, lang).text);
         tag.style.setProperty('--el', ELEMENT_COLOR[def.element]);
         head.append(h('span', 'lo-creature', myCreature(c.species)), tag);
         const chosen = h('div', 'lo-grid');

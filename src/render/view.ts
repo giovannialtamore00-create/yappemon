@@ -3,13 +3,20 @@
 import * as THREE from 'three';
 import { DASH_S, MOVES, SPECIES, secToTicks } from '../sim/data';
 import type { MoveId, PlayerIdx, SimEvent, SimState, SpeciesId } from '../sim/types';
+import { ELEMENT_COLOR } from '../i18n';
 import { buildCreature, type CreatureModel } from './creatures';
 import { TRAINER_Z, creatureZ, makeOrb, worldX, type SceneCtx } from './scene';
 import { Vfx, type FxKind } from './vfx';
 import { alertPose, dodgePose, movePose, type Pose } from './motion';
 
-const ELEMENT_FX: Record<string, FxKind> = { fire: 'fire', water: 'water', grass: 'grass', electric: 'electric', normal: 'normal' };
-const CHARGE_FX: Record<string, FxKind> = { fire: 'ember', water: 'splash', grass: 'leaf', electric: 'static', normal: 'dust' };
+const ELEMENT_FX: Record<string, FxKind> = {
+  fire: 'fire', water: 'water', grass: 'grass', electric: 'electric', normal: 'normal',
+  rock: 'rock', ground: 'dust', flying: 'wind', psychic: 'psychic', ghost: 'shadow', dark: 'shadow', dragon: 'dragon', poison: 'poison', steel: 'metal', ice: 'ice',
+};
+const CHARGE_FX: Record<string, FxKind> = {
+  fire: 'ember', water: 'splash', grass: 'leaf', electric: 'static', normal: 'dust',
+  rock: 'dust', ground: 'dust', flying: 'wind', psychic: 'psychic', ghost: 'shadow', dark: 'shadow', dragon: 'dragon', poison: 'poison', steel: 'metal', ice: 'ice',
+};
 
 interface Side {
   models: CreatureModel[];
@@ -200,7 +207,7 @@ export class BattleView {
             if (m.delivery === 'ground' && m.heavy) {
               const o = (e.p === 0 ? 1 : 0) as PlayerIdx;
               const pos = this.creaturePos(o, s).setY(0);
-              this.vfx.telegraph(pos, m.element === 'fire' ? '#ff5a12' : '#6fd04a', m.windup * 1.1);
+              this.vfx.telegraph(pos, ELEMENT_COLOR[m.element], m.windup * 1.1);
             }
           }
           if (e.action.kind === 'recall') {

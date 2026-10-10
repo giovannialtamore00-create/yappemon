@@ -6,7 +6,7 @@ import {
   DODGE_COST, DODGE_INVULN_S, DODGE_WINDOW_S, DT, FORCED_SWITCH_S, HALF_FAR_M, HALF_NEAR_M, HOME_Z_M, INTERRUPT_THRESHOLD,
   MOVES, PREFERRED_GAP_M, SNAP_SPEED, HYPE_STAMINA, FULL_POWER_MULT, FULL_POWER_COOLDOWN_S, NAME_ACC_BONUS, CHEERS, CHEER_GAP_S, CHEER_REPEAT_S, CHEER_REPEAT_FAIL, TEMP_HP_S, TEMP_HP_MAX, QUEUE_MAX, QUICK_WINDUP_S, RECALL_S, SENDOUT_S, SPECIES, SPEED_MULT, STAB, STAMINA_MAX,
   STAMINA_PAUSE_S, STAMINA_REGEN_PER_S, STEP_JITTER_M, STEP_SPEED, STRAFE_MAX_S, STRAFE_MIN_S, STRAFE_SPEED, TICK_HZ, INTERMISSION_S,
-  LOADOUT_S, MAX_ROUNDS, ROUNDS_TO_WIN, defaultLoadout, sameFamily, secToTicks, speciesAtStage, typeMultiplier, validLoadout,
+  LOADOUT_S, MAX_ROUNDS, ROUNDS_TO_WIN, defaultLoadout, elementsOf, sameFamily, secToTicks, speciesAtStage, typeMultiplier, validLoadout,
 } from './data';
 import { nextRandom } from './rng';
 import type {
@@ -75,10 +75,11 @@ function rand(s: SimState): number {
 
 /** Pure damage formula, exported for tests. `roll` is in [0, 1). */
 export function computeDamage(
-  power: number, moveEl: Element, attackerEl: Element, defenderEl: Element, roll: number, shielded: boolean, stageMult = 1,
+  power: number, moveEl: Element, attackerEl: Element | readonly Element[], defenderEl: Element | readonly Element[], roll: number, shielded: boolean, stageMult = 1,
 ): { damage: number; eff: Effectiveness } {
   const mult = moveEl === 'normal' ? 1 : typeMultiplier(moveEl, defenderEl);
-  const stab = moveEl !== 'normal' && moveEl === attackerEl ? STAB : 1;
+  const attackerEls = typeof attackerEl === 'string' ? [attackerEl] : attackerEl;
+  const stab = moveEl !== 'normal' && attackerEls.includes(moveEl) ? STAB : 1;
   const variance = 0.9 + 0.2 * roll;
   const raw = power * stageMult * mult * stab * variance * (shielded ? 0.5 : 1);
   return { damage: Math.max(1, Math.round(raw)), eff: mult > 1 ? 'super' : mult < 1 ? 'weak' : 'neutral' };
@@ -630,7 +631,7 @@ function resolveStrike(s: SimState, k: Strike, ev: SimEvent[]) {
     // Tide Mirror: the hit bounces back at the attacker (computed against the attacker's own type).
     target.mirrorTicks = 0;
     ev.push({ t: 'status', p: k.target, status: 'mirror', on: false });
-    const back = computeDamage(power, m.element, attackerDef.element, attackerDef.element, rand(s), attacker.shieldTicks > 0, attackerDef.dmgMult);
+    const back = computeDamage(power, m.element, elementsOf(attacker.species), elementsOf(attacker.species), rand(s), attacker.shieldTicks > 0, attackerDef.dmgMult);
     ev.push({ t: 'reflect', p: k.target, target: k.owner, move: k.move, damage: back.damage });
     // The reflected hit counts as the attacker getting hit: its queued commands are lost.
     if (ownerOnField(s, k) && !attacker.fainted) {
@@ -640,7 +641,7 @@ function resolveStrike(s: SimState, k: Strike, ev: SimEvent[]) {
     }
     return;
   }
-  const { damage, eff: e } = computeDamage(power, m.element, attackerDef.element, SPECIES[target.species].element, rand(s), target.shieldTicks > 0, attackerDef.dmgMult);
+  const { damage, eff: e } = computeDamage(power, m.element, elementsOf(attacker.species), elementsOf(target.species), rand(s), target.shieldTicks > 0, attackerDef.dmgMult);
   target.hp = Math.max(0, target.hp - afterTempHp(target, damage));
   const interrupted = damage >= INTERRUPT_THRESHOLD && !!run && run.phase === 'windup' && run.action.kind === 'move' && !MOVES[run.action.move].armored;
   ev.push({ t: 'hit', p: k.owner, target: k.target, move: k.move, damage, eff: e, interrupted, heavy: m.heavy, strike: k.id });

@@ -1,6 +1,8 @@
 // Pure data types for the combat simulation. No DOM / Three.js imports allowed in src/sim.
 
-export type Element = 'normal' | 'fire' | 'water' | 'grass' | 'electric';
+export type Element =
+  | 'normal' | 'fire' | 'water' | 'grass' | 'electric'
+  | 'rock' | 'ground' | 'flying' | 'psychic' | 'ghost' | 'dark' | 'dragon' | 'poison' | 'steel' | 'ice';
 /** Base forms (stage 1), then stage 2 and stage 3 evolutions. */
 export type BaseSpeciesId = 'cindrix' | 'brinkle' | 'vinram' | 'joltmoth';
 export type SpeciesId =
@@ -88,6 +90,8 @@ export type SpeedClass = 'slow' | 'medium' | 'fast';
 export interface SpeciesDef {
   id: SpeciesId;
   element: Element;
+  /** Second type of a dual-type creature (its moves of either type get the same-type bonus). */
+  element2?: Element;
   maxHp: number;
   speed: SpeedClass;
   moves: MoveId[];
