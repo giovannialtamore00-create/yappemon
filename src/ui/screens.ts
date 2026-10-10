@@ -4,6 +4,7 @@ import { ELEMENT_COLOR, ELEMENT_LABEL, getLang, t, typeBadge } from '../i18n';
 import { LOADOUT_SIZE, MOVES, SPECIES, SPECIES_IDS, evolutionLine } from '../sim/data';
 import type { BaseSpeciesId, Lang, MoveId, SpeciesId } from '../sim/types';
 import { MOVE_DESC } from '../movedesc';
+import { portrait } from '../render/portraits';
 import { NAME_MAX, cleanWord, myCreature, myMove } from '../names';
 import type { TeamNames } from '../names';
 
@@ -243,7 +244,10 @@ export class Screens {
           extra.append(li);
         }
       }
-      c.append(top, stats, ml, evo, extra);
+      const img = h('img', 'cc-img');
+      img.src = portrait(sp);
+      img.alt = d.name;
+      c.append(img, top, stats, ml, evo, extra);
       c.addEventListener('mouseenter', () => o.onHover(sp));
       c.addEventListener('mouseleave', () => o.onHover(picks[picks.length - 1] ?? null));
       c.addEventListener('click', () => {
