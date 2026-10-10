@@ -85,7 +85,7 @@ export const STEP_JITTER_M = 0.6;
 export const SPEED_MULT: Record<SpeedClass, number> = { slow: 1.15, medium: 1, fast: 0.85 };
 export const STRAFE_SPEED: Record<SpeedClass, number> = { slow: 1.2, medium: 1.6, fast: 2.2 };
 /** Distance (m) each evolution line likes to keep from the opponent: it stands about half of it from the centre line. */
-export const PREFERRED_GAP_M: Record<BaseSpeciesId, number> = { cindrix: 4.5, brinkle: 5.5, vinram: 4, joltmoth: 5, gravelo: 4, pipwing: 5, wispurr: 4.5 };
+export const PREFERRED_GAP_M: Record<BaseSpeciesId, number> = { cindrix: 4.5, brinkle: 5.5, vinram: 4, joltmoth: 5, gravelo: 4, pipwing: 5, wispurr: 4.5, dusklet: 5, scalet: 4.5, gloopit: 4 };
 
 /** Rounds needed to win the match (best of 3). Set to 3 to always play all three rounds. */
 export const ROUNDS_TO_WIN = 2;
@@ -104,6 +104,9 @@ const JOLTMOTH_MOVES: MoveId[] = ['wing_flick', 'spark_dart', 'static_field', 't
 const GRAVELO_MOVES: MoveId[] = ['pebble_bump', 'gravel_shot', 'stone_skin', 'fault_quake'];
 const PIPWING_MOVES: MoveId[] = ['beak_peck', 'feather_dart', 'dizzy_gale', 'hurricane'];
 const WISPURR_MOVES: MoveId[] = ['paw_tap', 'psy_orb', 'calm_mind', 'mind_crush'];
+const DUSKLET_MOVES: MoveId[] = ['shade_nip', 'spook_bolt', 'dread_stare', 'nightmare_wave'];
+const SCALET_MOVES: MoveId[] = ['claw_swipe', 'wyrm_spit', 'scale_guard', 'meteor_fall'];
+const GLOOPIT_MOVES: MoveId[] = ['goo_slap', 'acid_spit', 'sticky_goo', 'sludge_wave'];
 
 // Stage 2: HP ×1.25, damage ×1.15, +1 move. Stage 3: HP ×1.5, damage ×1.3, +1 more move.
 export const SPECIES: Record<SpeciesId, SpeciesDef> = {
@@ -116,6 +119,10 @@ export const SPECIES: Record<SpeciesId, SpeciesDef> = {
   pipwing: { id: 'pipwing', name: 'Pipwing', element: 'flying', maxHp: 90, speed: 'fast', moves: PIPWING_MOVES, stage: 1, family: 'pipwing', next: 'galehawk', dmgMult: 1 },
   wispurr: { id: 'wispurr', name: 'Wispurr', element: 'psychic', maxHp: 100, speed: 'medium', moves: WISPURR_MOVES, stage: 1, family: 'wispurr', next: 'mystiline', dmgMult: 1 },
 
+  dusklet: { id: 'dusklet', name: 'Dusklet', element: 'ghost', element2: 'dark', maxHp: 100, speed: 'fast', moves: DUSKLET_MOVES, stage: 1, family: 'dusklet', next: 'gloamwraith', dmgMult: 1 },
+  scalet: { id: 'scalet', name: 'Scalet', element: 'dragon', maxHp: 115, speed: 'medium', moves: SCALET_MOVES, stage: 1, family: 'scalet', next: 'drakonet', dmgMult: 1 },
+  gloopit: { id: 'gloopit', name: 'Gloopit', element: 'poison', maxHp: 128, speed: 'slow', moves: GLOOPIT_MOVES, stage: 1, family: 'gloopit', next: 'toxifrog', dmgMult: 1 },
+
   pyroxen: { id: 'pyroxen', name: 'Pyroxen', element: 'fire', maxHp: 138, speed: 'medium', moves: [...CINDRIX_MOVES, 'rock_hurl', 'molten_leap'], stage: 2, family: 'cindrix', next: 'calderox', dmgMult: 1.15 },
   tsunafin: { id: 'tsunafin', name: 'Tsunafin', element: 'water', maxHp: 150, speed: 'medium', moves: [...BRINKLE_MOVES, 'frost_fin', 'tide_mirror'], stage: 2, family: 'brinkle', next: 'abyssmaw', dmgMult: 1.15 },
   thornhorn: { id: 'thornhorn', name: 'Thornhorn', element: 'grass', maxHp: 156, speed: 'slow', moves: [...VINRAM_MOVES, 'toxic_thorns', 'bramble_stampede'], stage: 2, family: 'vinram', next: 'elderoot', dmgMult: 1.15 },
@@ -125,6 +132,10 @@ export const SPECIES: Record<SpeciesId, SpeciesDef> = {
   galehawk: { id: 'galehawk', name: 'Galehawk', element: 'flying', maxHp: 113, speed: 'fast', moves: [...PIPWING_MOVES, 'shadow_talon'], stage: 2, family: 'pipwing', next: 'zephyrion', dmgMult: 1.15 },
   mystiline: { id: 'mystiline', name: 'Mystiline', element: 'psychic', maxHp: 125, speed: 'medium', moves: [...WISPURR_MOVES, 'spirit_hex'], stage: 2, family: 'wispurr', next: 'astralynx', dmgMult: 1.15 },
 
+  gloamwraith: { id: 'gloamwraith', name: 'Gloamwraith', element: 'ghost', element2: 'dark', maxHp: 125, speed: 'fast', moves: [...DUSKLET_MOVES, 'wisp_flame'], stage: 2, family: 'dusklet', next: 'nightpall', dmgMult: 1.15 },
+  drakonet: { id: 'drakonet', name: 'Drakonet', element: 'dragon', maxHp: 144, speed: 'medium', moves: [...SCALET_MOVES, 'storm_fang'], stage: 2, family: 'scalet', next: 'wyverno', dmgMult: 1.15 },
+  toxifrog: { id: 'toxifrog', name: 'Toxifrog', element: 'poison', maxHp: 160, speed: 'slow', moves: [...GLOOPIT_MOVES, 'swamp_jet'], stage: 2, family: 'gloopit', next: 'plaguelord', dmgMult: 1.15 },
+
   calderox: { id: 'calderox', name: 'Calderox', element: 'fire', maxHp: 165, speed: 'medium', moves: [...CINDRIX_MOVES, 'rock_hurl', 'molten_leap', 'tremor_crush', 'volcanic_ruin'], stage: 3, family: 'cindrix', dmgMult: 1.3 },
   abyssmaw: { id: 'abyssmaw', name: 'Abyssmaw', element: 'water', maxHp: 180, speed: 'medium', moves: [...BRINKLE_MOVES, 'frost_fin', 'tide_mirror', 'void_bite', 'maelstrom'], stage: 3, family: 'brinkle', dmgMult: 1.3 },
   elderoot: { id: 'elderoot', name: 'Elderoot', element: 'grass', maxHp: 188, speed: 'slow', moves: [...VINRAM_MOVES, 'toxic_thorns', 'bramble_stampede', 'mind_bloom', 'ancient_bloom'], stage: 3, family: 'vinram', dmgMult: 1.3 },
@@ -132,10 +143,13 @@ export const SPECIES: Record<SpeciesId, SpeciesDef> = {
   tectonyx: { id: 'tectonyx', name: 'Tectonyx', element: 'rock', element2: 'ground', maxHp: 195, speed: 'slow', moves: [...GRAVELO_MOVES, 'magma_chunk', 'glacier_drop'], stage: 3, family: 'gravelo', dmgMult: 1.3 },
   zephyrion: { id: 'zephyrion', name: 'Zephyrion', element: 'flying', maxHp: 135, speed: 'fast', moves: [...PIPWING_MOVES, 'shadow_talon', 'draco_zephyr'], stage: 3, family: 'pipwing', dmgMult: 1.3 },
   astralynx: { id: 'astralynx', name: 'Astralynx', element: 'psychic', maxHp: 150, speed: 'medium', moves: [...WISPURR_MOVES, 'spirit_hex', 'astral_blade'], stage: 3, family: 'wispurr', dmgMult: 1.3 },
+  nightpall: { id: 'nightpall', name: 'Nightpall', element: 'ghost', element2: 'dark', maxHp: 150, speed: 'fast', moves: [...DUSKLET_MOVES, 'wisp_flame', 'grave_miasma'], stage: 3, family: 'dusklet', dmgMult: 1.3 },
+  wyverno: { id: 'wyverno', name: 'Wyverno', element: 'dragon', maxHp: 173, speed: 'medium', moves: [...SCALET_MOVES, 'storm_fang', 'inferno_roar'], stage: 3, family: 'scalet', dmgMult: 1.3 },
+  plaguelord: { id: 'plaguelord', name: 'Plaguelord', element: 'poison', maxHp: 192, speed: 'slow', moves: [...GLOOPIT_MOVES, 'swamp_jet', 'mire_slam'], stage: 3, family: 'gloopit', dmgMult: 1.3 },
 };
 
 /** Selectable (stage-1) species. */
-export const SPECIES_IDS: BaseSpeciesId[] = ['cindrix', 'brinkle', 'vinram', 'joltmoth', 'gravelo', 'pipwing', 'wispurr'];
+export const SPECIES_IDS: BaseSpeciesId[] = ['cindrix', 'brinkle', 'vinram', 'joltmoth', 'gravelo', 'pipwing', 'wispurr', 'dusklet', 'scalet', 'gloopit'];
 export const ALL_SPECIES_IDS = Object.keys(SPECIES) as SpeciesId[];
 
 /** The form of a base species at a given stage (1–3). */
@@ -239,6 +253,28 @@ export const MOVES: Record<MoveId, MoveDef> = {
   mind_crush: { id: 'mind_crush', species: 'wispurr', element: 'psychic', cost: 35, power: 30, delivery: 'beam', effect: dmg, windup: 1.5, active: 0.4, recovery: 0.7, hitDelay: 0.15, heavy: true, accuracy: 80, name: { en: 'Mind Crush', it: 'Schianto Mentale' } },
   spirit_hex: { id: 'spirit_hex', species: 'mystiline', element: 'ghost', cost: 30, power: 22, delivery: 'projectile', effect: dmg, windup: 0.8, active: 0.2, recovery: 0.5, speed: 11, heavy: false, accuracy: 85, name: { en: 'Spirit Hex', it: 'Maleficio Spettrale' } },
   astral_blade: { id: 'astral_blade', species: 'astralynx', element: 'steel', cost: 45, power: 38, delivery: 'beam', effect: dmg, windup: 1.7, active: 0.4, recovery: 0.9, hitDelay: 0.1, heavy: true, accuracy: 75, name: { en: 'Astral Blade', it: 'Lama Astrale' } },
+
+  // Dusklet line (Ghost/Dark): Gloamwraith learns a Fire move, Nightpall a Poison move
+  shade_nip: { id: 'shade_nip', species: 'dusklet', element: 'normal', cost: 15, power: 8, delivery: 'melee', effect: dmg, windup: 0.15, active: 0.2, recovery: 0.3, heavy: false, quick: true, accuracy: 100, name: { en: 'Shade Nip', it: 'Pizzico Ombra' } },
+  spook_bolt: { id: 'spook_bolt', species: 'dusklet', element: 'ghost', cost: 15, power: 15, delivery: 'projectile', effect: dmg, windup: 0.6, active: 0.15, recovery: 0.4, speed: 16, heavy: false, accuracy: 90, name: { en: 'Spook Bolt', it: 'Dardo Spettrale' } },
+  dread_stare: { id: 'dread_stare', species: 'dusklet', element: 'ghost', cost: 20, power: 0, delivery: 'beam', effect: { kind: 'root', seconds: 2 }, windup: 0.6, active: 0.3, recovery: 0.4, hitDelay: 0.2, heavy: false, accuracy: 85, name: { en: 'Dread Stare', it: 'Sguardo Gelido' } },
+  nightmare_wave: { id: 'nightmare_wave', species: 'dusklet', element: 'dark', cost: 35, power: 30, delivery: 'wave', effect: dmg, windup: 1.5, active: 0.4, recovery: 0.7, speed: 9, heavy: true, accuracy: 80, name: { en: 'Nightmare Wave', it: 'Onda Incubo' } },
+  wisp_flame: { id: 'wisp_flame', species: 'gloamwraith', element: 'fire', cost: 30, power: 22, delivery: 'projectile', effect: dmg, windup: 0.8, active: 0.2, recovery: 0.5, speed: 13, heavy: false, accuracy: 85, name: { en: 'Wisp Flame', it: 'Fuoco Fatuo' } },
+  grave_miasma: { id: 'grave_miasma', species: 'nightpall', element: 'poison', cost: 45, power: 38, delivery: 'wave', effect: dmg, windup: 1.9, active: 0.5, recovery: 0.9, speed: 8, heavy: true, accuracy: 75, name: { en: 'Grave Miasma', it: 'Miasma Tombale' } },
+  // Scalet line (Dragon): Drakonet learns an Electric move, Wyverno a Fire move
+  claw_swipe: { id: 'claw_swipe', species: 'scalet', element: 'normal', cost: 15, power: 9, delivery: 'melee', effect: dmg, windup: 0.15, active: 0.25, recovery: 0.35, heavy: false, quick: true, accuracy: 100, name: { en: 'Claw Swipe', it: 'Graffio' } },
+  wyrm_spit: { id: 'wyrm_spit', species: 'scalet', element: 'dragon', cost: 15, power: 16, delivery: 'projectile', effect: dmg, windup: 0.6, active: 0.15, recovery: 0.45, speed: 15, heavy: false, accuracy: 90, name: { en: 'Wyrm Spit', it: 'Sputo di Drago' } },
+  scale_guard: { id: 'scale_guard', species: 'scalet', element: 'dragon', cost: 20, power: 0, delivery: 'self', effect: { kind: 'shield', factor: 0.5, seconds: 4 }, windup: 0.3, active: 0.2, recovery: 0.3, heavy: false, accuracy: 100, name: { en: 'Scale Guard', it: 'Guardia di Scaglie' } },
+  meteor_fall: { id: 'meteor_fall', species: 'scalet', element: 'dragon', cost: 35, power: 30, delivery: 'ground', effect: dmg, windup: 1.6, active: 0.5, recovery: 0.7, hitDelay: 0.25, heavy: true, accuracy: 80, name: { en: 'Meteor Fall', it: 'Meteora Draconica' } },
+  storm_fang: { id: 'storm_fang', species: 'drakonet', element: 'electric', cost: 30, power: 22, delivery: 'melee', effect: dmg, windup: 0.8, active: 0.3, recovery: 0.6, heavy: false, accuracy: 85, name: { en: 'Storm Fang', it: 'Zanna di Tempesta' } },
+  inferno_roar: { id: 'inferno_roar', species: 'wyverno', element: 'fire', cost: 45, power: 38, delivery: 'beam', effect: dmg, windup: 1.8, active: 0.5, recovery: 0.9, hitDelay: 0.1, heavy: true, accuracy: 75, name: { en: 'Inferno Roar', it: 'Ruggito Infernale' } },
+  // Gloopit line (Poison): Toxifrog learns a Water move, Plaguelord an Earth move
+  goo_slap: { id: 'goo_slap', species: 'gloopit', element: 'normal', cost: 15, power: 8, delivery: 'melee', effect: dmg, windup: 0.15, active: 0.25, recovery: 0.35, heavy: false, quick: true, accuracy: 100, name: { en: 'Goo Slap', it: 'Schiaffo Viscido' } },
+  acid_spit: { id: 'acid_spit', species: 'gloopit', element: 'poison', cost: 15, power: 15, delivery: 'projectile', effect: dmg, windup: 0.6, active: 0.2, recovery: 0.45, speed: 13, heavy: false, accuracy: 90, name: { en: 'Acid Spit', it: 'Sputo Acido' } },
+  sticky_goo: { id: 'sticky_goo', species: 'gloopit', element: 'poison', cost: 20, power: 0, delivery: 'projectile', effect: { kind: 'root', seconds: 2 }, windup: 0.6, active: 0.2, recovery: 0.4, speed: 11, heavy: false, accuracy: 85, name: { en: 'Sticky Goo', it: 'Melma Appiccicosa' } },
+  sludge_wave: { id: 'sludge_wave', species: 'gloopit', element: 'poison', cost: 35, power: 30, delivery: 'wave', effect: dmg, windup: 1.5, active: 0.4, recovery: 0.7, speed: 9, heavy: true, accuracy: 80, name: { en: 'Sludge Wave', it: 'Onda Fangosa' } },
+  swamp_jet: { id: 'swamp_jet', species: 'toxifrog', element: 'water', cost: 30, power: 22, delivery: 'beam', effect: dmg, windup: 0.8, active: 0.4, recovery: 0.5, hitDelay: 0.15, heavy: false, accuracy: 85, name: { en: 'Swamp Jet', it: 'Getto di Palude' } },
+  mire_slam: { id: 'mire_slam', species: 'plaguelord', element: 'ground', cost: 45, power: 38, delivery: 'ground', effect: dmg, windup: 1.9, active: 0.6, recovery: 0.9, hitDelay: 0.2, heavy: true, accuracy: 75, name: { en: 'Mire Slam', it: 'Schianto di Palude' } },
 };
 
 /** Uses per round by base stamina cost: strongest (≥35) 5, strong (30) 10, normal (20–25) 15, common (15) 20. */

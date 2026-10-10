@@ -40,8 +40,9 @@ Stack: TypeScript, Vite, Three.js, PeerJS, Web Speech API, Vitest, Playwright. N
 - **Creatures feature (user request 2026-10-10, branch `creatures` off `rename`; plan in decisions #79):** 8 new 3-stage lines (Rock/Earth dual, Flying, Psychic, Ghost/Dark dual, Dragon, Poison, Steel, Ice) with different body shapes per stage; every evolution (new + existing lines) learns one off-type move (existing lines keep their same-type evo move and add one). M7 types engine · M8 existing lines +off-type moves · M9 batch A (Rock/Earth, Flying, Psychic) · M10 batch B (Ghost/Dark, Dragon, Poison) · M11 batch C (Steel, Ice, 12-card team screen) · M12 balance + docs + net.
 - **Done:** M7 (decision #79: 10 elements, dual types, chart, badges/VFX/SFX hooks; tests pass).
 - **Done:** M8 (decision #80: 8 off-type evolution moves on the existing lines, EN+IT voice, fallback VFX/SFX; tests 289 pass, `scripts/offtype-shots.mjs`).
-- **Done:** M9 (decision #81: Gravelo/Pipwing/Wispurr lines with 9 models, 18 moves, EN+IT voice, team screen 7 cards; tests 351 pass, `scripts/newcreatures-test.mjs`, flow/net OK). PAUSE: user looks at the new creatures (`node scripts/creature-sheet.mjs` → screenshots/creatures) before M10.
-- **Next:** M10 batch B (Ghost/Dark dual, Dragon, Poison), then M11 batch C (Steel, Ice), M12 balance + docs + net.
+- **Done:** M9 (decision #81: Gravelo/Pipwing/Wispurr lines with 9 models, 18 moves, EN+IT voice, team screen 7 cards; tests 351 pass, `scripts/newcreatures-test.mjs`, flow/net OK). User approved the look (said go).
+- **Done:** M10 (decision #82: Dusklet/Scalet/Gloopit lines, 9 models, 18 moves, EN+IT voice; tests 402 pass, `scripts/newcreatures-test.mjs` all 6 lines OK).
+- **Next:** M11 batch C (Steel, Ice; 12 cards on the team screen), then M12 balance + docs + net, then user playtest of everything and ask before merging.
 - **Earlier feature (verbal boosts, decisions #73–74):** on `main`; user still to try boosts by voice in Chrome.
 - **Known issues:** `smoke.mjs --full` crashes headless Chrome on an audio-device error, also before this feature (docs/blockers.md).
 ## Docs (read only what the task needs)

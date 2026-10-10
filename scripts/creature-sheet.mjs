@@ -5,7 +5,8 @@ import { chromium } from 'playwright';
 import { createServer } from 'vite';
 
 const LINES = [['cindrix', 'pyroxen', 'calderox'], ['brinkle', 'tsunafin', 'abyssmaw'], ['vinram', 'thornhorn', 'elderoot'], ['joltmoth', 'stormoth', 'tempestra'],
-  ['gravelo', 'boulderax', 'tectonyx'], ['pipwing', 'galehawk', 'zephyrion'], ['wispurr', 'mystiline', 'astralynx']];
+  ['gravelo', 'boulderax', 'tectonyx'], ['pipwing', 'galehawk', 'zephyrion'], ['wispurr', 'mystiline', 'astralynx'],
+  ['dusklet', 'gloamwraith', 'nightpall'], ['scalet', 'drakonet', 'wyverno'], ['gloopit', 'toxifrog', 'plaguelord']];
 mkdirSync('screenshots/creatures', { recursive: true });
 const server = await createServer({ server: { port: 5196 }, logLevel: 'error' });
 await server.listen();

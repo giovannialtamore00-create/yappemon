@@ -4,12 +4,14 @@ export type Element =
   | 'normal' | 'fire' | 'water' | 'grass' | 'electric'
   | 'rock' | 'ground' | 'flying' | 'psychic' | 'ghost' | 'dark' | 'dragon' | 'poison' | 'steel' | 'ice';
 /** Base forms (stage 1), then stage 2 and stage 3 evolutions. */
-export type BaseSpeciesId = 'cindrix' | 'brinkle' | 'vinram' | 'joltmoth' | 'gravelo' | 'pipwing' | 'wispurr';
+export type BaseSpeciesId = 'cindrix' | 'brinkle' | 'vinram' | 'joltmoth' | 'gravelo' | 'pipwing' | 'wispurr'
+  | 'dusklet' | 'scalet' | 'gloopit';
 export type SpeciesId =
   | BaseSpeciesId
   | 'pyroxen' | 'tsunafin' | 'thornhorn' | 'stormoth'
   | 'calderox' | 'abyssmaw' | 'elderoot' | 'tempestra'
-  | 'boulderax' | 'tectonyx' | 'galehawk' | 'zephyrion' | 'mystiline' | 'astralynx';
+  | 'boulderax' | 'tectonyx' | 'galehawk' | 'zephyrion' | 'mystiline' | 'astralynx'
+  | 'gloamwraith' | 'nightpall' | 'drakonet' | 'wyverno' | 'toxifrog' | 'plaguelord';
 export type Stage = 1 | 2 | 3;
 export type PlayerIdx = 0 | 1;
 export type Lang = 'en' | 'it';
@@ -40,7 +42,11 @@ export type MoveId =
   // Gravelo (Rock/Earth), Pipwing (Flying), Wispurr (Psychic) lines
   | 'pebble_bump' | 'gravel_shot' | 'stone_skin' | 'fault_quake' | 'magma_chunk' | 'glacier_drop'
   | 'beak_peck' | 'feather_dart' | 'dizzy_gale' | 'hurricane' | 'shadow_talon' | 'draco_zephyr'
-  | 'paw_tap' | 'psy_orb' | 'calm_mind' | 'mind_crush' | 'spirit_hex' | 'astral_blade';
+  | 'paw_tap' | 'psy_orb' | 'calm_mind' | 'mind_crush' | 'spirit_hex' | 'astral_blade'
+  // Dusklet (Ghost/Dark), Scalet (Dragon), Gloopit (Poison) lines
+  | 'shade_nip' | 'spook_bolt' | 'dread_stare' | 'nightmare_wave' | 'wisp_flame' | 'grave_miasma'
+  | 'claw_swipe' | 'wyrm_spit' | 'scale_guard' | 'meteor_fall' | 'storm_fang' | 'inferno_roar'
+  | 'goo_slap' | 'acid_spit' | 'sticky_goo' | 'sludge_wave' | 'swamp_jet' | 'mire_slam';
 
 /**
  * How a move reaches its target.

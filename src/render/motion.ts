@@ -303,6 +303,9 @@ const MOTIONS: Record<MoveId, MotionFn> = {
   pebble_bump: roll, gravel_shot: shake, stone_skin: tuck, fault_quake: rear, magma_chunk: spit, glacier_drop: stomp,
   beak_peck: pirouette, feather_dart: jab, dizzy_gale: tremble, hurricane: crash, shadow_talon: leap, draco_zephyr: dive(1.2),
   paw_tap: bounce, psy_orb: levitate, calm_mind: levitate, mind_crush: tremble, spirit_hex: whip, astral_blade: dive(1.0),
+  shade_nip: bounce, spook_bolt: jab, dread_stare: tremble, nightmare_wave: crash, wisp_flame: spit, grave_miasma: crash,
+  claw_swipe: pirouette, wyrm_spit: spit, scale_guard: tuck, meteor_fall: rear, storm_fang: leap, inferno_roar: dive(1.2),
+  goo_slap: bounce, acid_spit: spit, sticky_goo: whip, sludge_wave: crash, swamp_jet: jet, mire_slam: stomp,
   volcanic_ruin: stomp, maelstrom: crash, ancient_bloom: levitate, sky_judgement: dive(1.6),
 };
 

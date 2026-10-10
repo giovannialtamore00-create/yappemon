@@ -13,6 +13,9 @@ Player-facing numbers. Source of truth for values is `src/sim/data.ts` (stats, m
 | Gravelo → Boulderax → Tectonyx: a round pebble-plated armadillo → a long lizard with boulders on its back, a horn ridge and a rock-club tail → a walking mountain, a huge shell crowned with glowing crystal spires | Rock/Earth | 130 / 163 / 195 | Slow |
 | Pipwing → Galehawk → Zephyrion: a round yellow chick with stubby wings → a sleek brown hawk with a hooked beak and tail fan → a long white-and-teal storm eagle with two pairs of wings, a feather crest, ribbon tail and wind rings | Flying | 90 / 113 / 135 | Fast |
 | Wispurr → Mystiline → Astralynx: a small lavender kitten with a pink brow gem → a tall indigo cat on long legs with two tails and floating orbs → a floating star lynx with tufted ears, leaf-shaped ear fans, ribbon tails and halo rings | Psychic | 100 / 125 / 150 | Medium |
+| Dusklet → Gloamwraith → Nightpall: a pale round lantern ghost with a wispy tail → a dark hooded wraith with glowing eyes, skeletal claws and a tattered hem → a huge tattered reaper cloak with a horned crown, six red eyes, floating hands and shadow wisps | Ghost/Dark | 100 / 125 / 150 | Fast |
+| Scalet → Drakonet → Wyverno: a teal wingless hatchling with horn nubs → a blue wyvern with bat wings, swept horns and a spiked tail → a huge purple-and-gold dragon with great wings, a horned crest, glowing chest and blade-tipped tail | Dragon | 115 / 144 / 173 | Medium |
+| Gloopit → Toxifrog → Plaguelord: a glossy green slime frog → a warty purple-green frog with spore sacs and a throat sac → a bloated toad king with a spotted-mushroom crown, tusks, glowing pustules and a spore cloud | Poison | 128 / 160 / 192 | Slow |
 
 ## Type chart
 
@@ -83,6 +86,18 @@ Uses per round (see combat-rules.md): Stamina 47+ → 5 uses, 41 → 10, 27–34
 | | Psy Orb | Sfera Psichica | 20 | 90% | Slow psychic orb, 15 dmg |
 | | Calm Mind | Mente Calma | 34 | – | Heal 18 HP over 3 s |
 | | Mind Crush | Schianto Mentale | 47 | 80% | Psychic beam, 30 dmg |
+| **Dusklet** (Ghost/Dark) | Shade Nip | Pizzico Ombra | 20 | 100% | **Quick** melee, 8 dmg (Normal) |
+| | Spook Bolt | Dardo Spettrale | 20 | 90% | Fast ghost projectile, 15 dmg |
+| | Dread Stare | Sguardo Gelido | 27 | 85% | Root target 2 s (can't dodge or move) |
+| | Nightmare Wave | Onda Incubo | 47 | 80% | Dark wave, 30 dmg |
+| **Scalet** (Dragon) | Claw Swipe | Graffio | 20 | 100% | **Quick** melee, 9 dmg (Normal) |
+| | Wyrm Spit | Sputo di Drago | 20 | 90% | Dragon projectile, 16 dmg |
+| | Scale Guard | Guardia di Scaglie | 27 | – | Take 50% damage for 4 s |
+| | Meteor Fall | Meteora Draconica | 47 | 80% | Meteor strike under target, 30 dmg |
+| **Gloopit** (Poison) | Goo Slap | Schiaffo Viscido | 20 | 100% | **Quick** melee, 8 dmg (Normal) |
+| | Acid Spit | Sputo Acido | 20 | 90% | Poison projectile, 15 dmg |
+| | Sticky Goo | Melma Appiccicosa | 27 | 85% | Root target 2 s (can't dodge or move) |
+| | Sludge Wave | Onda Fangosa | 47 | 80% | Toxic wave, 30 dmg |
 
 **Off-type moves of the new lines** (one per evolution, always a different type than the creature's own; nothing else is learned):
 
@@ -94,6 +109,12 @@ Uses per round (see combat-rules.md): Stamina 47+ → 5 uses, 41 → 10, 27–34
 | **Zephyrion** | Draco Zephyr | Soffio Draconico | Dragon | 61 | 75% | Dragon wind beam, 38 dmg, very long windup |
 | **Mystiline** | Spirit Hex | Maleficio Spettrale | Ghost | 41 | 85% | Haunting curse projectile, 22 dmg |
 | **Astralynx** | Astral Blade | Lama Astrale | Steel | 61 | 75% | Blade of starlight beam, 38 dmg, very long windup |
+| **Gloamwraith** | Wisp Flame | Fuoco Fatuo | Fire | 41 | 85% | Ghost fire projectile, 22 dmg |
+| **Nightpall** | Grave Miasma | Miasma Tombale | Poison | 61 | 75% | Slow toxic wave, 38 dmg, very long windup |
+| **Drakonet** | Storm Fang | Zanna di Tempesta | Electric | 41 | 85% | Melee crackling bite, 22 dmg |
+| **Wyverno** | Inferno Roar | Ruggito Infernale | Fire | 61 | 75% | Fire beam, 38 dmg, very long windup |
+| **Toxifrog** | Swamp Jet | Getto di Palude | Water | 41 | 85% | Muddy water beam, 22 dmg |
+| **Plaguelord** | Mire Slam | Schianto di Palude | Earth | 61 | 75% | Ground slam, 38 dmg, very long windup |
 
 **Off-type moves learned by evolving** (each existing evolution also learns one move of another type; every evolved form keeps all earlier moves, so stage 3 knows 8 and picks 4 in the loadout screen. The default loadout still swaps in the same-type move above, not these):
 
