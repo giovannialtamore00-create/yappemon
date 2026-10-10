@@ -251,17 +251,17 @@ describe('accuracy and combos', () => {
   it('hitChance = accuracy × target state', () => {
     const s = ready(['cindrix'], ['vinram']);
     const foe = s.trainers[1];
-    expect(hitChance(MOVES.cinder_spit, foe)).toBeCloseTo(0.9);
-    expect(hitChance(MOVES.thunder_lance, foe)).toBeCloseTo(0.75);
+    expect(hitChance(MOVES.cinder_spit, foe)).toBeCloseTo(0.95);
+    expect(hitChance(MOVES.thunder_lance, foe)).toBeCloseTo(0.8);
     expect(hitChance(MOVES.shell_ram, foe)).toBe(1);
     // Busy with a move: ×1.2 (capped at 1).
     step(s, [[], [q('thorn_quake')]]);
     expect(hitChance(MOVES.cinder_spit, foe)).toBe(1);
-    expect(hitChance(MOVES.thunder_lance, foe)).toBeCloseTo(0.9);
+    expect(hitChance(MOVES.thunder_lance, foe)).toBeCloseTo(0.96);
     // Alert: ×0.7.
     const t = ready(['cindrix'], ['vinram']);
     step(t, [[], [alert]]);
-    expect(hitChance(MOVES.cinder_spit, t.trainers[1])).toBeCloseTo(0.63);
+    expect(hitChance(MOVES.cinder_spit, t.trainers[1])).toBeCloseTo(0.665);
     expect(hitChance(MOVES.shell_ram, t.trainers[1])).toBeCloseTo(0.7);
   });
   it('accuracy rolls hit roughly as often as hitChance says', () => {
@@ -795,7 +795,7 @@ describe('verbal boosts', () => {
 
   it('FULL POWER: accuracy ×1.3 (capped at 100%)', () => {
     const s = ready(['joltmoth'], ['vinram']);
-    expect(hitChance(MOVES.thunder_lance, s.trainers[1], true)).toBeCloseTo(0.75 * FULL_POWER_MULT);
+    expect(hitChance(MOVES.thunder_lance, s.trainers[1], true)).toBe(1);
     expect(hitChance(MOVES.cinder_spit, s.trainers[1], true)).toBe(1);
   });
 
@@ -850,7 +850,7 @@ describe('creature name accuracy bonus', () => {
   it('hitChance: +10 accuracy, capped at 100, before state modifiers', () => {
     const s = ready(['cindrix'], ['vinram']);
     const foe = s.trainers[1];
-    expect(hitChance(MOVES.thunder_lance, foe, false, true)).toBeCloseTo(0.85);
+    expect(hitChance(MOVES.thunder_lance, foe, false, true)).toBeCloseTo(0.9);
     expect(hitChance(MOVES.cinder_spit, foe, false, true)).toBe(1);
     expect(hitChance(MOVES.shell_ram, foe, false, true)).toBe(1);
     step(s, [[], [alert]]);

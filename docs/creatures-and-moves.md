@@ -47,101 +47,101 @@ Uses per round (see combat-rules.md): Stamina 47+ → 5 uses, 41 → 10, 27–34
 | Creature | English | Italiano | Stamina | Accuracy | Effect |
 |---|---|---|---|---|---|
 | **Cindrix** (Fire) | Shell Ram | Carica Corazzata | 20 | 100% | **Quick** melee roll, 8 dmg |
-| | Cinder Spit | Sputo di Brace | 20 | 90% | Fire projectile, 16 dmg |
+| | Cinder Spit | Sputo di Brace | 20 | 95% | Fire projectile, 16 dmg |
 | | Heat Shell | Guscio Rovente | 27 | – | Take 50% damage for 4 s |
-| | Magma Burst | Esplosione di Magma | 47 | 80% | Eruption under target, 30 dmg, long windup |
+| | Magma Burst | Esplosione di Magma | 47 | 85% | Eruption under target, 30 dmg, long windup |
 | **Brinkle** (Water) | Bubble Bump | Spinta di Bolla | 20 | 100% | **Quick** melee bounce, 8 dmg |
-| | Water Jet | Getto d'Acqua | 20 | 90% | Water beam, 16 dmg |
+| | Water Jet | Getto d'Acqua | 20 | 95% | Water beam, 16 dmg |
 | | Healing Rain | Pioggia Curativa | 34 | – | Heal 18 HP over 3 s |
-| | Tidal Crash | Schianto di Marea | 47 | 80% | Water wave, 30 dmg |
+| | Tidal Crash | Schianto di Marea | 47 | 85% | Water wave, 30 dmg |
 | **Vinram** (Grass) | Horn Charge | Carica di Corna | 20 | 100% | **Quick** melee headbutt, 9 dmg |
-| | Leaf Volley | Raffica di Foglie | 20 | 90% | Grass projectile spread, 15 dmg |
-| | Vine Snare | Laccio di Liane | 27 | 85% | Root target 2 s (can't dodge or move) |
-| | Thorn Quake | Terremoto di Spine | 47 | 80% | Ground spikes, 30 dmg |
+| | Leaf Volley | Raffica di Foglie | 20 | 95% | Grass projectile spread, 15 dmg |
+| | Vine Snare | Laccio di Liane | 27 | 90% | Root target 2 s (can't dodge or move) |
+| | Thorn Quake | Terremoto di Spine | 47 | 85% | Ground spikes, 30 dmg |
 | **Joltmoth** (Electric) | Wing Flick | Colpo d'Ala | 20 | 100% | **Quick** melee wing strike, 8 dmg |
-| | Spark Dart | Dardo Scintilla | 20 | 90% | Fast electric projectile, 15 dmg |
-| | Static Field | Campo Statico | 27 | 85% | Halve target's stamina regen for 5 s |
-| | Thunder Lance | Lancia di Tuono | 47 | 75% | Electric bolt, 29 dmg, very fast |
+| | Spark Dart | Dardo Scintilla | 20 | 95% | Fast electric projectile, 15 dmg |
+| | Static Field | Campo Statico | 27 | 90% | Halve target's stamina regen for 5 s |
+| | Thunder Lance | Lancia di Tuono | 47 | 80% | Electric bolt, 29 dmg, very fast |
 
 **Moves learned by evolving** (evolved forms keep all earlier moves):
 
 | Evolution | English | Italiano | Stamina | Accuracy | Effect |
 |---|---|---|---|---|---|
-| **Pyroxen** (stage 2 of Cindrix) | Molten Leap | Balzo Fuso | 41 | 85% | Leaps high and slams onto the target, 24 dmg |
-| **Calderox** (stage 3) | Volcanic Ruin | Rovina Vulcanica | 61 | 75% | Triple eruption under the target, 40 dmg, very long windup |
+| **Pyroxen** (stage 2 of Cindrix) | Molten Leap | Balzo Fuso | 41 | 90% | Leaps high and slams onto the target, 24 dmg |
+| **Calderox** (stage 3) | Volcanic Ruin | Rovina Vulcanica | 61 | 80% | Triple eruption under the target, 40 dmg, very long windup |
 | **Tsunafin** (stage 2 of Brinkle) | Tide Mirror | Specchio di Marea | 34 | – | For 1.5 s, the next hit is reflected back at the attacker |
-| **Abyssmaw** (stage 3) | Maelstrom | Gorgo Abissale | 54 | 80% | Whirlpool, 26 dmg + roots 1.5 s |
-| **Thornhorn** (stage 2 of Vinram) | Bramble Stampede | Carica di Rovi | 41 | 90% | Charge whose windup can't be interrupted, 24 dmg |
+| **Abyssmaw** (stage 3) | Maelstrom | Gorgo Abissale | 54 | 85% | Whirlpool, 26 dmg + roots 1.5 s |
+| **Thornhorn** (stage 2 of Vinram) | Bramble Stampede | Carica di Rovi | 41 | 95% | Charge whose windup can't be interrupted, 24 dmg |
 | **Elderoot** (stage 3) | Ancient Bloom | Fioritura Antica | 47 | – | Heal 35 HP over 3 s |
-| **Stormoth** (stage 2 of Joltmoth) | Chain Storm | Tempesta a Catena | 41 | 85% | 3 bolts of 10 dmg, each dodgeable separately |
-| **Tempestra** (stage 3) | Sky Judgement | Giudizio Celeste | 61 | 75% | Lightning from the sky, 38 dmg, very long windup |
+| **Stormoth** (stage 2 of Joltmoth) | Chain Storm | Tempesta a Catena | 41 | 90% | 3 bolts of 10 dmg, each dodgeable separately |
+| **Tempestra** (stage 3) | Sky Judgement | Giudizio Celeste | 61 | 80% | Lightning from the sky, 38 dmg, very long windup |
 
 | **Gravelo** (Rock/Earth) | Pebble Bump | Botta di Sasso | 20 | 100% | **Quick** melee, 9 dmg (Normal) |
-| | Gravel Shot | Colpo di Ghiaia | 20 | 90% | Rock projectile, 15 dmg |
+| | Gravel Shot | Colpo di Ghiaia | 20 | 95% | Rock projectile, 15 dmg |
 | | Stone Skin | Pelle di Pietra | 27 | – | Take 50% damage for 4 s |
-| | Fault Quake | Faglia Sismica | 47 | 80% | Earth eruption under target, 30 dmg |
+| | Fault Quake | Faglia Sismica | 47 | 85% | Earth eruption under target, 30 dmg |
 | **Pipwing** (Flying) | Beak Peck | Beccata | 20 | 100% | **Quick** melee, 8 dmg (Normal) |
-| | Feather Dart | Dardo di Piuma | 20 | 90% | Fast feather projectile, 15 dmg |
-| | Dizzy Gale | Vento Stordente | 27 | 85% | Halve target's stamina regen for 5 s |
-| | Hurricane | Uragano | 47 | 80% | Wind wave, 30 dmg |
+| | Feather Dart | Dardo di Piuma | 20 | 95% | Fast feather projectile, 15 dmg |
+| | Dizzy Gale | Vento Stordente | 27 | 90% | Halve target's stamina regen for 5 s |
+| | Hurricane | Uragano | 47 | 85% | Wind wave, 30 dmg |
 | **Wispurr** (Psychic) | Paw Tap | Zampata | 20 | 100% | **Quick** melee, 8 dmg (Normal) |
-| | Psy Orb | Sfera Psichica | 20 | 90% | Slow psychic orb, 15 dmg |
+| | Psy Orb | Sfera Psichica | 20 | 95% | Slow psychic orb, 15 dmg |
 | | Calm Mind | Mente Calma | 34 | – | Heal 18 HP over 3 s |
-| | Mind Crush | Schianto Mentale | 47 | 80% | Psychic beam, 30 dmg |
+| | Mind Crush | Schianto Mentale | 47 | 85% | Psychic beam, 30 dmg |
 | **Dusklet** (Ghost/Dark) | Shade Nip | Pizzico Ombra | 20 | 100% | **Quick** melee, 8 dmg (Normal) |
-| | Spook Bolt | Dardo Spettrale | 20 | 90% | Fast ghost projectile, 15 dmg |
-| | Dread Stare | Sguardo Gelido | 27 | 85% | Root target 2 s (can't dodge or move) |
-| | Nightmare Wave | Onda Incubo | 47 | 80% | Dark wave, 30 dmg |
+| | Spook Bolt | Dardo Spettrale | 20 | 95% | Fast ghost projectile, 15 dmg |
+| | Dread Stare | Sguardo Gelido | 27 | 90% | Root target 2 s (can't dodge or move) |
+| | Nightmare Wave | Onda Incubo | 47 | 85% | Dark wave, 30 dmg |
 | **Scalet** (Dragon) | Claw Swipe | Graffio | 20 | 100% | **Quick** melee, 9 dmg (Normal) |
-| | Wyrm Spit | Sputo di Drago | 20 | 90% | Dragon projectile, 16 dmg |
+| | Wyrm Spit | Sputo di Drago | 20 | 95% | Dragon projectile, 16 dmg |
 | | Scale Guard | Guardia di Scaglie | 27 | – | Take 50% damage for 4 s |
-| | Meteor Fall | Meteora Draconica | 47 | 80% | Meteor strike under target, 30 dmg |
+| | Meteor Fall | Meteora Draconica | 47 | 85% | Meteor strike under target, 30 dmg |
 | **Gloopit** (Poison) | Goo Slap | Schiaffo Viscido | 20 | 100% | **Quick** melee, 8 dmg (Normal) |
-| | Acid Spit | Sputo Acido | 20 | 90% | Poison projectile, 15 dmg |
-| | Sticky Goo | Melma Appiccicosa | 27 | 85% | Root target 2 s (can't dodge or move) |
-| | Sludge Wave | Onda Fangosa | 47 | 80% | Toxic wave, 30 dmg |
+| | Acid Spit | Sputo Acido | 20 | 95% | Poison projectile, 15 dmg |
+| | Sticky Goo | Melma Appiccicosa | 27 | 90% | Root target 2 s (can't dodge or move) |
+| | Sludge Wave | Onda Fangosa | 47 | 85% | Toxic wave, 30 dmg |
 | **Cogling** (Steel) | Cog Bash | Botta di Ingranaggio | 20 | 100% | **Quick** melee, 8 dmg (Normal) |
-| | Nail Shot | Sparo di Chiodi | 20 | 90% | Fast steel projectile, 15 dmg |
+| | Nail Shot | Sparo di Chiodi | 20 | 95% | Fast steel projectile, 15 dmg |
 | | Self Repair | Autoriparazione | 34 | – | Heal 18 HP over 3 s |
-| | Iron Crush | Schianto di Ferro | 47 | 80% | Ground slam, 30 dmg |
+| | Iron Crush | Schianto di Ferro | 47 | 85% | Ground slam, 30 dmg |
 | **Flurrbit** (Ice) | Snow Bump | Spinta di Neve | 20 | 100% | **Quick** melee, 8 dmg (Normal) |
-| | Ice Shard | Scheggia di Ghiaccio | 20 | 90% | Fast ice projectile, 15 dmg |
-| | Frost Bind | Morsa di Gelo | 27 | 85% | Root target 2 s (can't dodge or move) |
-| | Blizzard | Bufera | 47 | 80% | Snow wave, 30 dmg |
+| | Ice Shard | Scheggia di Ghiaccio | 20 | 95% | Fast ice projectile, 15 dmg |
+| | Frost Bind | Morsa di Gelo | 27 | 90% | Root target 2 s (can't dodge or move) |
+| | Blizzard | Bufera | 47 | 85% | Snow wave, 30 dmg |
 
 **Off-type moves of the new lines** (one per evolution, always a different type than the creature's own; nothing else is learned):
 
 | Evolution | English | Italiano | Type | Stamina | Accuracy | Effect |
 |---|---|---|---|---|---|---|
-| **Boulderax** | Magma Chunk | Blocco di Magma | Fire | 41 | 85% | Flaming boulder, 22 dmg |
-| **Tectonyx** | Glacier Drop | Caduta Glaciale | Ice | 61 | 75% | Ice falls on the foe, 38 dmg, very long windup |
-| **Galehawk** | Shadow Talon | Artiglio Ombra | Dark | 41 | 85% | Melee claw strike, 22 dmg |
-| **Zephyrion** | Draco Zephyr | Soffio Draconico | Dragon | 61 | 75% | Dragon wind beam, 38 dmg, very long windup |
-| **Mystiline** | Spirit Hex | Maleficio Spettrale | Ghost | 41 | 85% | Haunting curse projectile, 22 dmg |
-| **Astralynx** | Astral Blade | Lama Astrale | Steel | 61 | 75% | Blade of starlight beam, 38 dmg, very long windup |
-| **Gloamwraith** | Wisp Flame | Fuoco Fatuo | Fire | 41 | 85% | Ghost fire projectile, 22 dmg |
-| **Nightpall** | Grave Miasma | Miasma Tombale | Poison | 61 | 75% | Slow toxic wave, 38 dmg, very long windup |
-| **Drakonet** | Storm Fang | Zanna di Tempesta | Electric | 41 | 85% | Melee crackling bite, 22 dmg |
-| **Wyverno** | Inferno Roar | Ruggito Infernale | Fire | 61 | 75% | Fire beam, 38 dmg, very long windup |
-| **Toxifrog** | Swamp Jet | Getto di Palude | Water | 41 | 85% | Muddy water beam, 22 dmg |
-| **Plaguelord** | Mire Slam | Schianto di Palude | Earth | 61 | 75% | Ground slam, 38 dmg, very long windup |
-| **Gearhound** | Arc Weld | Saldatura ad Arco | Electric | 41 | 85% | Melee sparking weld, 22 dmg |
-| **Mechadon** | Forge Blast | Getto di Fornace | Fire | 61 | 75% | Furnace beam, 38 dmg, very long windup |
-| **Hailstag** | Aurora Gaze | Sguardo Aurorale | Psychic | 41 | 85% | Aurora ray projectile, 22 dmg |
-| **Glaciarch** | Avalanche | Valanga | Rock | 61 | 75% | Ground avalanche, 38 dmg, very long windup |
+| **Boulderax** | Magma Chunk | Blocco di Magma | Fire | 41 | 90% | Flaming boulder, 22 dmg |
+| **Tectonyx** | Glacier Drop | Caduta Glaciale | Ice | 61 | 80% | Ice falls on the foe, 38 dmg, very long windup |
+| **Galehawk** | Shadow Talon | Artiglio Ombra | Dark | 41 | 90% | Melee claw strike, 22 dmg |
+| **Zephyrion** | Draco Zephyr | Soffio Draconico | Dragon | 61 | 80% | Dragon wind beam, 38 dmg, very long windup |
+| **Mystiline** | Spirit Hex | Maleficio Spettrale | Ghost | 41 | 90% | Haunting curse projectile, 22 dmg |
+| **Astralynx** | Astral Blade | Lama Astrale | Steel | 61 | 80% | Blade of starlight beam, 38 dmg, very long windup |
+| **Gloamwraith** | Wisp Flame | Fuoco Fatuo | Fire | 41 | 90% | Ghost fire projectile, 22 dmg |
+| **Nightpall** | Grave Miasma | Miasma Tombale | Poison | 61 | 80% | Slow toxic wave, 38 dmg, very long windup |
+| **Drakonet** | Storm Fang | Zanna di Tempesta | Electric | 41 | 90% | Melee crackling bite, 22 dmg |
+| **Wyverno** | Inferno Roar | Ruggito Infernale | Fire | 61 | 80% | Fire beam, 38 dmg, very long windup |
+| **Toxifrog** | Swamp Jet | Getto di Palude | Water | 41 | 90% | Muddy water beam, 22 dmg |
+| **Plaguelord** | Mire Slam | Schianto di Palude | Earth | 61 | 80% | Ground slam, 38 dmg, very long windup |
+| **Gearhound** | Arc Weld | Saldatura ad Arco | Electric | 41 | 90% | Melee sparking weld, 22 dmg |
+| **Mechadon** | Forge Blast | Getto di Fornace | Fire | 61 | 80% | Furnace beam, 38 dmg, very long windup |
+| **Hailstag** | Aurora Gaze | Sguardo Aurorale | Psychic | 41 | 90% | Aurora ray projectile, 22 dmg |
+| **Glaciarch** | Avalanche | Valanga | Rock | 61 | 80% | Ground avalanche, 38 dmg, very long windup |
 
 **Off-type moves learned by evolving** (each existing evolution also learns one move of another type; every evolved form keeps all earlier moves, so stage 3 knows 8 and picks 4 in the loadout screen. The default loadout still swaps in the same-type move above, not these):
 
 | Evolution | English | Italiano | Type | Stamina | Accuracy | Effect |
 |---|---|---|---|---|---|---|
-| **Pyroxen** | Rock Hurl | Lancio di Roccia | Rock | 41 | 85% | Boulder projectile, 22 dmg |
-| **Calderox** | Tremor Crush | Frantuma Terra | Earth | 61 | 75% | Ground crush, 38 dmg, very long windup |
-| **Tsunafin** | Frost Fin | Pinna Gelida | Ice | 41 | 85% | Ice-water beam, 22 dmg |
-| **Abyssmaw** | Void Bite | Morso del Vuoto | Dark | 61 | 80% | Heavy melee bite, 38 dmg |
-| **Thornhorn** | Toxic Thorns | Spine Tossiche | Poison | 41 | 85% | Thorn projectile, 22 dmg |
-| **Elderoot** | Mind Bloom | Fiore Mentale | Psychic | 61 | 75% | Psychic beam, 37 dmg, very long windup |
-| **Stormoth** | Gale Slash | Fendente di Vento | Flying | 41 | 85% | Fast wind projectile, 22 dmg |
-| **Tempestra** | Razor Pinion | Penna Tagliente | Steel | 61 | 75% | Very fast steel feather, 38 dmg |
+| **Pyroxen** | Rock Hurl | Lancio di Roccia | Rock | 41 | 90% | Boulder projectile, 22 dmg |
+| **Calderox** | Tremor Crush | Frantuma Terra | Earth | 61 | 80% | Ground crush, 38 dmg, very long windup |
+| **Tsunafin** | Frost Fin | Pinna Gelida | Ice | 41 | 90% | Ice-water beam, 22 dmg |
+| **Abyssmaw** | Void Bite | Morso del Vuoto | Dark | 61 | 85% | Heavy melee bite, 38 dmg |
+| **Thornhorn** | Toxic Thorns | Spine Tossiche | Poison | 41 | 90% | Thorn projectile, 22 dmg |
+| **Elderoot** | Mind Bloom | Fiore Mentale | Psychic | 61 | 80% | Psychic beam, 37 dmg, very long windup |
+| **Stormoth** | Gale Slash | Fendente di Vento | Flying | 41 | 90% | Fast wind projectile, 22 dmg |
+| **Tempestra** | Razor Pinion | Penna Tagliente | Steel | 61 | 80% | Very fast steel feather, 38 dmg |
 
 **Quick moves** (the four Normal melee moves) wind up in 0.15 s, always hit an unguarded foe and **can't be caught by the dodge window**; every other attack winds up at least 0.6 s.
 

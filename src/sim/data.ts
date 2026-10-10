@@ -308,7 +308,10 @@ export function usesForBaseCost(base: number): number {
 }
 
 // Costs above are base values; apply the global stamina-cost multiplier once.
+/** Every move's base accuracy is raised by this many points (capped at 100). */
+export const ACCURACY_BONUS = 5;
 for (const m of Object.values(MOVES)) {
+  m.accuracy = Math.min(100, m.accuracy + ACCURACY_BONUS);
   m.uses = usesForBaseCost(m.cost);
   m.cost = scaledCost(m.cost);
 }
