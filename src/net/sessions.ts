@@ -46,6 +46,7 @@ export function sanitizeIntents(list: unknown): Intent[] {
     if (typeof it !== 'object' || it === null) continue;
     const i = it as Record<string, unknown>;
     if (i.type === 'stop') out.push({ type: 'stop' });
+    else if (i.type === 'steer' && (i.x === -1 || i.x === 0 || i.x === 1) && (i.z === -1 || i.z === 0 || i.z === 1)) out.push({ type: 'steer', x: i.x, z: i.z });
     else if (i.type === 'cheer' && typeof i.word === 'string' && i.word in CHEERS) out.push({ type: 'cheer', word: i.word as CheerId });
     else if (i.type === 'choose' && (i.slot === 0 || i.slot === 1)) out.push({ type: 'choose', slot: i.slot });
     else if (i.type === 'go' && isSpecies(i.species)) out.push({ type: 'go', species: i.species });

@@ -140,6 +140,8 @@ export type QAction =
 export type Intent =
   | { type: 'queue'; actions: QAction[] }
   | { type: 'stop' }
+  /** Manual movement: switches the trainer to manual steering. `x`: −1 left / +1 right (creature's view), `z`: +1 toward / −1 away from the opponent. */
+  | { type: 'steer'; x: -1 | 0 | 1; z: -1 | 0 | 1 }
   /** Encouragement word: instant, free, doesn't touch the queue or the running action. */
   | { type: 'cheer'; word: CheerId }
   | { type: 'choose'; slot: 0 | 1 }
@@ -213,6 +215,10 @@ export interface TrainerState {
   strafeTicks: number;
   /** Distance from the centre line (|z|) the creature is stepping toward; re-rolled with each strafe leg. */
   stepZ: number;
+  /** Manual movement (lobby setting): steering replaces the automatic drift while true. */
+  manual: boolean;
+  steerX: -1 | 0 | 1;
+  steerZ: -1 | 0 | 1;
   /** Ticks left in the armed dodge window, and the requested side (0 = auto). */
   dodgeReady: number;
   dodgeDir: 0 | 1 | -1;

@@ -13,6 +13,9 @@ Open the address it prints (usually **http://localhost:5173**) in **Chrome or Ed
 
 To build the static site: `npm run build` (output goes to `dist/`).
 
+## Movement
+Lobby → Movement: **Automatic** (creatures move by themselves) or **Manual (WASD)**: A/D sidestep, W toward / S away from the opponent.
+
 ## Play with a friend
 
 Both players open the same game URL in **Chrome or Edge** on their own computers.

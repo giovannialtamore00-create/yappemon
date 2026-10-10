@@ -81,6 +81,43 @@ export class Battle {
     audio?.musicStart();
   }
 
+  private steerKeys = { a: false, d: false, w: false, s: false };
+  private steerSent = '';
+  private steerOff: (() => void) | null = null;
+
+  /** Manual movement: WASD steers this player's creature (A/D sidestep, W toward / S away from the opponent). */
+  enableManualMovement() {
+    const send = () => {
+      const k = this.steerKeys;
+      const x = (k.d ? 1 : 0) - (k.a ? 1 : 0) as -1 | 0 | 1;
+      const z = (k.w ? 1 : 0) - (k.s ? 1 : 0) as -1 | 0 | 1;
+      const key = x + ',' + z;
+      if (key === this.steerSent) return;
+      this.steerSent = key;
+      this.session.send([{ type: 'steer', x, z }]);
+    };
+    const set = (e: KeyboardEvent, down: boolean) => {
+      const tag = (e.target as HTMLElement | null)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+      const k = e.key.toLowerCase();
+      if (k !== 'a' && k !== 'd' && k !== 'w' && k !== 's') return;
+      this.steerKeys[k] = down;
+      send();
+    };
+    const onDown = (e: KeyboardEvent) => set(e, true);
+    const onUp = (e: KeyboardEvent) => set(e, false);
+    const onBlur = () => { this.steerKeys = { a: false, d: false, w: false, s: false }; send(); };
+    window.addEventListener('keydown', onDown);
+    window.addEventListener('keyup', onUp);
+    window.addEventListener('blur', onBlur);
+    this.steerOff = () => {
+      window.removeEventListener('keydown', onDown);
+      window.removeEventListener('keyup', onUp);
+      window.removeEventListener('blur', onBlur);
+    };
+    send();
+  }
+
   /** A fresh 3D view for the creatures of the current round (stage changes each round). */
   private makeView(teams: [SpeciesId[], SpeciesId[]]): BattleView {
     const v = new BattleView(this.ctx, teams, this.session.me);
@@ -297,6 +334,7 @@ export class Battle {
   }
 
   dispose() {
+    this.steerOff?.();
     this.hud.setVoice(null, 0);
     this.closeSwitch();
     this.closeLoadout();

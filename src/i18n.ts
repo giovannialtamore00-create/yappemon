@@ -4,6 +4,9 @@ const STR = {
   en: {
     tagline: 'Command your creature with your voice.',
     language: 'Voice language',
+    movement: 'Movement',
+    moveAuto: 'Automatic',
+    moveManual: 'Manual (WASD)',
     practice: 'Practice vs Bot',
     host: 'Host game',
     join: 'Join game',
@@ -145,6 +148,9 @@ const STR = {
   it: {
     tagline: 'Comanda la tua creatura con la voce.',
     language: 'Lingua vocale',
+    movement: 'Movimento',
+    moveAuto: 'Automatico',
+    moveManual: 'Manuale (WASD)',
     practice: 'Allenamento vs Bot',
     host: 'Crea partita',
     join: 'Unisciti',

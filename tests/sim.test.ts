@@ -952,3 +952,37 @@ describe('encouragements', () => {
     expect(step(s, [[ch('come_on')], []]).filter((e) => e.t === 'cheer')).toHaveLength(0);
   });
 });
+
+describe('manual movement (steer)', () => {
+  const steer = (x: -1 | 0 | 1, z: -1 | 0 | 1): Intent => ({ type: 'steer', x, z });
+  it('stands still with no keys, moves left/right in the creature’s view', () => {
+    const s = ready(['cindrix'], ['vinram']);
+    run(s, 1, [[steer(0, 0)], [steer(0, 0)]]);
+    const [a0, b0] = [s.trainers[0].x, s.trainers[1].x];
+    run(s, sec(1));
+    expect([s.trainers[0].x, s.trainers[1].x]).toEqual([a0, b0]);
+    run(s, sec(0.5), [[steer(1, 0)], [steer(1, 0)]]);
+    expect(s.trainers[0].x).toBeGreaterThan(a0); // player 0 right = +x
+    expect(s.trainers[1].x).toBeLessThan(b0); // player 1 faces the other way
+  });
+  it('W goes toward the opponent, S away, within the own half', () => {
+    const s = ready(['cindrix'], ['vinram']);
+    run(s, 1, [[steer(0, 1)], []]);
+    run(s, sec(20));
+    expect(s.trainers[0].z).toBeCloseTo(HALF_NEAR_M, 5);
+    run(s, 1, [[steer(0, -1)], []]);
+    run(s, sec(20));
+    expect(s.trainers[0].z).toBeCloseTo(HALF_FAR_M, 5);
+    run(s, 1, [[steer(1, 0)], []]);
+    run(s, sec(10));
+    expect(s.trainers[0].x).toBeLessThanOrEqual(ARENA_X_M);
+  });
+  it('a busy creature does not move; the other player stays automatic', () => {
+    const s = ready(['cindrix'], ['vinram']);
+    run(s, 1, [[steer(1, 0), q('shell_ram')], []]);
+    const x = s.trainers[0].x;
+    run(s, 3);
+    expect(s.trainers[0].x).toBe(x);
+    expect(s.trainers[1].manual).toBe(false);
+  });
+});

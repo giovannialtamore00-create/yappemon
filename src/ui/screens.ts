@@ -42,8 +42,8 @@ export class Screens {
   // ------------------------------------------------------------ lobby
 
   lobby(o: {
-    lang: Lang; voiceSupported: boolean;
-    onLang(l: Lang): void; onPractice(): void; onHost(): void; onHostSpectate(): void; onJoin(code: string): void;
+    lang: Lang; voiceSupported: boolean; manual: boolean;
+    onLang(l: Lang): void; onMovement(manual: boolean): void; onPractice(): void; onHost(): void; onHostSpectate(): void; onJoin(code: string): void;
   }) {
     const s = this.overlay('lobby');
     const card = h('div', 'card lobby-card');
@@ -54,6 +54,11 @@ export class Screens {
     for (const [l, label] of [['en', 'English'], ['it', 'Italiano']] as const) {
       const b = button(label, () => o.onLang(l), `btn toggle${o.lang === l ? ' on' : ''}`);
       langRow.append(b);
+    }
+    const moveRow = h('div', 'lang-row');
+    moveRow.append(h('span', 'label', t('movement')));
+    for (const [m, label] of [[false, t('moveAuto')], [true, t('moveManual')]] as const) {
+      moveRow.append(button(label, () => o.onMovement(m), `btn toggle${o.manual === m ? ' on' : ''}`));
     }
     const actions = h('div', 'lobby-actions');
     actions.append(button(t('practice'), o.onPractice, 'btn big primary'), button(t('host'), o.onHost, 'btn big'), button(t('hostSpectate'), o.onHostSpectate, 'btn big'));
@@ -69,7 +74,7 @@ export class Screens {
     };
     input.addEventListener('keydown', (e) => { if (e.key === 'Enter') join(); });
     joinRow.append(input, button(t('joinGo'), join, 'btn big'));
-    card.append(logo, tag, langRow, actions, h('div', 'or', t('join')), joinRow);
+    card.append(logo, tag, langRow, moveRow, actions, h('div', 'or', t('join')), joinRow);
     const how = h('details', 'howto');
     how.append(h('summary', '', t('howTo')), h('p', '', t('howToBody')));
     card.append(how);

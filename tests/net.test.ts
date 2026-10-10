@@ -49,3 +49,10 @@ describe('remote input sanitizing', () => {
     expect(sanitizeTeam(['cindrix', 'zzz'])).toBeNull();
   });
 });
+
+describe('steer intents', () => {
+  it('accepts -1/0/1 and rejects anything else', () => {
+    expect(sanitizeIntents([{ type: 'steer', x: -1, z: 1 }])).toEqual([{ type: 'steer', x: -1, z: 1 }]);
+    expect(sanitizeIntents([{ type: 'steer', x: 5, z: 0 }, { type: 'steer', x: 'a', z: 0 }, { type: 'steer', x: 0 }])).toEqual([]);
+  });
+});

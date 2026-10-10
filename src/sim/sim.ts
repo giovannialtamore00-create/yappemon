@@ -30,7 +30,7 @@ function createTrainer(p: PlayerIdx, team: SpeciesId[], loadouts: MoveId[][] = [
     team: team.map((sp, i) => createCreature(sp, defaultLoadout(sp, loadouts[i]))), active: 0, field: 'sending', fieldTicks: secToTicks(SENDOUT_S),
     action: null, queue: [], dodgeCooldown: 0, invulnTicks: 0,
     x: 0, z: side(p) * HOME_Z_M, driftDir: p === 0 ? 1 : -1, strafeTicks: secToTicks(1.2), stepZ: HOME_Z_M,
-    dodgeReady: 0, dodgeDir: 0, dashTicks: 0, dashDir: 1, alertTicks: 0, cheerTick: -1e9, cheerAt: {},
+    manual: false, steerX: 0, steerZ: 0, dodgeReady: 0, dodgeDir: 0, dashTicks: 0, dashDir: 1, alertTicks: 0, cheerTick: -1e9, cheerAt: {},
   };
 }
 
@@ -205,6 +205,11 @@ function applyIntent(s: SimState, p: PlayerIdx, it: Intent, ev: SimEvent[]) {
     case 'stop':
       t.queue = [];
       ev.push({ t: 'stopped', p });
+      return;
+    case 'steer':
+      t.manual = true;
+      t.steerX = it.x;
+      t.steerZ = it.z;
       return;
     case 'choose':
       return choose(s, p, it.slot, ev);
@@ -415,6 +420,13 @@ function move(s: SimState, p: PlayerIdx) {
   }
   if (c.rootTicks > 0) return;
   if (t.action && t.action.action.kind !== 'alert') return;
+  if (t.manual) {
+    // Creature-relative: player 1 faces +z, so its right is world −x. Toward the opponent = smaller |z|.
+    t.x = clampX(t.x + (p === 0 ? t.steerX : -t.steerX) * STRAFE_SPEED[SPECIES[c.species].speed] * (t.alertTicks > 0 ? ALERT_STRAFE_MULT : 1) * DT);
+    const absZ = Math.abs(t.z) - t.steerZ * STEP_SPEED * DT;
+    t.z = side(p) * Math.max(HALF_NEAR_M, Math.min(HALF_FAR_M, absZ));
+    return;
+  }
   const def = SPECIES[c.species];
   if (--t.strafeTicks <= 0) {
     t.driftDir = t.driftDir === 1 ? -1 : 1;

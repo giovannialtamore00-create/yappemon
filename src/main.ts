@@ -18,6 +18,11 @@ import { ClientSession, HostSession, SpectatorHostSession, sanitizeTeam } from '
 import { clearNames, myMove, sanitizeNames, setMe, setNames, type TeamNames } from './names';
 
 const LANG_KEY = 'yappemon.lang';
+const MOVE_KEY = 'yappemon.manualMove';
+
+function loadManual(): boolean {
+  try { return localStorage.getItem(MOVE_KEY) === '1'; } catch { return false; }
+}
 
 function loadLang(): Lang {
   try {
@@ -163,6 +168,7 @@ class App {
     });
     this.hud.setMic(this.speech.status);
     if (this.battle.spectator) return;
+    if (loadManual()) this.battle.enableManualMovement();
     if (isSupportedBrowser()) {
       this.speech.start(getLang());
       // A fresh mic tap per match: calibration starts over. No mic → no boosts, the game plays as before.
@@ -375,6 +381,11 @@ class App {
     this.screens.lobby({
       lang: getLang(),
       voiceSupported: isSupportedBrowser(),
+      manual: loadManual(),
+      onMovement: (m) => {
+        try { localStorage.setItem(MOVE_KEY, m ? '1' : '0'); } catch { /* ignore */ }
+        this.lobby();
+      },
       onLang: (l) => {
         setLang(l);
         try { localStorage.setItem(LANG_KEY, l); } catch { /* ignore */ }
