@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import {
-  ARENA_X_M, Bot, FULL_POWER_COOLDOWN_S, FULL_POWER_MULT, HYPE_STAMINA, LOADOUT_S, SNAP_SPEED, PREFERRED_GAP_M, defaultLoadout, DODGE_COST, HALF_FAR_M, HALF_NEAR_M, MOVES, MOVE_IDS, SPECIES, elementsOf, STAMINA_MAX, TICK_HZ, activeCreature,
+  ARENA_X_M, Bot, COMBO_ACC_MULT, FULL_POWER_COOLDOWN_S, FULL_POWER_MULT, HYPE_STAMINA, LOADOUT_S, SNAP_SPEED, PREFERRED_GAP_M, defaultLoadout, DODGE_COST, HALF_FAR_M, HALF_NEAR_M, MOVES, MOVE_IDS, SPECIES, elementsOf, STAMINA_MAX, TICK_HZ, activeCreature,
   computeDamage, createMatch, hitChance, step, travelTicks, typeMultiplier, usesLeft,
   type BaseSpeciesId, type CheerId, type Intent, type MoveId, type SimEvent, type SimState, type SpeciesId,
 } from '../src/sim';
@@ -984,5 +984,42 @@ describe('manual movement (steer)', () => {
     run(s, 3);
     expect(s.trainers[0].x).toBe(x);
     expect(s.trainers[1].manual).toBe(false);
+  });
+});
+
+describe('combo: second move of a chain', () => {
+  it('hitChance ×1.2 with combo=true (capped at 1)', () => {
+    const s = ready(['cindrix'], ['vinram']);
+    const foe = s.trainers[1];
+    expect(hitChance(MOVES.thunder_lance, foe, false, false, true)).toBeCloseTo(0.8 * COMBO_ACC_MULT);
+    expect(hitChance(MOVES.cinder_spit, foe, false, false, true)).toBe(1);
+  });
+  it('only the 2nd move gets the shorter windup and the combo flag', () => {
+    sureHits();
+    const s = ready(['cindrix'], ['vinram']);
+    const ev = run(s, sec(8), [[q('cinder_spit', 'cinder_spit', 'cinder_spit')], []]);
+    const starts = ev.filter((e) => e.t === 'action_start' && e.p === 0);
+    expect(starts).toHaveLength(3);
+    const flags = starts.map((e) => (e.t === 'action_start' && e.action.kind === 'move' ? !!e.action.combo : null));
+    expect(flags).toEqual([false, true, false]);
+  });
+  it('windup is 70% shorter for the 2nd move', () => {
+    sureHits();
+    const s = ready(['cindrix'], ['vinram']);
+    step(s, [[q('magma_burst', 'magma_burst')], []]);
+    const first = s.trainers[0].action!.total;
+    let guard = 0;
+    while (s.trainers[0].chain === 1 && guard++ < 600) step(s, none);
+    expect(s.trainers[0].chain).toBe(2);
+    expect(s.trainers[0].action!.total).toBeLessThan(first * 0.4);
+  });
+  it('a lone move after idle is not a combo', () => {
+    sureHits();
+    const s = ready(['cindrix'], ['vinram']);
+    run(s, sec(4), [[q('shell_ram')], []]);
+    expect(s.trainers[0].chain).toBe(0);
+    const ev = run(s, sec(1), [[q('shell_ram')], []]);
+    const st = ev.find((e) => e.t === 'action_start' && e.p === 0);
+    expect(st && st.t === 'action_start' && st.action.kind === 'move' && st.action.combo).toBeFalsy();
   });
 });

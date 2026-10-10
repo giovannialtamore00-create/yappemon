@@ -4,7 +4,7 @@
 import {
   ALERT_COST, ALERT_EVADE, ALERT_S, ALERT_STRAFE_MULT, ARENA_X_M, ATTACKING_EXPOSED, DASH_M, DASH_S, DODGE_COOLDOWN_S,
   DODGE_COST, DODGE_INVULN_S, DODGE_WINDOW_S, DT, FORCED_SWITCH_S, HALF_FAR_M, HALF_NEAR_M, HOME_Z_M, INTERRUPT_THRESHOLD,
-  MOVES, PREFERRED_GAP_M, SNAP_SPEED, HYPE_STAMINA, FULL_POWER_MULT, FULL_POWER_COOLDOWN_S, NAME_ACC_BONUS, CHEERS, CHEER_GAP_S, CHEER_REPEAT_S, CHEER_REPEAT_FAIL, TEMP_HP_S, TEMP_HP_MAX, QUEUE_MAX, QUICK_WINDUP_S, RECALL_S, SENDOUT_S, SPECIES, SPEED_MULT, STAB, STAMINA_MAX,
+  MOVES, PREFERRED_GAP_M, SNAP_SPEED, HYPE_STAMINA, FULL_POWER_MULT, FULL_POWER_COOLDOWN_S, NAME_ACC_BONUS, COMBO_ACC_MULT, COMBO_WINDUP_MULT, CHEERS, CHEER_GAP_S, CHEER_REPEAT_S, CHEER_REPEAT_FAIL, TEMP_HP_S, TEMP_HP_MAX, QUEUE_MAX, QUICK_WINDUP_S, RECALL_S, SENDOUT_S, SPECIES, SPEED_MULT, STAB, STAMINA_MAX,
   STAMINA_PAUSE_S, STAMINA_REGEN_PER_S, STEP_JITTER_M, STEP_SPEED, STRAFE_MAX_S, STRAFE_MIN_S, STRAFE_SPEED, TICK_HZ, INTERMISSION_S,
   LOADOUT_S, MAX_ROUNDS, ROUNDS_TO_WIN, defaultLoadout, elementsOf, sameFamily, secToTicks, speciesAtStage, typeMultiplier, validLoadout,
 } from './data';
@@ -30,7 +30,7 @@ function createTrainer(p: PlayerIdx, team: SpeciesId[], loadouts: MoveId[][] = [
     team: team.map((sp, i) => createCreature(sp, defaultLoadout(sp, loadouts[i]))), active: 0, field: 'sending', fieldTicks: secToTicks(SENDOUT_S),
     action: null, queue: [], dodgeCooldown: 0, invulnTicks: 0,
     x: 0, z: side(p) * HOME_Z_M, driftDir: p === 0 ? 1 : -1, strafeTicks: secToTicks(1.2), stepZ: HOME_Z_M,
-    manual: false, steerX: 0, steerZ: 0, dodgeReady: 0, dodgeDir: 0, dashTicks: 0, dashDir: 1, alertTicks: 0, cheerTick: -1e9, cheerAt: {},
+    chain: 0, manual: false, steerX: 0, steerZ: 0, dodgeReady: 0, dodgeDir: 0, dashTicks: 0, dashDir: 1, alertTicks: 0, cheerTick: -1e9, cheerAt: {},
   };
 }
 
@@ -98,10 +98,10 @@ function speedMult(t: TrainerState) {
  * (busy with a move ×1.2, alert ×0.7, otherwise ×1). Dodges are handled separately.
  * `named`: +NAME_ACC_BONUS to the base accuracy (capped at 100) before the modifiers.
  */
-export function hitChance(move: MoveDef, target: TrainerState, full = false, named = false): number {
+export function hitChance(move: MoveDef, target: TrainerState, full = false, named = false, combo = false): number {
   const mod = target.action?.action.kind === 'move' ? ATTACKING_EXPOSED : target.alertTicks > 0 ? ALERT_EVADE : 1;
   const acc = named ? Math.min(100, move.accuracy + NAME_ACC_BONUS) : move.accuracy;
-  return Math.min(1, (acc / 100) * mod * (full ? FULL_POWER_MULT : 1));
+  return Math.min(1, (acc / 100) * mod * (full ? FULL_POWER_MULT : 1) * (combo ? COMBO_ACC_MULT : 1));
 }
 
 export const distance = (a: TrainerState, b: TrainerState) => Math.hypot(a.x - b.x, a.z - b.z);
@@ -400,6 +400,7 @@ function tickTrainer(s: SimState, p: PlayerIdx, ev: SimEvent[]) {
   if (t.field !== 'active') return;
 
   if (!t.action) startNext(s, p, ev);
+  if (!t.action) t.chain = 0;
   if (t.action) advanceAction(s, p, ev);
   if (t.field === 'active') move(s, p);
 }
@@ -479,8 +480,11 @@ function startNext(s: SimState, p: PlayerIdx, ev: SimEvent[]) {
       if (c.stamina < m.cost) return fail(s, p, 'stamina', ev);
       spend(c, m.cost);
       c.used[m.id] = (c.used[m.id] ?? 0) + 1;
-      const run = boostedAction(s, p, a);
-      const windup = (m.quick ? QUICK_WINDUP_S : m.windup * speedMult(t)) / (run.boost === 'snap' ? SNAP_SPEED : 1);
+      const first = boostedAction(s, p, a);
+      const second = t.chain === 1;
+      t.chain++;
+      const run = second ? { ...first, combo: true as const } : first;
+      const windup = (m.quick ? QUICK_WINDUP_S : m.windup * speedMult(t)) / (run.boost === 'snap' ? SNAP_SPEED : 1) * (second ? COMBO_WINDUP_MULT : 1);
       t.action = newRun(s, run, secToTicks(windup));
       ev.push({ t: 'action_start', p, action: run });
       if (run.boost === 'hype') c.stamina = Math.min(STAMINA_MAX, c.stamina + HYPE_STAMINA * STAMINA_MAX);
@@ -573,6 +577,7 @@ function onActiveStart(s: SimState, p: PlayerIdx, ev: SimEvent[]) {
     };
     if (a.boost === 'full') strike.full = true;
     if (a.named) strike.named = true;
+    if (a.combo) strike.combo = true;
     ev.push({ t: 'launch', p, move: m.id, strike: strike.id });
     if (m.delivery === 'melee') resolveStrike(s, strike, ev);
     else s.strikes.push(strike);
@@ -625,7 +630,7 @@ function resolveStrike(s: SimState, k: Strike, ev: SimEvent[]) {
     dash(s, k.target, ev);
     return void ev.push({ t: 'dodged', p: k.owner, target: k.target, move: k.move, strike: k.id });
   }
-  if (rand(s) >= hitChance(m, tt, k.full, k.named)) return void ev.push({ t: 'miss', p: k.owner, target: k.target, move: k.move, strike: k.id });
+  if (rand(s) >= hitChance(m, tt, k.full, k.named, k.combo)) return void ev.push({ t: 'miss', p: k.owner, target: k.target, move: k.move, strike: k.id });
 
   const eff = m.effect;
   if (eff.kind === 'root' || eff.kind === 'static') {

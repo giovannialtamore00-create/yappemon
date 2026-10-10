@@ -38,6 +38,9 @@ export const HYPE_STAMINA = 0.1;
 /** FULL POWER: accuracy and damage ×1.3, then unusable for this long (keeps counting between rounds). */
 export const FULL_POWER_MULT = 1.3;
 export const FULL_POWER_COOLDOWN_S = 60;
+/** Second move of a chain (started right after the first, no idle gap): hit chance ×1.2, windup ×0.3 (70% shorter). */
+export const COMBO_ACC_MULT = 1.2;
+export const COMBO_WINDUP_MULT = 0.3;
 /** Saying the active creature's name before a command: +10 accuracy (points, capped at 100) on its moves. */
 export const NAME_ACC_BONUS = 10;
 

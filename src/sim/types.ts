@@ -129,7 +129,7 @@ export type Boost = 'snap' | 'hype' | 'full';
 
 export type QAction =
   /** `named`: the player said the creature's name before the command (+NAME_ACC_BONUS accuracy). */
-  | { kind: 'move'; move: MoveId; boost?: Boost; named?: true }
+  | { kind: 'move'; move: MoveId; boost?: Boost; named?: true; combo?: true }
   /** Arms a 2 s dodge window; `dir` = −1 left / +1 right (from the creature's point of view), absent = auto. */
   | { kind: 'dodge'; dir?: 1 | -1 }
   /** 3 s defensive stance: harder to hit, no attacking. */
@@ -216,6 +216,8 @@ export interface TrainerState {
   /** Distance from the centre line (|z|) the creature is stepping toward; re-rolled with each strafe leg. */
   stepZ: number;
   /** Manual movement (lobby setting): steering replaces the automatic drift while true. */
+  /** Moves started since this trainer was last idle (the 2nd gets the combo bonus). */
+  chain: number;
   manual: boolean;
   steerX: -1 | 0 | 1;
   steerZ: -1 | 0 | 1;
@@ -253,6 +255,8 @@ export interface Strike {
   full?: boolean;
   /** Launched by a move said after the creature's name: +NAME_ACC_BONUS accuracy. */
   named?: boolean;
+  /** Launched by the second move of a chain: hit chance ×COMBO_ACC_MULT. */
+  combo?: boolean;
 }
 
 export interface SimState {
