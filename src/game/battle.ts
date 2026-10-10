@@ -3,7 +3,7 @@
 
 import * as THREE from 'three';
 import { FAIL_REASON, getLang, t } from '../i18n';
-import { MOVES, SPECIES } from '../sim/data';
+import { creatureName, moveName, setMe } from '../names';
 import { activeCreature } from '../sim/sim';
 import type { Boost, Intent, PlayerIdx, SimEvent, SimState, SpeciesId, BaseSpeciesId } from '../sim/types';
 import { normalize, parse, toIntents } from '../voice/parser';
@@ -70,6 +70,7 @@ export class Battle {
     private onEnd: (result: 'victory' | 'defeat' | 'draw') => void,
   ) {
     this.spectator = !!(session as { spectator?: boolean }).spectator;
+    setMe(this.me);
     this.view = this.makeView(teams);
     ctx.cameraMode = this.spectator ? 'spectate' : 'battle';
     hud.relabel();
@@ -157,7 +158,7 @@ export class Battle {
     if (!this.spectator && !this.hintShown && v.curr.trainers[this.me].field === 'active') {
       this.hintShown = true;
       const first = activeCreature(v.curr.trainers[this.me]).moves[1]!;
-      this.hud.setHint(t('sayHint', { move: MOVES[first].name[getLang()] }));
+      this.hud.setHint(t('sayHint', { move: moveName(this.me, first, getLang()) }));
     }
   }
 
@@ -193,7 +194,7 @@ export class Battle {
       case 'round_start': {
         this.audio?.musicDuck(false);
         this.hud.banner(`${t('round')} ${e.round}`, t('fight'), 1600);
-        const names = s.trainers[this.me].team.map((c) => SPECIES[c.species].name).join(' & ');
+        const names = s.trainers[this.me].team.map((c) => creatureName(this.me, c.species)).join(' & ');
         if (!this.spectator) this.hud.toast(t('evolvedInto', { names }), 'good', 3000);
         break;
       }
@@ -230,12 +231,12 @@ export class Battle {
         } else this.hud.toast(this.spectator ? t('failedP', { who: who(e.p) }) : t('foeFailed'), this.spectator ? 'info' : 'good', 1600);
         break;
       case 'faint': {
-        const name = SPECIES[s.trainers[e.p].team[e.slot]!.species].name;
+        const name = creatureName(e.p, s.trainers[e.p].team[e.slot]!.species);
         this.hud.toast(`${name} ${t('fainted')}`, this.spectator ? 'info' : mine ? 'bad' : 'good');
         break;
       }
       case 'sendout': {
-        const name = SPECIES[s.trainers[e.p].team[e.slot]!.species].name;
+        const name = creatureName(e.p, s.trainers[e.p].team[e.slot]!.species);
         this.hud.toast(this.spectator ? t('foeSentOutP', { who: who(e.p), name }) : mine ? t('sentOut', { name }) : t('foeSentOut', { name }), 'info');
         if (mine) this.closeSwitch();
         break;

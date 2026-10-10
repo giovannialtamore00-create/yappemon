@@ -6,7 +6,7 @@ import { getLang, setLang, t } from './i18n';
 import { Hud } from './render/hud';
 import { createScene } from './render/scene';
 import { Showcase } from './render/showcase';
-import { MOVES, SPECIES_IDS, defaultLoadout } from './sim/data';
+import { SPECIES_IDS, defaultLoadout } from './sim/data';
 import type { BaseSpeciesId, Lang } from './sim/types';
 import { Screens, setUiClickHandler } from './ui/screens';
 import { Speech, isSupportedBrowser } from './voice/speech';
@@ -15,6 +15,7 @@ import type { Boost } from './sim/types';
 import { hostRoom, joinRoom, type Link, type Pending } from './net/link';
 import { normalizeCode } from './net/protocol';
 import { ClientSession, HostSession, SpectatorHostSession, sanitizeTeam } from './net/sessions';
+import { clearNames, myMove, setMe, setNames } from './names';
 
 const LANG_KEY = 'yappemon.lang';
 
@@ -281,6 +282,7 @@ class App {
   /** Team select for an online match. The host collects both teams and starts the match. */
   private netTeamSelect(link: Link, role: 'host' | 'client') {
     this.endBattle();
+    clearNames(); // custom names are practice-only for now
     this.link = link;
     link.onClose = () => this.disconnected();
     let mine: BaseSpeciesId[] | null = null;
@@ -376,10 +378,18 @@ class App {
   practiceTeamSelect() {
     this.closeNet(true);
     this.endBattle();
+    clearNames();
+    setMe(0);
     this.screens.teamSelect({
       subtitle: isSupportedBrowser() ? t('micAsk') : undefined,
       onHover: (sp) => this.showcase.show(sp),
-      onReady: (team) => this.voiceCheck(team, () => this.startPractice(team)),
+      onReady: (team) => {
+        const go = () => this.voiceCheck(team, () => this.startPractice(team));
+        // Test runs (?seed=…) skip the rename screen unless ?rename=1.
+        const q = new URLSearchParams(location.search);
+        if (q.has('seed') && !q.has('rename')) return go();
+        this.screens.rename({ team, onDone: (n) => { setNames(0, n); go(); } });
+      },
     });
   }
 
@@ -399,7 +409,7 @@ class App {
       then();
     };
     const total = this.mic.calibration()?.total ?? 3;
-    const words = defaultLoadout(team[0]!).map((m) => MOVES[m].name[getLang()]);
+    const words = defaultLoadout(team[0]!).map((m) => myMove(m, getLang()));
     const ui = this.screens.voiceCheck({ words, total, onSkip: finish });
     const progress = () => {
       const c = this.mic.calibration();

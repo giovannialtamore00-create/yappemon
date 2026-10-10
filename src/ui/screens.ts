@@ -4,6 +4,8 @@ import { ELEMENT_COLOR, ELEMENT_LABEL, getLang, t } from '../i18n';
 import { LOADOUT_SIZE, MOVES, SPECIES, SPECIES_IDS, evolutionLine } from '../sim/data';
 import type { BaseSpeciesId, Lang, MoveId, SpeciesId } from '../sim/types';
 import { MOVE_DESC } from '../movedesc';
+import { NAME_MAX, cleanWord, myCreature, myMove } from '../names';
+import type { TeamNames } from '../names';
 
 const h = <K extends keyof HTMLElementTagNameMap>(tag: K, cls?: string, text?: string) => {
   const e = document.createElement(tag);
@@ -86,6 +88,74 @@ export class Screens {
     card.append(codeEl, copy, st, button(t('back'), onCancel, 'btn ghost'));
     s.append(card);
     return { setStatus: (text: string) => { st.textContent = text; } };
+  }
+
+  /** Before a match: name the creatures and the first word of their moves. Empty field = original name. */
+  rename(o: { team: BaseSpeciesId[]; onDone(n: TeamNames): void }) {
+    const s = this.overlay('rename');
+    const lang = getLang();
+    const card = h('div', 'card rename-card');
+    card.append(h('h2', '', t('renameTitle')), h('p', 'muted', t('renameHint', { n: NAME_MAX })));
+    const field = (placeholder: string) => {
+      const i = h('input', 'name-input');
+      i.type = 'text';
+      i.maxLength = NAME_MAX;
+      i.placeholder = placeholder;
+      i.autocomplete = 'off';
+      return i;
+    };
+    const creatures: [BaseSpeciesId, HTMLInputElement][] = [];
+    const moves: [MoveId, HTMLInputElement][] = [];
+    card.append(h('h3', '', t('renameCreatures')));
+    const crow = h('div', 'rename-row');
+    for (const sp of o.team) {
+      const i = field(SPECIES[sp].name);
+      creatures.push([sp, i]);
+      crow.append(i);
+    }
+    card.append(crow, h('h3', '', t('renameMoves')));
+    const seen = new Set<MoveId>();
+    for (const sp of o.team) {
+      const col = h('div', 'rename-moves');
+      for (const m of SPECIES[sp].moves) {
+        if (seen.has(m)) continue;
+        seen.add(m);
+        const full = MOVES[m].name[lang];
+        const i = field(full.split(' ')[0]!);
+        moves.push([m, i]);
+        const row = h('label', 'rename-move');
+        row.append(i, h('span', 'muted', full.split(' ').slice(1).join(' ')));
+        col.append(row);
+      }
+      card.append(col);
+    }
+    const err = h('p', 'rename-err');
+    const done = button(t('renameOk'), () => {
+      const out: TeamNames = { creatures: {}, moves: {} };
+      const taken = new Set<string>();
+      for (const sp of SPECIES_IDS) taken.add(SPECIES[sp].name.toLowerCase());
+      const used = new Set<string>();
+      for (const [sp, i] of creatures) {
+        const w = cleanWord(i.value);
+        if (!w) continue;
+        const k = w.toLowerCase();
+        const own = SPECIES[sp].name.toLowerCase();
+        if (used.has(k) || (taken.has(k) && k !== own)) { err.textContent = t('renameClash'); return; }
+        used.add(k);
+        out.creatures[sp] = w;
+      }
+      for (const [m, i] of moves) {
+        const w = cleanWord(i.value);
+        if (w) out.moves[m] = w;
+      }
+      o.onDone(out);
+    }, 'btn big primary');
+    const keep = button(t('renameKeep'), () => o.onDone({ creatures: {}, moves: {} }), 'btn ghost');
+    const row = h('div', 'end-row');
+    row.append(done, keep);
+    card.append(err, row);
+    s.append(card);
+    creatures[0]?.[1].focus();
   }
 
   /** Before a match: read a few words in a normal voice so verbal boosts know the player's usual voice. */
@@ -203,7 +273,7 @@ export class Screens {
     card.append(h('h2', '', t('switchTitle')), h('p', 'muted', t('switchHint')));
     const row = h('div', 'switch-row');
     o.team.forEach((c, i) => {
-      const b = button(`${i + 1}. ${SPECIES[c.species].name}  (${Math.ceil(c.hp)}/${c.maxHp})`, () => o.onPick(i as 0 | 1), 'btn big');
+      const b = button(`${i + 1}. ${myCreature(c.species)}  (${Math.ceil(c.hp)}/${c.maxHp})`, () => o.onPick(i as 0 | 1), 'btn big');
       b.disabled = c.fainted;
       row.append(b);
     });
@@ -243,7 +313,7 @@ export class Screens {
       const b = h('button', `lo-move${selected ? ' sel' : ''}`);
       b.style.setProperty('--el', ELEMENT_COLOR[m.element]);
       const top = h('div', 'lo-top');
-      top.append(h('span', 'lo-name', m.name[lang]));
+      top.append(h('span', 'lo-name', myMove(id, lang)));
       if (m.species === sp && def.stage > 1) top.append(h('span', 'lo-new', t('newTag')));
       const meta = h('div', 'mc-meta');
       meta.append(h('span', 'mc-type', ELEMENT_LABEL[lang][m.element]));
@@ -265,7 +335,7 @@ export class Screens {
         const head = h('div', 'lo-head');
         const tag = h('span', 'mc-type', ELEMENT_LABEL[lang][def.element]);
         tag.style.setProperty('--el', ELEMENT_COLOR[def.element]);
-        head.append(h('span', 'lo-creature', def.name), tag);
+        head.append(h('span', 'lo-creature', myCreature(c.species)), tag);
         const chosen = h('div', 'lo-grid');
         const pool = h('div', 'lo-grid pool');
         const rest = def.moves.filter((m) => !picks[slot]!.includes(m));

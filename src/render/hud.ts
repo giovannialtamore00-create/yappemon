@@ -4,6 +4,7 @@ import { ELEMENT_COLOR, ELEMENT_LABEL, getLang, t } from '../i18n';
 import { ALERT_COST, CHEERS, CHEER_IDS, DODGE_COST, MOVES, SPECIES, STAMINA_MAX, TICK_HZ } from '../sim/data';
 import { MOVE_DESC } from '../movedesc';
 import { usesLeft } from '../sim/sim';
+import { creatureName, moveName, namesVersion } from '../names';
 import type { Boost, CheerId, CreatureState, PlayerIdx, QAction, SimState, TrainerState } from '../sim/types';
 
 export type MicStatus = 'on' | 'off' | 'denied' | 'unsupported' | 'starting';
@@ -193,13 +194,13 @@ export class Hud {
     this.updateRound(s, me);
     const mine = s.trainers[me];
     const theirs = s.trainers[me === 0 ? 1 : 0];
-    this.updatePanel(this.me, mine);
-    this.updatePanel(this.foe, theirs);
-    this.updateQueue(mine);
-    this.updateMoves(mine);
-    this.updateCommands(mine);
+    this.updatePanel(this.me, mine, me);
+    this.updatePanel(this.foe, theirs, me === 0 ? 1 : 0);
+    this.updateQueue(mine, me);
+    this.updateMoves(mine, me);
+    this.updateCommands(mine, me);
     this.updateEnergy(mine);
-    const name = SPECIES[mine.team[mine.active]!.species].name;
+    const name = creatureName(me, mine.team[mine.active]!.species);
     if (this.nameWord.textContent !== name) this.nameWord.textContent = name;
     if (this.cheerLang !== getLang()) {
       this.cheerLang = getLang();
@@ -207,13 +208,13 @@ export class Hud {
     }
   }
 
-  private updatePanel(p: Panel, tr: TrainerState) {
+  private updatePanel(p: Panel, tr: TrainerState, who: PlayerIdx) {
     const c: CreatureState = tr.team[tr.active]!;
     const def = SPECIES[c.species];
-    const key = `${c.species}|${getLang()}|${tr.team.map((x) => x.fainted).join()}`;
+    const key = `${namesVersion()}|${c.species}|${getLang()}|${tr.team.map((x) => x.fainted).join()}`;
     if (key !== p.key) {
       p.key = key;
-      p.name.textContent = def.name;
+      p.name.textContent = creatureName(who, c.species);
       p.badge.textContent = ELEMENT_LABEL[getLang()][def.element];
       p.badge.style.background = ELEMENT_COLOR[def.element];
       p.dots.innerHTML = '';
@@ -238,7 +239,7 @@ export class Hud {
     let heavy = false;
     if (p === this.foe && tr.action?.phase === 'windup' && tr.action.action.kind === 'move') {
       const m = MOVES[tr.action.action.move];
-      act = t('foeWinding', { move: m.name[getLang()] });
+      act = t('foeWinding', { move: moveName(who, tr.action.action.move, getLang()) });
       heavy = m.heavy;
     }
     if (p.act.textContent !== act) {
@@ -247,18 +248,18 @@ export class Hud {
     }
   }
 
-  private chipLabel(a: QAction): string {
+  private chipLabel(a: QAction, me: PlayerIdx): string {
     const lang = getLang();
-    if (a.kind === 'move') return MOVES[a.move].name[lang];
+    if (a.kind === 'move') return moveName(me, a.move, lang);
     if (a.kind === 'dodge') return t(a.dir === -1 ? 'chipDodgeLeft' : a.dir === 1 ? 'chipDodgeRight' : 'chipDodge');
     if (a.kind === 'alert') return t('chipAlert');
     return t('chipBack');
   }
 
-  private updateQueue(tr: TrainerState) {
+  private updateQueue(tr: TrainerState, me: PlayerIdx) {
     const items: { label: string; current: boolean; phase?: string }[] = [];
-    if (tr.action) items.push({ label: this.chipLabel(tr.action.action), current: true, phase: tr.action.phase });
-    for (const a of tr.queue) items.push({ label: this.chipLabel(a), current: false });
+    if (tr.action) items.push({ label: this.chipLabel(tr.action.action, me), current: true, phase: tr.action.phase });
+    for (const a of tr.queue) items.push({ label: this.chipLabel(a, me), current: false });
     const key = items.map((i) => `${i.label}:${i.current}:${i.phase}`).join('|');
     if (key === this.queueKey) return;
     this.queueKey = key;
@@ -293,10 +294,10 @@ export class Hud {
   }
 
   /** Always-visible general commands, greyed out when they can't be used right now. */
-  private updateCommands(tr: TrainerState) {
+  private updateCommands(tr: TrainerState, me: PlayerIdx) {
     const c = tr.team[tr.active]!;
     const bench = tr.team.findIndex((x, i) => i !== tr.active && !x.fainted);
-    const benchName = bench >= 0 ? SPECIES[tr.team[bench]!.species].name : '';
+    const benchName = bench >= 0 ? creatureName(me, tr.team[bench]!.species) : '';
     const busy = !!tr.action || tr.queue.length > 0;
     const armed = tr.dodgeReady > 0;
     const items: { label: string; ok: boolean; why?: string; cost?: number; info?: boolean; armed?: boolean }[] = [
@@ -327,7 +328,7 @@ export class Hud {
   }
 
   /** Bottom move bar: one card per move with name, type, stamina cost and what it does. */
-  private updateMoves(tr: TrainerState) {
+  private updateMoves(tr: TrainerState, me: PlayerIdx) {
     const c = tr.team[tr.active]!;
     const def = SPECIES[c.species];
     const lang = getLang();
@@ -335,7 +336,7 @@ export class Hud {
     const affordable = c.moves.map((m, i) => c.stamina >= MOVES[m].cost && left[i]! > 0);
     const current = tr.action?.action.kind === 'move' ? tr.action.action.move : null;
     const queued = new Set(tr.queue.flatMap((a) => (a.kind === 'move' ? [a.move] : [])));
-    const key = `${c.species}|${c.moves.join()}|${lang}|${affordable.join()}|${left.join()}|${c.stamina >= DODGE_COST}|${current}|${[...queued].join()}`;
+    const key = `${namesVersion()}|${c.species}|${c.moves.join()}|${lang}|${affordable.join()}|${left.join()}|${c.stamina >= DODGE_COST}|${current}|${[...queued].join()}`;
     if (key === this.movesKey) return;
     this.movesKey = key;
     this.moves.innerHTML = '';
@@ -357,7 +358,7 @@ export class Hud {
       meta.append(uses, h('span', 'mc-cost', String(m.cost)));
       const dmg = Math.round(m.power * def.dmgMult);
       const desc = h('div', 'mc-desc', MOVE_DESC[id][lang].replace('{d}', String(dmg)));
-      card.append(h('div', 'mc-name', m.name[lang]), meta, desc);
+      card.append(h('div', 'mc-name', moveName(me, id, lang)), meta, desc);
       card.title = `${desc.textContent} (${lang === 'it' ? m.name.en : m.name.it})`;
       this.moves.append(card);
     });

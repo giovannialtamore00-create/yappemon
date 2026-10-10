@@ -358,3 +358,9 @@ html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
 .vcheck-heard { min-height: 1.3em; margin: 0; font-style: italic; }
 .vcheck-status { margin: 0; font-weight: 700; }
 .vcheck-status.done { color: #7ddc7d; }
+.rename-card { max-width: min(640px, calc(100vw - 32px)); max-height: 90vh; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+.rename-card h2, .rename-card h3 { margin: 0; }
+.rename-row, .rename-moves { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.rename-move { display: flex; align-items: center; gap: 6px; }
+.name-input { width: 130px; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--line); background: rgba(255, 255, 255, 0.08); color: inherit; font: inherit; font-weight: 700; }
+.rename-err { color: #ff6b6b; min-height: 1.2em; margin: 0; }

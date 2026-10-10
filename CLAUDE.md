@@ -34,7 +34,9 @@ Stack: TypeScript, Vite, Three.js, PeerJS, Web Speech API, Vitest, Playwright. N
   tests, `scripts/uses-shots.mjs`, net + flow OK).
 - **Done:** M2 (decision #76: `named` flag parser → `QAction` → `Strike`, `NAME_ACC_BONUS` in hitChance; right-side Words box, name lights green when used; tests, `scripts/name-test.mjs`; net/flow/IT voice/boost scripts OK).
 - **Done:** M3 (decision #77: `cheer` intent, `CHEERS` in data.ts, temp HP, 5 s gap, 50% repeat fail; Words box + green flash + sound; tests, `scripts/cheer-test.mjs`; net/flow/IT voice/spectator/name OK, boost-test flaky (blockers)).
-- **Next:** user playtests the whole feature (M1–M3) at once → fixes as new commits → ask before merging `encouragements` into `main` (publishes live).
+- **Rename feature (user request 2026-10-10, branch `rename` off `encouragements`):** M4 creature + move-first-word rename screen (practice) · M5 voice recognises new names (+ `named` bonus) · M6 online sync + `sanitizeNames`.
+- **Done:** M4 (decision #78: `src/names.ts`, `Screens.rename`, HUD/toasts use names; `scripts/rename-test.mjs` OK, tests pass). Note: the "say …" hint shows the new move name but voice only knows the old one until M5.
+- **Next:** M5 (parser `ParseContext.names`), then M6. Old Next, still pending: user playtests the whole feature (M1–M3) at once → fixes as new commits → ask before merging `encouragements` into `main` (publishes live).
 - **Earlier feature (verbal boosts, decisions #73–74):** on `main`; user still to try boosts by voice in Chrome.
 - **Known issues:** `smoke.mjs --full` crashes headless Chrome on an audio-device error, also before this feature (docs/blockers.md).
 ## Docs (read only what the task needs)
@@ -43,7 +45,7 @@ Stack: TypeScript, Vite, Three.js, PeerJS, Web Speech API, Vitest, Playwright. N
 - [docs/creatures-and-moves.md](docs/creatures-and-moves.md): creature stats, all moves (costs, accuracy, effects), type chart. Read for move/creature work.
 - [docs/voice-commands.md](docs/voice-commands.md): all EN/IT commands, chaining, dodge/alert. Read for parser or command changes.
 - [docs/testing.md](docs/testing.md): headless scripts, test URL options, page hooks, Windows/headless tips. Read before verifying.
-- [docs/decisions.md](docs/decisions.md): numbered design decisions (#1–75, newest last). Grep for a topic; don't read it all.
+- [docs/decisions.md](docs/decisions.md): numbered design decisions (#1–78, newest last). Grep for a topic; don't read it all.
 - [docs/playing.md](docs/playing.md): player setup, online play, browser requirements, known limitations.
 - [docs/deploy.md](docs/deploy.md): GitHub Pages / Netlify deploy and CI. Read only for deploy work.
 - [docs/blockers.md](docs/blockers.md): parked problems.

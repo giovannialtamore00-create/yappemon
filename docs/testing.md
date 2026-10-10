@@ -32,6 +32,7 @@ Playwright needs Chromium once: `npx playwright install chromium`.
 | `music-test.mjs` | Battle music |
 | `cheer-test.mjs` | Encouragements: word reaches the sim, lights green in the Words box, flash word, 5 s gap, Italian labels, phone layout (`screenshots/cheer/`) |
 | `name-test.mjs` | Creature name bonus: "Cindrix, cinder spit" reaches the sim as a named move; plain / other-creature commands don't |
+| `rename-test.mjs` | Rename screen (practice): clash refused, new creature and move names show in the HUD; screenshots in screenshots/rename |
 | `contact-sheet.mjs <dir> <out.png>` | Combine screenshots into one image for review |
 
 **Full verification before a merge:** `npx vitest run`, `smoke.mjs --full`, `flow-test.mjs`, `italian-voice-test.mjs`, `net-test.mjs`, `spectator-test.mjs`, plus the screenshot scripts relevant to the change.
