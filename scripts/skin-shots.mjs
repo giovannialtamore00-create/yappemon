@@ -15,7 +15,7 @@ try {
   page.on('pageerror', (e) => errors.push(e.message));
   await page.goto(`${url}?seed=5&botTeam=vinram,brinkle&bot=passive`);
   await page.waitForTimeout(1200);
-  await page.screenshot({ path: 'screenshots/skin/1-lobby.png' });
+  await page.waitForTimeout(2500); await page.screenshot({ path: 'screenshots/skin/1-lobby.png' });
   const fonts = await page.evaluate(() => ['Bangers', 'Lilita One', 'Modak'].map((f) => `${f}:${document.fonts.check(`20px "${f}"`)}`));
   console.log('fonts loaded', fonts.join(' '));
   await page.getByRole('button', { name: /Practice/ }).click();

@@ -403,7 +403,7 @@ html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
 .banner-sub { font-family: var(--font); font-weight: 400; color: var(--zap); -webkit-text-stroke: 3px var(--ink); paint-order: stroke fill; }
 
 /* title screens: four elemental wedges + dot texture, comic title */
-.lobby, .hosting, .end { background: radial-gradient(#0003 2px, transparent 3px) 0 0 / 16px 16px, conic-gradient(from 45deg at 50% 42%, var(--fire) 0 25%, var(--water) 0 50%, var(--grass) 0 75%, var(--zap) 0); }
+.lobby, .hosting, .end { background: radial-gradient(#0002 2px, transparent 3px) 0 0 / 16px 16px, conic-gradient(from 45deg at 50% 42%, rgba(255, 90, 31, 0.3) 0 25%, rgba(34, 167, 255, 0.3) 0 50%, rgba(61, 220, 90, 0.3) 0 75%, rgba(255, 225, 26, 0.3) 0); }
 .lobby-card { background: transparent; border: 0; box-shadow: none; max-width: min(640px, 100%); align-items: center; }
 .logo-stage { position: relative; padding: 18px 56px 8px; }
 .logo { font-family: var(--font-title); font-weight: 400; font-size: clamp(3.6rem, 13vw, 7rem); line-height: 1; letter-spacing: 0.04em; color: var(--comic-red); background: none; -webkit-background-clip: border-box; background-clip: border-box; -webkit-text-stroke: 5px var(--ink); paint-order: stroke fill; text-shadow: 6px 6px 0 var(--ink); filter: none; transform: skew(-8deg) rotate(-2deg); display: inline-block; }
