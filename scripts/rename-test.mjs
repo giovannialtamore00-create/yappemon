@@ -26,6 +26,10 @@ try {
   const inputs = page.locator('.name-input');
   await inputs.nth(0).fill('Zappy');
   await inputs.nth(1).fill('Vinram'); // clashes with another creature
+  check(await page.locator('.rename-stage').count() >= 4, 'evolution stages listed on rename screen');
+  const molten = await page.evaluate(() => [...document.querySelectorAll('.rename-move input')].findIndex((i) => i.placeholder === 'Molten'));
+  check(molten >= 0, 'stage-2 learned move (Molten Leap) can be renamed');
+  await page.locator('.rename-move input').nth(molten).fill('Lava');
   await page.getByRole('button', { name: 'Done' }).click();
   check((await page.locator('.rename-err').textContent()).length > 0, 'clash with another creature is refused');
   await inputs.nth(1).fill('Blaze');

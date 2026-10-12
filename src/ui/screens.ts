@@ -139,8 +139,11 @@ export class Screens {
     const seen = new Set<MoveId>();
     for (const sp of o.team) {
       const col = h('div', 'rename-moves');
-      for (const m of SPECIES[sp].moves) {
-        if (seen.has(m)) continue;
+      for (const form of evolutionLine(sp)) {
+        const fresh = SPECIES[form].moves.filter((m) => !seen.has(m));
+        if (!fresh.length) continue;
+        col.append(h('div', 'rename-stage muted', t('renameStage', { n: SPECIES[form].stage, name: SPECIES[form].name })));
+        for (const m of fresh) {
         seen.add(m);
         const full = MOVES[m].name[lang];
         const i = field(full.split(' ')[0]!);
@@ -148,6 +151,7 @@ export class Screens {
         const row = h('label', 'rename-move');
         row.append(i, h('span', 'muted', full.split(' ').slice(1).join(' ')));
         col.append(row);
+        }
       }
       card.append(col);
     }
