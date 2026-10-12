@@ -17,7 +17,9 @@ export type Stage = 1 | 2 | 3;
 export type PlayerIdx = 0 | 1;
 export type Lang = 'en' | 'it';
 
-export type CheerId = 'come_on' | 'stay_strong' | 'courage' | 'perfect' | 'dont_give_up';
+export type CheerId = 'come_on' | 'stay_strong' | 'courage' | 'perfect' | 'dont_give_up' | CustomCheerId;
+/** The player's own three encouragement words (names live in src/names.ts, effects here). */
+export type CustomCheerId = 'mine1' | 'mine2' | 'mine3';
 
 /** An encouragement word; amounts are fractions of max stamina / max HP. */
 export interface CheerDef {

@@ -2,7 +2,7 @@
 // Robust to recognizer garbling: accents/case normalized, phonetic folding, Levenshtein similarity
 // over token windows, and alias lists with distinctive keywords.
 
-import { ALL_SPECIES_IDS, CHEERS, CHEER_IDS, MOVES, SPECIES, knowsMove, sameFamily } from '../sim/data';
+import { ALL_SPECIES_IDS, CHEERS, CHEER_IDS, CUSTOM_CHEER_IDS, MOVES, SPECIES, knowsMove, sameFamily } from '../sim/data';
 import type { TeamNames } from '../names';
 import type { CheerId, Intent, MoveId, QAction, SpeciesId } from '../sim/types';
 import {
@@ -150,6 +150,7 @@ function namePhrases(names: TeamNames): Phrase[] {
     const cmd: Command = { kind: 'move', move: m.id };
     for (const lang of ['en', 'it'] as const) add([w, ...m.name[lang].split(' ').slice(1)].join(' '), cmd, m.species);
   }
+  names.cheers?.forEach((w, i) => { if (w && i < CUSTOM_CHEER_IDS.length) add(w, { kind: 'cheer', word: CUSTOM_CHEER_IDS[i]! }); });
   return out;
 }
 

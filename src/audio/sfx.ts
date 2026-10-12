@@ -272,6 +272,7 @@ export class Sfx {
     const notes: Record<CheerId, number[]> = {
       come_on: [523, 659, 784], stay_strong: [392, 523, 659], courage: [440, 554, 659],
       perfect: [659, 784, 1047], dont_give_up: [349, 440, 523, 698],
+      mine1: [587, 740, 880], mine2: [494, 622, 740], mine3: [370, 466, 554, 740],
     };
     for (const [i, f] of notes[word].entries()) this.tone(f, 0.22, { type: 'triangle', vol: 0.12, delay: i * 0.07 });
   }

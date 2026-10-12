@@ -60,3 +60,6 @@ No extra words: the way a command is said can boost its first move (one boost at
 ## Custom names (rename screen)
 
 Names chosen on the Rename screen work by voice for the player who chose them: a renamed creature counts as the creature name (+10 accuracy), a renamed move is said with its new first word ("Ember Spit" for "Cinder Spit"). The original names keep working. Works in practice and online (each player speaks their own names).
+
+## Personal encouragement words
+On the Rename screen (before a match) the player can invent up to 3 words and test each with the mic; only words that were heard (green) are used. They act like the built-in encouragements (slot 1 stamina +5%, slot 2 temp HP +2%, slot 3 heal 5%), are shown in the Words box, and are understood only for their owner. Details: decisions #93.

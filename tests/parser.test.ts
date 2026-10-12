@@ -445,3 +445,18 @@ describe('custom names', () => {
     expect(parse('ember spit', { activeSpecies: 'cindrix' }).commands.map((c) => c.kind)).not.toContain('go');
   });
 });
+
+describe('personal encouragement words', () => {
+  const names = { creatures: {}, moves: {}, cheers: ['Bravo', '', 'Cannoli'] };
+  it('maps each slot to its own cheer', () => {
+    expect(parse('bravo', { names }).commands).toEqual([{ kind: 'cheer', word: 'mine1' }]);
+    expect(parse('cannoli', { names }).commands).toEqual([{ kind: 'cheer', word: 'mine3' }]);
+  });
+  it('is an instant intent that does not split the queue', () => {
+    const it = toIntents(parse('bravo', { names, activeSpecies: 'cindrix' }).commands, { forcedSwitch: false, activeSpecies: 'cindrix' });
+    expect(it).toEqual([{ type: 'cheer', word: 'mine1' }]);
+  });
+  it('means nothing without the name list', () => {
+    expect(parse('bravo').commands).toEqual([]);
+  });
+});

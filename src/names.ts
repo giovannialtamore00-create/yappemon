@@ -9,9 +9,12 @@ export interface TeamNames {
   creatures: Record<string, string>;
   /** Move id -> new first word of the move name (both languages). */
   moves: Record<string, string>;
+  /** The player's own encouragement words: slot i (0-2) -> word, '' when unused or not mic-tested. */
+  cheers?: string[];
 }
 
 export const NAME_MAX = 12;
+export const CUSTOM_CHEERS = 3;
 
 const store: [TeamNames, TeamNames] = [{ creatures: {}, moves: {} }, { creatures: {}, moves: {} }];
 let me: 0 | 1 = 0;
@@ -67,5 +70,18 @@ export function sanitizeNames(raw: unknown): TeamNames {
       if (w) out.moves[id] = w;
     }
   }
+  if (Array.isArray(r.cheers)) {
+    const seen = new Set<string>();
+    out.cheers = Array.from({ length: CUSTOM_CHEERS }, (_, i) => {
+      const v = (r.cheers as unknown[])[i];
+      const w = typeof v === 'string' ? cleanWord(v) : '';
+      if (!w || seen.has(w.toLowerCase())) return '';
+      seen.add(w.toLowerCase());
+      return w;
+    });
+  }
   return out;
 }
+
+/** Display name of a custom encouragement slot for player p ('' if unused). */
+export const cheerWordOf = (p: 0 | 1, i: number) => store[p].cheers?.[i] ?? '';

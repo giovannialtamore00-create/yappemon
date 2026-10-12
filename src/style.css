@@ -468,3 +468,7 @@ html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
 .creature-card .cc-evo { color: #6b3b00; }
 .creature-card.picked .cc-evo { color: #3a2000; }
 .lo-move .mc-acc, .creature-card .mc-acc { color: #355; }
+.cheer-slots { display: flex; flex-direction: column; gap: 6px; }
+.cheer-slot { display: flex; align-items: center; gap: 8px; justify-content: center; flex-wrap: wrap; }
+.cheer-msg { min-width: 120px; font-size: 0.8rem; }
+.name-input.verified { border-color: #5be37a; box-shadow: 0 0 10px rgba(91, 227, 122, 0.7); background: #12331c; }

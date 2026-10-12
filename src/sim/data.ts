@@ -1,4 +1,4 @@
-import type { BaseSpeciesId, CheerDef, CheerId, Element, MoveDef, MoveId, SpeciesDef, SpeciesId, SpeedClass } from './types';
+import type { BaseSpeciesId, CheerDef, CheerId, CustomCheerId, Element, MoveDef, MoveId, SpeciesDef, SpeciesId, SpeedClass } from './types';
 
 export const TICK_HZ = 30;
 export const DT = 1 / TICK_HZ;
@@ -51,8 +51,13 @@ export const CHEERS: Record<CheerId, CheerDef> = {
   courage: { id: 'courage', tempHp: 0.01, name: { en: 'Courage', it: 'Coraggio' } },
   perfect: { id: 'perfect', stamina: 0.05, name: { en: 'Perfect', it: 'Perfetto' } },
   dont_give_up: { id: 'dont_give_up', heal: 0.05, name: { en: "Don't give up", it: 'Non arrenderti' } },
+  // Player-named words: slot 1 = stamina, slot 2 = temp HP, slot 3 = heal. The name here is a placeholder.
+  mine1: { id: 'mine1', stamina: 0.05, name: { en: 'Mine 1', it: 'Mia 1' } },
+  mine2: { id: 'mine2', tempHp: 0.02, name: { en: 'Mine 2', it: 'Mia 2' } },
+  mine3: { id: 'mine3', heal: 0.05, name: { en: 'Mine 3', it: 'Mia 3' } },
 };
-export const CHEER_IDS = Object.keys(CHEERS) as CheerId[];
+export const CHEER_IDS = Object.keys(CHEERS).filter((w) => !w.startsWith('mine')) as Exclude<CheerId, CustomCheerId>[];
+export const CUSTOM_CHEER_IDS: CustomCheerId[] = ['mine1', 'mine2', 'mine3'];
 /** Minimum gap between any two encouragements of one player. */
 export const CHEER_GAP_S = 5;
 /** The same word again within this time has CHEER_REPEAT_FAIL chance of doing nothing. */

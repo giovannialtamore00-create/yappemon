@@ -5,7 +5,8 @@ import { LOADOUT_SIZE, MOVES, SPECIES, SPECIES_IDS, evolutionLine } from '../sim
 import type { BaseSpeciesId, Lang, MoveId, SpeciesId } from '../sim/types';
 import { MOVE_DESC } from '../movedesc';
 import { portrait } from '../render/portraits';
-import { NAME_MAX, cleanWord, myCreature, myMove } from '../names';
+import { parse } from '../voice/parser';
+import { CUSTOM_CHEERS, NAME_MAX, cleanWord, myCreature, myMove } from '../names';
 import type { TeamNames } from '../names';
 
 const ELEMENT_ICON = {
@@ -113,7 +114,7 @@ export class Screens {
   }
 
   /** Before a match: name the creatures and the first word of their moves. Empty field = original name. */
-  rename(o: { team: BaseSpeciesId[]; onDone(n: TeamNames): void }) {
+  rename(o: { team: BaseSpeciesId[]; onDone(n: TeamNames): void; listen?(cb: (alts: string[]) => void): () => void }) {
     const s = this.overlay('rename');
     const lang = getLang();
     const card = h('div', 'card rename-card');
@@ -155,6 +156,46 @@ export class Screens {
       }
       card.append(col);
     }
+    // Personal encouragement words: a slot only counts after the player says it and the voice parser hears it.
+    card.append(h('h3', '', t('cheerTitle')), h('p', 'muted', t('cheerHint')));
+    const slots: { input: HTMLInputElement; ok: boolean; word: string }[] = [];
+    let stopListening: (() => void) | null = null;
+    const stop = () => { stopListening?.(); stopListening = null; };
+    const slotsEl = h('div', 'cheer-slots');
+    for (let i = 0; i < CUSTOM_CHEERS; i++) {
+      const slot = { input: field(t('cheerPlaceholder', { n: i + 1 })), ok: false, word: '' };
+      const msg = h('span', 'muted cheer-msg');
+      const reset = () => { slot.ok = false; slot.input.classList.remove('verified'); msg.textContent = ''; };
+      slot.input.addEventListener('input', () => { stop(); reset(); });
+      const test = button(t('cheerTest'), () => {
+        stop();
+        reset();
+        const word = cleanWord(slot.input.value);
+        const lower = word.toLowerCase();
+        const clash = !word || parse(word).commands.length > 0
+          || slots.some((x) => x !== slot && x.input.value.trim().toLowerCase() === lower)
+          || SPECIES_IDS.some((sp) => SPECIES[sp].name.toLowerCase() === lower)
+          || creatures.some(([, c]) => c.value.trim().toLowerCase() === lower);
+        if (clash) { msg.textContent = t('cheerClash'); return; }
+        if (!o.listen) { msg.textContent = t('cheerNoMic'); return; }
+        msg.textContent = t('cheerListening');
+        const names: TeamNames = { creatures: {}, moves: {}, cheers: [word] };
+        stopListening = o.listen((alts) => {
+          const hit = alts.some((a) => parse(a, { names }).commands.some((c) => c.kind === 'cheer' && c.word === 'mine1'));
+          if (!hit) { msg.textContent = t('cheerFail', { heard: alts[0] ?? '' }); return; }
+          stop();
+          slot.ok = true;
+          slot.word = word;
+          slot.input.classList.add('verified');
+          msg.textContent = t('cheerOk');
+        });
+      }, 'btn ghost');
+      slots.push(slot);
+      const row = h('div', 'cheer-slot');
+      row.append(slot.input, test, msg);
+      slotsEl.append(row);
+    }
+    card.append(slotsEl);
     const err = h('p', 'rename-err');
     const done = button(t('renameOk'), () => {
       const out: TeamNames = { creatures: {}, moves: {} };
@@ -174,9 +215,11 @@ export class Screens {
         const w = cleanWord(i.value);
         if (w) out.moves[m] = w;
       }
+      if (slots.some((x) => x.ok)) out.cheers = slots.map((x) => (x.ok ? x.word : ''));
+      stop();
       o.onDone(out);
     }, 'btn big primary');
-    const keep = button(t('renameKeep'), () => o.onDone({ creatures: {}, moves: {} }), 'btn ghost');
+    const keep = button(t('renameKeep'), () => { stop(); o.onDone({ creatures: {}, moves: {} }); }, 'btn ghost');
     const row = h('div', 'end-row');
     row.append(done, keep);
     card.append(err, row);
