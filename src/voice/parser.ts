@@ -2,7 +2,7 @@
 // Robust to recognizer garbling: accents/case normalized, phonetic folding, Levenshtein similarity
 // over token windows, and alias lists with distinctive keywords.
 
-import { ALL_SPECIES_IDS, CHEERS, CHEER_IDS, MOVES, SPECIES, knowsMove, sameFamily } from '../sim/data';
+import { ALL_SPECIES_IDS, CHEERS, CHEER_IDS, MOVES, SPECIES, TEAM_SIZE, knowsMove, sameFamily } from '../sim/data';
 import type { TeamNames } from '../names';
 import type { CheerId, Intent, MoveId, QAction, SpeciesId } from '../sim/types';
 import {
@@ -20,7 +20,7 @@ export type Command =
   | { kind: 'recall' }
   | { kind: 'stop' }
   | { kind: 'go'; species: SpeciesId; explicit: boolean }
-  | { kind: 'pick'; slot: 0 | 1 };
+  | { kind: 'pick'; slot: number };
 
 export interface ParseContext {
   /** When set, only this creature's moves are considered (much more robust). */
@@ -130,7 +130,7 @@ function buildPhrases(): Phrase[] {
   for (const a of ALERT_ALIASES) add(a, { kind: 'alert' });
   for (const a of RECALL_ALIASES) add(a, { kind: 'recall' });
   for (const a of STOP_ALIASES) add(a, { kind: 'stop' });
-  for (const slot of [0, 1] as const) for (const a of PICK_ALIASES[slot]) add(a, { kind: 'pick', slot });
+  for (let slot = 0; slot < TEAM_SIZE; slot++) for (const a of PICK_ALIASES[slot]) add(a, { kind: 'pick', slot });
   return out;
 }
 

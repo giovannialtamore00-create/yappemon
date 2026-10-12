@@ -139,6 +139,8 @@ describe('forced switch picks', () => {
     expect(moves('second')).toEqual(['pick:1']);
     expect(moves('primo')).toEqual(['pick:0']);
     expect(moves('il secondo')).toEqual(['pick:1']);
+    expect(moves('third')).toEqual(['pick:2']);
+    expect(moves('il terzo')).toEqual(['pick:2']);
   });
   it('bare creature name', () => expect(moves('brinkle')).toEqual(['go:brinkle']));
 });

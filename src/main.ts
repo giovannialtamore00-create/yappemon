@@ -6,7 +6,7 @@ import { getLang, setLang, t } from './i18n';
 import { Hud } from './render/hud';
 import { createScene } from './render/scene';
 import { Showcase } from './render/showcase';
-import { SPECIES_IDS, defaultLoadout } from './sim/data';
+import { SPECIES_IDS, TEAM_SIZE, defaultLoadout } from './sim/data';
 import type { BaseSpeciesId, Lang } from './sim/types';
 import { Screens, setUiClickHandler } from './ui/screens';
 import { Speech, isSupportedBrowser } from './voice/speech';
@@ -459,7 +459,7 @@ class App {
     // URL options for testing: ?seed=123&botTeam=vinram,brinkle&bot=passive&loadout=0
     const q = new URLSearchParams(location.search);
     const forced = (q.get('botTeam') ?? '').split(',').filter((x): x is BaseSpeciesId => (SPECIES_IDS as string[]).includes(x));
-    const botTeam = forced.length === 2 ? forced : [...SPECIES_IDS].sort(() => Math.random() - 0.5).slice(0, 2);
+    const botTeam = forced.length === TEAM_SIZE ? forced : [...SPECIES_IDS].sort(() => Math.random() - 0.5).slice(0, TEAM_SIZE);
     const seed = q.has('seed') ? Number(q.get('seed')) >>> 0 : undefined;
     // ?loadout=<seconds> sets the move-choice time (0 skips the panel), for automated tests.
     const loadout = q.has('loadout') ? Math.max(0, Number(q.get('loadout')) || 0) : undefined;

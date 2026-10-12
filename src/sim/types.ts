@@ -144,7 +144,7 @@ export type Intent =
   | { type: 'steer'; x: -1 | 0 | 1; z: -1 | 0 | 1 }
   /** Encouragement word: instant, free, doesn't touch the queue or the running action. */
   | { type: 'cheer'; word: CheerId }
-  | { type: 'choose'; slot: 0 | 1 }
+  | { type: 'choose'; slot: number }
   | { type: 'go'; species: SpeciesId }
   /** During the loadout phase: the moves team slot `slot` brings into the round. */
   | { type: 'loadout'; slot: number; moves: MoveId[] }

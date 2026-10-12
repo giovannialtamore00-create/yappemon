@@ -2,7 +2,7 @@
 // at ~20 Hz plus the events since the last snapshot; the client (player 1) sends only intents and
 // renders snapshots with a small interpolation delay.
 
-import { ALL_SPECIES_IDS, CHEERS, DT, MOVES, SPECIES_IDS } from '../sim/data';
+import { ALL_SPECIES_IDS, CHEERS, DT, MOVES, SPECIES_IDS, TEAM_SIZE } from '../sim/data';
 import type { CheerId, Intent, MoveId, PlayerIdx, QAction, SimEvent, SimState, SpeciesId, BaseSpeciesId } from '../sim/types';
 import { SimRunner, type Session, type SessionView } from '../game/session';
 import type { Link } from './link';
@@ -15,8 +15,10 @@ const INTERP_DELAY_MS = 110;
 const isSpecies = (x: unknown): x is SpeciesId => typeof x === 'string' && (ALL_SPECIES_IDS as string[]).includes(x);
 const isBase = (x: unknown): x is BaseSpeciesId => typeof x === 'string' && (SPECIES_IDS as string[]).includes(x);
 
+const isSlot = (x: unknown): x is number => Number.isInteger(x) && (x as number) >= 0 && (x as number) < TEAM_SIZE;
+
 export function sanitizeTeam(x: unknown): BaseSpeciesId[] | null {
-  if (!Array.isArray(x) || x.length !== 2 || !x.every(isBase) || x[0] === x[1]) return null;
+  if (!Array.isArray(x) || x.length !== TEAM_SIZE || !x.every(isBase) || new Set(x).size !== TEAM_SIZE) return null;
   return x as BaseSpeciesId[];
 }
 
@@ -48,10 +50,10 @@ export function sanitizeIntents(list: unknown): Intent[] {
     if (i.type === 'stop') out.push({ type: 'stop' });
     else if (i.type === 'steer' && (i.x === -1 || i.x === 0 || i.x === 1) && (i.z === -1 || i.z === 0 || i.z === 1)) out.push({ type: 'steer', x: i.x, z: i.z });
     else if (i.type === 'cheer' && typeof i.word === 'string' && i.word in CHEERS) out.push({ type: 'cheer', word: i.word as CheerId });
-    else if (i.type === 'choose' && (i.slot === 0 || i.slot === 1)) out.push({ type: 'choose', slot: i.slot });
+    else if (i.type === 'choose' && isSlot(i.slot)) out.push({ type: 'choose', slot: i.slot });
     else if (i.type === 'go' && isSpecies(i.species)) out.push({ type: 'go', species: i.species });
     else if (i.type === 'ready') out.push({ type: 'ready' });
-    else if (i.type === 'loadout' && (i.slot === 0 || i.slot === 1) && Array.isArray(i.moves) && i.moves.length <= 8
+    else if (i.type === 'loadout' && isSlot(i.slot) && Array.isArray(i.moves) && i.moves.length <= 8
       && i.moves.every((m) => typeof m === 'string' && m in MOVES)) out.push({ type: 'loadout', slot: i.slot, moves: i.moves as MoveId[] });
     else if (i.type === 'queue' && Array.isArray(i.actions)) {
       const actions = i.actions.slice(0, 4).map(sanitizeAction).filter((a): a is QAction => a !== null);

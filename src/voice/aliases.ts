@@ -189,9 +189,10 @@ export const RECALL_ALIASES = ['come back', 'comeback', 'come back here', 'retur
 export const STOP_ALIASES = ['stop', 'stopp', 'halt', 'cancel', 'wait', 'hold', 'hold on',
   'fermati', 'fermo', 'ferma', 'fermate', 'basta', 'annulla', 'alt', 'aspetta'];
 
-export const PICK_ALIASES: Record<0 | 1, string[]> = {
+export const PICK_ALIASES: Record<number, string[]> = {
   0: ['first', 'first one', 'one', 'number one', 'primo', 'prima', 'il primo', 'uno', 'numero uno'],
   1: ['second', 'second one', 'two', 'number two', 'secondo', 'seconda', 'il secondo', 'due', 'numero due'],
+  2: ['third', 'third one', 'three', 'number three', 'terzo', 'terza', 'il terzo', 'tre', 'numero tre'],
 };
 
 /** Words that split an utterance into separate commands. Longest first. */

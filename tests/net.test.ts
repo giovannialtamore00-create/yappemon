@@ -43,10 +43,14 @@ describe('remote input sanitizing', () => {
     expect((sanitizeIntents([many])[0] as { actions: unknown[] }).actions).toHaveLength(4);
   });
   it('validates teams', () => {
-    expect(sanitizeTeam(['cindrix', 'vinram'])).toEqual(['cindrix', 'vinram']);
-    expect(sanitizeTeam(['cindrix', 'cindrix'])).toBeNull();
-    expect(sanitizeTeam(['cindrix'])).toBeNull();
-    expect(sanitizeTeam(['cindrix', 'zzz'])).toBeNull();
+    expect(sanitizeTeam(['cindrix', 'vinram', 'brinkle'])).toEqual(['cindrix', 'vinram', 'brinkle']);
+    expect(sanitizeTeam(['cindrix', 'vinram'])).toBeNull();
+    expect(sanitizeTeam(['cindrix', 'cindrix', 'vinram'])).toBeNull();
+    expect(sanitizeTeam(['cindrix', 'vinram', 'vinram'])).toBeNull();
+    expect(sanitizeTeam(['cindrix', 'vinram', 'zzz'])).toBeNull();
+    expect(sanitizeTeam(['cindrix', 'vinram', 'brinkle', 'joltmoth'])).toBeNull();
+    expect(sanitizeIntents([{ type: 'choose', slot: 2 }])).toEqual([{ type: 'choose', slot: 2 }]);
+    expect(sanitizeIntents([{ type: 'choose', slot: 3 }])).toEqual([]);
   });
 });
 

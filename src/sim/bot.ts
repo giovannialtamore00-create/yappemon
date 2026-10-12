@@ -38,7 +38,7 @@ export class Bot {
       if (s.tick >= this.switchAt) {
         this.switchAt = -1;
         const slot = me.team.findIndex((c) => !c.fainted);
-        return slot >= 0 ? [{ type: 'choose', slot: slot as 0 | 1 }] : [];
+        return slot >= 0 ? [{ type: 'choose', slot }] : [];
       }
       return [];
     }

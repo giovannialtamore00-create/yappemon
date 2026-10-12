@@ -95,6 +95,8 @@ export const ROUNDS_TO_WIN = 2;
 export const MAX_ROUNDS = 3;
 /** Break between rounds: result banner, then the evolution animation. */
 export const INTERMISSION_S = 7;
+/** Creatures each player brings (all different). */
+export const TEAM_SIZE = 3;
 /** Moves a creature brings into a round, chosen from everything it has learned. */
 export const LOADOUT_SIZE = 4;
 /** Before every round: time to pick (and read) the moves; ends early when both players are ready. */

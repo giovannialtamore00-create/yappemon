@@ -219,9 +219,9 @@ function applyIntent(s: SimState, p: PlayerIdx, it: Intent, ev: SimEvent[]) {
     case 'ready':
       return; // only during the loadout phase
     case 'go': {
-      const slot = t.team.findIndex((c, i) => sameFamily(c.species, it.species) && !c.fainted && (t.field === 'choosing' || i !== t.active));
+      const slot = t.team.findIndex((c, i) => sameFamily(c.species, it.species) && !c.fainted && i !== t.active);
       if (t.field === 'choosing') {
-        if (slot >= 0) choose(s, p, slot as 0 | 1, ev);
+        if (slot >= 0) choose(s, p, slot, ev);
         else ev.push({ t: 'invalid', p, reason: 'not_now' });
         return;
       }
@@ -269,7 +269,7 @@ function choose(s: SimState, p: PlayerIdx, slot: number, ev: SimEvent[]) {
   const t = s.trainers[p];
   if (t.field !== 'choosing') return;
   const c = t.team[slot];
-  if (!c || c.fainted) return void ev.push({ t: 'invalid', p, reason: 'not_now' });
+  if (!c || c.fainted || slot === t.active) return void ev.push({ t: 'invalid', p, reason: 'not_now' });
   sendOut(s, p, slot, ev);
 }
 
@@ -392,7 +392,7 @@ function tickTrainer(s: SimState, p: PlayerIdx, ev: SimEvent[]) {
   }
   if (t.field === 'choosing') {
     if (--t.fieldTicks <= 0) {
-      const slot = t.team.findIndex((c) => !c.fainted);
+      const slot = benchSlot(t);
       if (slot >= 0) sendOut(s, p, slot, ev);
     }
     return;
@@ -515,13 +515,19 @@ function advanceAction(s: SimState, p: PlayerIdx, ev: SimEvent[]) {
     run.phase = 'recovery';
     run.left = run.total = recoveryTicks(t, a);
     if (a.kind === 'recall') {
-      // Recall finished: creature is in the orb, the bench creature is sent out.
+      // Recall finished: creature is in the orb. One living bench creature is sent out; with two the player chooses.
       const c = activeCreature(t);
       clearStatuses(c);
       ev.push({ t: 'recall', p, slot: t.active });
       const slot = benchSlot(t);
-      if (slot >= 0) sendOut(s, p, slot, ev);
-      else t.action = null;
+      if (slot < 0) t.action = null;
+      else if (t.team.filter((x, i) => i !== t.active && !x.fainted).length > 1) {
+        t.action = null;
+        t.queue = [];
+        t.field = 'choosing';
+        t.fieldTicks = secToTicks(FORCED_SWITCH_S);
+        ev.push({ t: 'switch_prompt', p, seconds: FORCED_SWITCH_S });
+      } else sendOut(s, p, slot, ev);
       return;
     }
     if (run.left <= 0) t.action = null;

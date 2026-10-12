@@ -516,6 +516,35 @@ describe('fainting and switching', () => {
     expect(s.trainers[0].active).toBe(1);
     expect(s.trainers[0].team[0]!.hp).toBe(50);
   });
+  it('recall with two benched creatures opens a choice, "choose" sends the picked one', () => {
+    const s = ready(['cindrix', 'joltmoth', 'brinkle'], ['vinram']);
+    const ev = run(s, sec(3), [[{ type: 'queue', actions: [{ kind: 'recall' }] }], []]);
+    expect(ev).toContainEqual({ t: 'recall', p: 0, slot: 0 });
+    expect(ev).toContainEqual({ t: 'switch_prompt', p: 0, seconds: 10 });
+    expect(s.trainers[0].field).toBe('choosing');
+    run(s, 1, [[{ type: 'choose', slot: 0 }], []]); // the recalled creature is not a valid pick
+    expect(s.trainers[0].field).toBe('choosing');
+    const ev2 = run(s, 1, [[{ type: 'go', species: 'brinkle' }], []]);
+    expect(ev2).toContainEqual({ t: 'sendout', p: 0, slot: 2 });
+  });
+  it('recall choice times out to the first living benched creature', () => {
+    const s = ready(['cindrix', 'joltmoth', 'brinkle'], ['vinram']);
+    run(s, sec(3), [[{ type: 'queue', actions: [{ kind: 'recall' }] }], []]);
+    const ev = run(s, sec(10.5));
+    expect(ev).toContainEqual({ t: 'sendout', p: 0, slot: 1 });
+  });
+  it('a round only ends when all three creatures fainted', () => {
+    const s = ready(['vinram', 'joltmoth', 'brinkle'], ['cindrix']);
+    s.trainers[0].team[1]!.fainted = true;
+    activeCreature(s.trainers[0]).hp = 1;
+    const ev = run(s, sec(5), [[], [q('shell_ram', 'shell_ram', 'shell_ram')]]);
+    expect(ev).toContainEqual({ t: 'faint', p: 0, slot: 0 });
+    expect(s.trainers[0].field).toBe('choosing'); // brinkle is still alive
+    run(s, sec(1.2), [[{ type: 'choose', slot: 2 }], []]);
+    activeCreature(s.trainers[0]).hp = 1;
+    const ev2 = run(s, sec(5), [[], [q('shell_ram', 'shell_ram', 'shell_ram')]]);
+    expect(ev2).toContainEqual(expect.objectContaining({ t: 'round_end', winner: 1 }));
+  });
   it('go <bench creature> recalls', () => {
     const s = ready(['cindrix', 'joltmoth'], ['vinram']);
     run(s, sec(3), [[{ type: 'go', species: 'joltmoth' }], []]);
