@@ -1,3 +1,6 @@
+import '@fontsource/bangers/400.css';
+import '@fontsource/lilita-one/400.css';
+import '@fontsource/modak/400.css';
 import './style.css';
 import { Sfx } from './audio/sfx';
 import { Battle, type BattleAudio } from './game/battle';
@@ -90,6 +93,7 @@ class App {
     (window as unknown as { __yappemon: unknown }).__yappemon = {
       state: () => this.battle?.state() ?? null,
       say: (text: string, boost?: Boost) => this.battle?.command(text, true, boost),
+      hear: (alts: string[]) => this.voiceCheckFinal?.(alts),
       app: this,
     };
   }
@@ -416,7 +420,13 @@ class App {
   private askNames(team: BaseSpeciesId[], done: (n: TeamNames) => void) {
     const q = new URLSearchParams(location.search);
     if (q.has('seed') && !q.has('rename')) return done({ creatures: {}, moves: {} });
-    this.screens.rename({ team, onDone: done });
+    const canListen = isSupportedBrowser() || q.has('seed');
+    const listen = (cb: (alts: string[]) => void) => {
+      this.voiceCheckFinal = cb;
+      this.speech.start(getLang());
+      return () => { this.voiceCheckFinal = null; this.speech.stop(); };
+    };
+    this.screens.rename({ team, onDone: done, listen: canListen ? listen : undefined });
   }
 
   /**

@@ -5,8 +5,16 @@ import { LOADOUT_SIZE, MOVES, SPECIES, SPECIES_IDS, evolutionLine } from '../sim
 import type { BaseSpeciesId, Lang, MoveId, SpeciesId } from '../sim/types';
 import { MOVE_DESC } from '../movedesc';
 import { portrait } from '../render/portraits';
-import { NAME_MAX, cleanWord, myCreature, myMove } from '../names';
+import { parse } from '../voice/parser';
+import { CUSTOM_CHEERS, NAME_MAX, cleanWord, myCreature, myMove } from '../names';
 import type { TeamNames } from '../names';
+
+const ELEMENT_ICON = {
+  fire: 'M12 1c1 5 7 7 7 13a7 7 0 0 1-14 0c0-3 2-5 3-8 1 1 2 2 2 4 2-2 2-5 2-9z',
+  water: 'M12 1C9 7 4 10 4 15.5a8 8 0 0 0 16 0C20 10 15 7 12 1z',
+  grass: 'M3 21C2 10 9 3 22 3c0 13-6 19-15 18l7-9-9 7z',
+  electric: 'M14 0 3 14h7l-2 10 13-15h-8z',
+} as const;
 
 const h = <K extends keyof HTMLElementTagNameMap>(tag: K, cls?: string, text?: string) => {
   const e = document.createElement(tag);
@@ -14,6 +22,13 @@ const h = <K extends keyof HTMLElementTagNameMap>(tag: K, cls?: string, text?: s
   if (text !== undefined) e.textContent = text;
   return e;
 };
+
+/** Decorative element icon (fire, water, grass, electric) for the title screens. */
+function elementIcon(kind: keyof typeof ELEMENT_ICON, cls: string): HTMLElement {
+  const e = h('span', `orb ${kind} ${cls}`);
+  e.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${ELEMENT_ICON[kind]}"/></svg>`;
+  return e;
+}
 
 function button(label: string, onClick: () => void, cls = 'btn'): HTMLButtonElement {
   const b = h('button', cls, label);
@@ -48,6 +63,8 @@ export class Screens {
     const s = this.overlay('lobby');
     const card = h('div', 'card lobby-card');
     const logo = h('h1', 'logo', 'YAPPEMON');
+    const stage = h('div', 'logo-stage');
+    stage.append(elementIcon('fire', 'o1'), elementIcon('water', 'o2'), elementIcon('grass', 'o3'), elementIcon('electric', 'o4'), logo);
     const tag = h('p', 'tagline', t('tagline'));
     const langRow = h('div', 'lang-row');
     langRow.append(h('span', 'label', t('language')));
@@ -74,7 +91,7 @@ export class Screens {
     };
     input.addEventListener('keydown', (e) => { if (e.key === 'Enter') join(); });
     joinRow.append(input, button(t('joinGo'), join, 'btn big'));
-    card.append(logo, tag, langRow, moveRow, actions, h('div', 'or', t('join')), joinRow);
+    card.append(stage, tag, langRow, moveRow, actions, h('div', 'or', t('join')), joinRow);
     const how = h('details', 'howto');
     how.append(h('summary', '', t('howTo')), h('p', '', t('howToBody')));
     card.append(how);
@@ -83,7 +100,7 @@ export class Screens {
   }
 
   hosting(code: string, onCancel: () => void, status = t('waitingFriend')) {
-    const s = this.overlay();
+    const s = this.overlay('hosting');
     const card = h('div', 'card');
     card.append(h('div', 'label', t('yourCode')));
     const codeEl = h('div', 'room-code', code);
@@ -97,7 +114,7 @@ export class Screens {
   }
 
   /** Before a match: name the creatures and the first word of their moves. Empty field = original name. */
-  rename(o: { team: BaseSpeciesId[]; onDone(n: TeamNames): void }) {
+  rename(o: { team: BaseSpeciesId[]; onDone(n: TeamNames): void; listen?(cb: (alts: string[]) => void): () => void }) {
     const s = this.overlay('rename');
     const lang = getLang();
     const card = h('div', 'card rename-card');
@@ -123,8 +140,11 @@ export class Screens {
     const seen = new Set<MoveId>();
     for (const sp of o.team) {
       const col = h('div', 'rename-moves');
-      for (const m of SPECIES[sp].moves) {
-        if (seen.has(m)) continue;
+      for (const form of evolutionLine(sp)) {
+        const fresh = SPECIES[form].moves.filter((m) => !seen.has(m));
+        if (!fresh.length) continue;
+        col.append(h('div', 'rename-stage muted', t('renameStage', { n: SPECIES[form].stage, name: SPECIES[form].name })));
+        for (const m of fresh) {
         seen.add(m);
         const full = MOVES[m].name[lang];
         const i = field(full.split(' ')[0]!);
@@ -132,9 +152,50 @@ export class Screens {
         const row = h('label', 'rename-move');
         row.append(i, h('span', 'muted', full.split(' ').slice(1).join(' ')));
         col.append(row);
+        }
       }
       card.append(col);
     }
+    // Personal encouragement words: a slot only counts after the player says it and the voice parser hears it.
+    card.append(h('h3', '', t('cheerTitle')), h('p', 'muted', t('cheerHint')));
+    const slots: { input: HTMLInputElement; ok: boolean; word: string }[] = [];
+    let stopListening: (() => void) | null = null;
+    const stop = () => { stopListening?.(); stopListening = null; };
+    const slotsEl = h('div', 'cheer-slots');
+    for (let i = 0; i < CUSTOM_CHEERS; i++) {
+      const slot = { input: field(t('cheerPlaceholder', { n: i + 1 })), ok: false, word: '' };
+      const msg = h('span', 'muted cheer-msg');
+      const reset = () => { slot.ok = false; slot.input.classList.remove('verified'); msg.textContent = ''; };
+      slot.input.addEventListener('input', () => { stop(); reset(); });
+      const test = button(t('cheerTest'), () => {
+        stop();
+        reset();
+        const word = cleanWord(slot.input.value);
+        const lower = word.toLowerCase();
+        const clash = !word || parse(word).commands.length > 0
+          || slots.some((x) => x !== slot && x.input.value.trim().toLowerCase() === lower)
+          || SPECIES_IDS.some((sp) => SPECIES[sp].name.toLowerCase() === lower)
+          || creatures.some(([, c]) => c.value.trim().toLowerCase() === lower);
+        if (clash) { msg.textContent = t('cheerClash'); return; }
+        if (!o.listen) { msg.textContent = t('cheerNoMic'); return; }
+        msg.textContent = t('cheerListening');
+        const names: TeamNames = { creatures: {}, moves: {}, cheers: [word] };
+        stopListening = o.listen((alts) => {
+          const hit = alts.some((a) => parse(a, { names }).commands.some((c) => c.kind === 'cheer' && c.word === 'mine1'));
+          if (!hit) { msg.textContent = t('cheerFail', { heard: alts[0] ?? '' }); return; }
+          stop();
+          slot.ok = true;
+          slot.word = word;
+          slot.input.classList.add('verified');
+          msg.textContent = t('cheerOk');
+        });
+      }, 'btn ghost');
+      slots.push(slot);
+      const row = h('div', 'cheer-slot');
+      row.append(slot.input, test, msg);
+      slotsEl.append(row);
+    }
+    card.append(slotsEl);
     const err = h('p', 'rename-err');
     const done = button(t('renameOk'), () => {
       const out: TeamNames = { creatures: {}, moves: {} };
@@ -154,9 +215,11 @@ export class Screens {
         const w = cleanWord(i.value);
         if (w) out.moves[m] = w;
       }
+      if (slots.some((x) => x.ok)) out.cheers = slots.map((x) => (x.ok ? x.word : ''));
+      stop();
       o.onDone(out);
     }, 'btn big primary');
-    const keep = button(t('renameKeep'), () => o.onDone({ creatures: {}, moves: {} }), 'btn ghost');
+    const keep = button(t('renameKeep'), () => { stop(); o.onDone({ creatures: {}, moves: {} }); }, 'btn ghost');
     const row = h('div', 'end-row');
     row.append(done, keep);
     card.append(err, row);

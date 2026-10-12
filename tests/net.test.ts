@@ -56,3 +56,14 @@ describe('steer intents', () => {
     expect(sanitizeIntents([{ type: 'steer', x: 5, z: 0 }, { type: 'steer', x: 'a', z: 0 }, { type: 'steer', x: 0 }])).toEqual([]);
   });
 });
+
+describe('sanitizeNames: personal cheers', () => {
+  it('keeps 3 clean slots, drops junk and duplicates', async () => {
+    const { sanitizeNames } = await import('../src/names');
+    const n = sanitizeNames({ creatures: {}, moves: {}, cheers: ['Bra vo!', 'bravo', 5, 'x', 'extra'] });
+    expect(n.cheers).toEqual(['Bravo', '', '']);
+  });
+  it('allows the custom cheer intents', () => {
+    expect(sanitizeIntents([{ type: 'cheer', word: 'mine2' }, { type: 'cheer', word: 'nope' }])).toEqual([{ type: 'cheer', word: 'mine2' }]);
+  });
+});

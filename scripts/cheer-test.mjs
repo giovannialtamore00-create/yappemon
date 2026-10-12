@@ -32,7 +32,7 @@ try {
   await page.getByRole('button', { name: /Ready/ }).click();
   await page.waitForFunction(() => window.__yappemon.state()?.trainers[0].field === 'active', null, { timeout: 10000 });
 
-  const words = await page.locator('.words-box .word').allTextContents();
+  const words = (await page.locator('.words-box .word').allTextContents()).filter(Boolean);
   check(words.join('|') === "Come on|Stay strong|Courage|Perfect|Don't give up|Cindrix", `Words box lists the encouragements, then the name (${words.join('|')})`);
   await setStamina(40);
   await page.evaluate(() => window.__yappemon.say('come on'));

@@ -2,7 +2,7 @@
 // these add short forms, distinctive keywords and likely speech-recognizer mishearings.
 // Both languages are always accepted, whatever recognition language is selected.
 
-import type { CheerId, MoveId, SpeciesId } from '../sim/types';
+import type { CheerId, CustomCheerId, MoveId, SpeciesId } from '../sim/types';
 
 export const MOVE_ALIASES: Record<MoveId, string[]> = {
   // Cindrix
@@ -169,7 +169,7 @@ export const SPECIES_ALIASES: Record<SpeciesId, string[]> = {
 };
 
 /** Encouragements (official EN/IT names come from sim data). "hold on" stays a stop word. */
-export const CHEER_ALIASES: Record<CheerId, string[]> = {
+export const CHEER_ALIASES: Record<Exclude<CheerId, CustomCheerId>, string[]> = {
   come_on: ['come on', 'cmon', 'c mon', 'come one', 'come own', 'forza', 'forsa', 'forze'],
   stay_strong: ['stay strong', 'stay strung', 'stays strong', 'stay string', 'stay stronger', 'resisti', 'resiste', 'resistere', 'resisto'],
   courage: ['courage', 'curage', 'courageous', 'coraggio', 'corraggio', 'coraggioso', 'coragio'],
