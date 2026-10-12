@@ -20,6 +20,7 @@ Playwright needs Chromium once: `npx playwright install chromium`.
 | `flow-test.mjs` | Italian UI, voice forced switch, leave, phone layout |
 | `italian-voice-test.mjs` | Italian voice commands incl. dodge window / alert |
 | `boost-test.mjs` | Verbal boosts in a match: pre-match voice check (dots, done), boost reaches the sim, SNAP/HYPE/FULL POWER flashes (screenshots in `screenshots/boosts/`), FULL POWER chip + cooldown, Italian label |
+| `skin-shots.mjs` | Pop-art skin screenshots (lobby, team, loadout, battle, mobile) into screenshots/skin; fails on page errors |
 | `prosody-test.mjs` | Verbal boosts: fake mic plays a synthetic WAV; debug panel must show HYPE!, SNAP!, FULL POWER! on the right words |
 | `net-test.mjs` | Two headless players over the real PeerJS broker (needs internet) |
 | `spectator-test.mjs` | Spectator room with two players |

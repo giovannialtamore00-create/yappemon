@@ -367,3 +367,103 @@ html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
 .rename-move { display: flex; align-items: center; gap: 6px; }
 .name-input { width: 130px; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--line); background: rgba(255, 255, 255, 0.08); color: inherit; font: inherit; font-weight: 700; }
 .rename-err { color: #ff6b6b; min-height: 1.2em; margin: 0; }
+
+/* ================================================================ pop-art skin (decision #92)
+   Four elements (fire, water, grass, electric), chunky black outlines, hard shadows. Look only: layout above is unchanged. */
+:root {
+  --fire: #ff5a1f; --water: #22a7ff; --grass: #3ddc5a; --zap: #ffe11a; --ink: #000; --comic-red: #e5262b;
+  --card: rgba(14, 12, 24, 0.92); --card-2: #231f3a; --line: rgba(255, 255, 255, 0.28);
+  --accent: var(--water); --gold: var(--zap);
+  --font: 'Lilita One', 'Trebuchet MS', 'Segoe UI', system-ui, sans-serif;
+  --font-display: 'Modak', 'Lilita One', system-ui, sans-serif;
+  --font-title: 'Bangers', 'Lilita One', system-ui, sans-serif;
+  --font-body: 'Trebuchet MS', 'Segoe UI', system-ui, sans-serif;
+  --sticker: 0 0 0 2px rgba(255, 255, 255, 0.2), 0 5px 0 var(--ink);
+}
+.btn { font-weight: 400; letter-spacing: 0.02em; border: 3px solid var(--ink); border-radius: 14px; box-shadow: 0 5px 0 var(--ink); background: var(--card-2); }
+.btn:hover:not(:disabled) { transform: translateY(-2px); border-color: var(--ink); box-shadow: 0 7px 0 var(--ink); }
+.btn:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 2px 0 var(--ink); }
+.btn.primary { background: var(--fire); color: var(--ink); border-color: var(--ink); }
+.btn.big { background: var(--water); color: var(--ink); font-size: 1.25rem; }
+.btn.big.primary { background: var(--fire); }
+.btn.big.ghost { background: #fff; }
+.btn.ghost { background: var(--card-2); }
+.btn.toggle.on { background: var(--zap); color: var(--ink); border-color: var(--ink); }
+.card { border: 3px solid var(--ink); border-radius: 20px; box-shadow: var(--sticker); backdrop-filter: none; }
+.label, .lo-label, .eg-label, .words-label, .queue-label { font-weight: 400; }
+.cc-stats, .lo-desc, .mc-desc, .howto, .cc-new, .cc-evo, .lo-empty, .warn, .transcript, .tagline { font-family: var(--font-body); }
+.team-head h2, .loadout-card h2, .end-title, .room-code, .banner-title, .cc-name, .lo-creature, .panel-name { font-family: var(--font-display); font-weight: 400; line-height: 1.05; }
+.panel-name, .cc-name, .lo-creature { letter-spacing: 0.02em; }
+.end-title { -webkit-text-stroke: 6px var(--ink); paint-order: stroke fill; color: #fff; text-shadow: 0 8px 0 var(--ink); }
+.end-victory .end-title { color: var(--zap); }
+.end-defeat .end-title { color: #fff; }
+.end-draw .end-title { color: var(--water); }
+.room-code { color: var(--zap); -webkit-text-stroke: 6px var(--ink); paint-order: stroke fill; text-shadow: 0 6px 0 var(--ink); letter-spacing: 0.1em; }
+.banner-title { color: #fff; -webkit-text-stroke: 8px var(--ink); paint-order: stroke fill; text-shadow: 0 6px 0 var(--ink); }
+.banner-sub { font-family: var(--font); font-weight: 400; color: var(--zap); -webkit-text-stroke: 3px var(--ink); paint-order: stroke fill; }
+
+/* title screens: four elemental wedges + dot texture, comic title */
+.lobby, .hosting, .end { background: radial-gradient(#0003 2px, transparent 3px) 0 0 / 16px 16px, conic-gradient(from 45deg at 50% 42%, var(--fire) 0 25%, var(--water) 0 50%, var(--grass) 0 75%, var(--zap) 0); }
+.lobby-card { background: transparent; border: 0; box-shadow: none; max-width: min(640px, 100%); align-items: center; }
+.logo-stage { position: relative; padding: 18px 56px 8px; }
+.logo { font-family: var(--font-title); font-weight: 400; font-size: clamp(3.6rem, 13vw, 7rem); line-height: 1; letter-spacing: 0.04em; color: var(--comic-red); background: none; -webkit-background-clip: border-box; background-clip: border-box; -webkit-text-stroke: 5px var(--ink); paint-order: stroke fill; text-shadow: 6px 6px 0 var(--ink); filter: none; transform: skew(-8deg) rotate(-2deg); display: inline-block; }
+.logo::after { content: '!'; }
+.orb { position: absolute; width: 2.8rem; height: 2.8rem; filter: drop-shadow(3px 4px 0 var(--ink)); }
+.orb svg { width: 100%; height: 100%; fill: var(--c); stroke: var(--ink); stroke-width: 1.4; stroke-linejoin: round; }
+.orb.fire { --c: var(--fire); } .orb.water { --c: var(--water); } .orb.grass { --c: var(--grass); } .orb.electric { --c: var(--zap); }
+.orb.o1 { left: 0; top: 0; transform: rotate(-14deg); } .orb.o2 { right: 0; top: -4px; transform: rotate(12deg); }
+.orb.o3 { left: 6px; bottom: -6px; transform: rotate(18deg); } .orb.o4 { right: 4px; bottom: -8px; transform: rotate(-10deg); }
+.tagline { display: inline-block; background: var(--ink); color: #fff; font-family: var(--font); font-size: 1.15rem; padding: 6px 20px; border-radius: 999px; border: 3px solid #fff; transform: rotate(1.5deg); margin: 8px 0 10px; }
+.lobby .label, .lobby .or, .lobby .muted { background: var(--ink); color: #fff; padding: 3px 12px; border-radius: 999px; }
+.lobby .howto { background: var(--ink); border: 3px solid #fff; border-radius: 14px; }
+.lobby .howto summary { color: var(--zap); font-family: var(--font); font-weight: 400; }
+.hosting .card, .end .card { background: var(--card); }
+.hosting .muted, .end .muted { color: #fff; }
+.code-input { border: 3px solid var(--ink); background: #fff; color: var(--ink); font-family: var(--font); font-weight: 400; box-shadow: 0 5px 0 var(--ink); }
+.code-input:focus { border-color: var(--ink); outline: 3px solid var(--zap); }
+
+/* team picker / loadout: chunky element cards over the 3D scene */
+.creature-card { border: 3px solid var(--ink); border-top: 8px solid var(--el); box-shadow: var(--sticker); background: #fff; color: var(--ink); }
+.creature-card:hover { transform: translateY(-4px) rotate(-0.6deg); }
+.creature-card.picked { background: var(--el); border-color: var(--ink); box-shadow: 0 0 0 4px #fff, 0 7px 0 4px var(--ink); transform: translateY(-3px); }
+.creature-card .cc-stats { color: #333; }
+.creature-card.picked .cc-stats { color: #111; }
+.creature-card .move-cost { color: #8a5a00; }
+.pick-num { border: 3px solid var(--ink); background: #fff; color: var(--ink); font-family: var(--font); font-weight: 400; }
+.badge { border: 2px solid var(--ink); font-weight: 400; letter-spacing: 0.03em; }
+.team-head h2 { -webkit-text-stroke: 5px var(--ink); paint-order: stroke fill; color: #fff; text-shadow: 0 5px 0 var(--ink); }
+.team-head p { background: var(--ink); display: inline-block; padding: 2px 14px; border-radius: 999px; }
+.lo-move { border: 3px solid var(--ink); border-top: 6px solid var(--el); background: #fff; color: var(--ink); box-shadow: 0 3px 0 var(--ink); }
+.lo-move .lo-desc { color: #333; }
+.lo-move.sel { background: var(--zap); box-shadow: 0 0 0 3px #fff, 0 5px 0 3px var(--ink); }
+.lo-name { font-weight: 400; font-size: 1rem; }
+.lo-new { border: 2px solid var(--ink); font-weight: 400; }
+.lo-swap { color: var(--zap); }
+
+/* battle HUD */
+.panel, .voice-box, .words-box, .energy-gauge, .corner, .round-info, .toast, .move-card { border: 3px solid var(--ink); box-shadow: var(--sticker); backdrop-filter: none; }
+.panel { border-radius: 16px; }
+.panel-name { font-size: 1.3rem; }
+.dot { border-color: var(--ink); background: var(--zap); box-shadow: none; }
+.dot.out { background: #555; }
+.bar { background: var(--ink); border: 3px solid var(--ink); }
+.bar .fill { border-radius: 0; }
+.bar.hp .fill.ok { background: var(--grass); } .bar.hp .fill.mid { background: var(--zap); } .bar.hp .fill.low { background: var(--fire); }
+.bar.st .fill { background: var(--water); }
+.bar-text { font-family: var(--font); font-weight: 400; }
+.move-card { border-top: 6px solid var(--el, var(--line)); }
+.move-card.current { box-shadow: 0 0 0 3px #fff, 0 0 18px var(--el), 0 5px 0 var(--ink); }
+.mc-name, .mc-cost, .chip, .cmd, .word, .toast, .round-info, .act-row, .eg-val, .mc-quick { font-weight: 400; font-family: var(--font); }
+.mc-type, .mc-quick { border: 2px solid var(--ink); font-weight: 400; }
+.toast { background: var(--card); }
+.toast-super { background: var(--zap); color: var(--ink); border-color: var(--ink); }
+.toast-bad { background: #7a1220; } .toast-good { background: #137a3a; }
+.chip, .cmd { border: 2px solid var(--ink); }
+.eg-fill { background: linear-gradient(0deg, var(--water), #7fd2ff); box-shadow: none; }
+.energy-gauge.low .eg-fill { background: linear-gradient(0deg, var(--fire), #ffb27f); box-shadow: none; }
+.float { font-family: var(--font); font-weight: 400; -webkit-text-stroke: 2px var(--ink); paint-order: stroke fill; }
+.bf-word { font-family: var(--font-display); font-weight: 400; font-style: normal; -webkit-text-stroke: 6px var(--ink); paint-order: stroke fill; letter-spacing: 0.02em; }
+.vcheck-word { font-weight: 400; }
+.creature-card .cc-evo { color: #6b3b00; }
+.creature-card.picked .cc-evo { color: #3a2000; }
+.lo-move .mc-acc, .creature-card .mc-acc { color: #355; }

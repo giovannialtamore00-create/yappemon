@@ -8,12 +8,26 @@ import { portrait } from '../render/portraits';
 import { NAME_MAX, cleanWord, myCreature, myMove } from '../names';
 import type { TeamNames } from '../names';
 
+const ELEMENT_ICON = {
+  fire: 'M12 1c1 5 7 7 7 13a7 7 0 0 1-14 0c0-3 2-5 3-8 1 1 2 2 2 4 2-2 2-5 2-9z',
+  water: 'M12 1C9 7 4 10 4 15.5a8 8 0 0 0 16 0C20 10 15 7 12 1z',
+  grass: 'M3 21C2 10 9 3 22 3c0 13-6 19-15 18l7-9-9 7z',
+  electric: 'M14 0 3 14h7l-2 10 13-15h-8z',
+} as const;
+
 const h = <K extends keyof HTMLElementTagNameMap>(tag: K, cls?: string, text?: string) => {
   const e = document.createElement(tag);
   if (cls) e.className = cls;
   if (text !== undefined) e.textContent = text;
   return e;
 };
+
+/** Decorative element icon (fire, water, grass, electric) for the title screens. */
+function elementIcon(kind: keyof typeof ELEMENT_ICON, cls: string): HTMLElement {
+  const e = h('span', `orb ${kind} ${cls}`);
+  e.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${ELEMENT_ICON[kind]}"/></svg>`;
+  return e;
+}
 
 function button(label: string, onClick: () => void, cls = 'btn'): HTMLButtonElement {
   const b = h('button', cls, label);
@@ -48,6 +62,8 @@ export class Screens {
     const s = this.overlay('lobby');
     const card = h('div', 'card lobby-card');
     const logo = h('h1', 'logo', 'YAPPEMON');
+    const stage = h('div', 'logo-stage');
+    stage.append(elementIcon('fire', 'o1'), elementIcon('water', 'o2'), elementIcon('grass', 'o3'), elementIcon('electric', 'o4'), logo);
     const tag = h('p', 'tagline', t('tagline'));
     const langRow = h('div', 'lang-row');
     langRow.append(h('span', 'label', t('language')));
@@ -74,7 +90,7 @@ export class Screens {
     };
     input.addEventListener('keydown', (e) => { if (e.key === 'Enter') join(); });
     joinRow.append(input, button(t('joinGo'), join, 'btn big'));
-    card.append(logo, tag, langRow, moveRow, actions, h('div', 'or', t('join')), joinRow);
+    card.append(stage, tag, langRow, moveRow, actions, h('div', 'or', t('join')), joinRow);
     const how = h('details', 'howto');
     how.append(h('summary', '', t('howTo')), h('p', '', t('howToBody')));
     card.append(how);
@@ -83,7 +99,7 @@ export class Screens {
   }
 
   hosting(code: string, onCancel: () => void, status = t('waitingFriend')) {
-    const s = this.overlay();
+    const s = this.overlay('hosting');
     const card = h('div', 'card');
     card.append(h('div', 'label', t('yourCode')));
     const codeEl = h('div', 'room-code', code);

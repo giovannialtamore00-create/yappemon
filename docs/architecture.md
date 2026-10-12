@@ -34,7 +34,7 @@ src/game/    session (local/host/client) and battle controller
 | `main.ts` | Bootstrap, menus → battle wiring, rAF loop, background ticker, URL test options | (runs on load) |
 | `i18n.ts` | EN/IT UI strings | `t`, `setLang`, `getLang`, `StrKey`, `ELEMENT_LABEL`, `ELEMENT_COLOR`, `FAIL_REASON` |
 | `movedesc.ts` | Move-bar effect text (`{d}` = stage-scaled damage) | `MOVE_DESC` |
-| `style.css` | All UI/HUD styling | |
+| `style.css` | All UI/HUD styling; the pop-art skin (decision #92) is the last block and overrides the base rules | |
 | `audio/music.ts` | Live-synthesized 8-bit battle theme | `ChipMusic` |
 | `audio/sfx.ts` | All synthesized SFX; owns the music | `Sfx` |
 | `game/battle.ts` | One match: drives session, view, HUD; voice/debug text → intents; toasts, sounds, loadout panel | `Battle`, `BattleAudio` |

@@ -1,3 +1,6 @@
+import '@fontsource/bangers/400.css';
+import '@fontsource/lilita-one/400.css';
+import '@fontsource/modak/400.css';
 import './style.css';
 import { Sfx } from './audio/sfx';
 import { Battle, type BattleAudio } from './game/battle';

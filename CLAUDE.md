@@ -45,6 +45,7 @@ Stack: TypeScript, Vite, Three.js, PeerJS, Web Speech API, Vitest, Playwright. N
 - **Done:** M11 (decision #83: Cogling/Gearhound/Mechadon Steel + Flurrbit/Hailstag/Glaciarch Ice, 6 models, 12 moves, EN+IT voice; tests 438 pass, `scripts/newcreatures-test.mjs` all 8 lines OK). 
 - **Done:** team-screen fix (decision #84): scrolling card grid with a picture of each creature; `scripts/team-shots.mjs` OK.
 - **Movement feature (user request 2026-10-11, branch `wasd` off `main`):** M13 lobby toggle Automatic/Manual, WASD steering (decision #87). Done, tests 445 pass, `scripts/wasd-test.mjs` + net-test OK. Waiting for user playtest; ask before merging.
+- **Pop-art UI (user request 2026-10-12, branch `pop-ui` off `main`, decision #92):** M19 new look (four-element wedges, Bangers comic title, Modak/Lilita One, bundled fonts, new favicon). Done, tests 449 pass, flow/net/IT voice OK, `scripts/skin-shots.mjs`. Waiting for user playtest; ask before merging.
 - **Next:** M12 docs check + net check (balance dropped by user, 2026-10-10), then user playtest of everything and ask before merging.
 - **Earlier feature (verbal boosts, decisions #73–74):** on `main`; user still to try boosts by voice in Chrome.
 - **Known issues:** `smoke.mjs --full` crashes headless Chrome on an audio-device error, also before this feature (docs/blockers.md).
